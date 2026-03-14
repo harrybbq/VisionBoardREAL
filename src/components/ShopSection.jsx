@@ -1,0 +1,292 @@
+import { useRef } from 'react';
+
+const PRIORITY_LABEL = { high: '🔴 High', med: '🟡 Medium', low: '🟢 Low' };
+const PRIORITY_CLASS = { high: 'priority-high', med: 'priority-med', low: 'priority-low' };
+
+let _dragItemId = null;
+
+function ShopCard({ item, coins, onToggleBought, onDelete, onShowCoinToast }) {
+  const hasLink = !!item.url;
+  const canAfford = (coins || 0) >= item.coinCost || item.bought;
+
+  return (
+    <div
+      className={`shop-item-card${item.bought ? ' bought' : ''}`}
+      draggable
+      onDragStart={e => {
+        _dragItemId = item.id;
+        setTimeout(() => e.target.classList.add('dragging'), 0);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', item.id);
+      }}
+      onDragEnd={e => {
+        e.target.classList.remove('dragging');
+        _dragItemId = null;
+        document.querySelectorAll('.shop-drop-zone').forEach(z => {
+          z.classList.remove('drag-over');
+          z._enterCount = 0;
+        });
+      }}
+    >
+      <div className="shop-item-img">
+        {item.imageUrl
+          ? <img src={item.imageUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.parentElement.innerHTML = '🛒'; }} />
+          : '🛒'
+        }
+      </div>
+      <div className="shop-item-body">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+          <div className="shop-item-name">{item.name}</div>
+          <span className={`shop-item-priority ${PRIORITY_CLASS[item.priority]}`}>{PRIORITY_LABEL[item.priority]}</span>
+        </div>
+        {item.price && <div className="shop-item-price">{item.price}</div>}
+        {item.coinCost > 0 && (
+          <div className={`shop-coin-cost${!canAfford && !item.bought ? ' cant-afford' : ''}`}>
+            ⬡ {item.coinCost} coins{item.bought ? ' · spent' : !canAfford ? ' · need more' : ' to unlock'}
+          </div>
+        )}
+        {item.notes && <div className="shop-item-notes">{item.notes}</div>}
+      </div>
+      <div className="shop-item-footer">
+        {hasLink
+          ? <a className="shop-link-btn" href={item.url} target="_blank" rel="noreferrer">View Online ↗</a>
+          : <span className="shop-link-btn no-link">No link added</span>
+        }
+        <button className="shop-bought-btn" onClick={() => onToggleBought(item.id)}>
+          {item.bought ? '✓ Bought' : 'Mark Bought'}
+        </button>
+        <button className="shop-del-btn" onClick={() => onDelete(item.id)}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onShowCoinToast, onDrop }) {
+  const handleDragEnter = e => {
+    e.preventDefault();
+    e.currentTarget._enterCount = (e.currentTarget._enterCount || 0) + 1;
+    e.currentTarget.classList.add('drag-over');
+  };
+  const handleDragLeave = e => {
+    e.currentTarget._enterCount = Math.max(0, (e.currentTarget._enterCount || 1) - 1);
+    if (e.currentTarget._enterCount === 0) e.currentTarget.classList.remove('drag-over');
+  };
+  const handleDragOver = e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+  const handleDrop = e => {
+    e.preventDefault();
+    e.currentTarget._enterCount = 0;
+    e.currentTarget.classList.remove('drag-over');
+    const dragId = e.dataTransfer.getData('text/plain') || _dragItemId;
+    if (dragId) onDrop(dragId, categoryId);
+  };
+
+  if (!items.length) {
+    return (
+      <div
+        className="shop-drop-zone"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <span className="shop-drop-hint">Drop items here</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="shop-drop-zone has-items"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <div className="shop-grid" style={{ padding: 0, display: 'grid' }}>
+        {items.map(item => (
+          <ShopCard
+            key={item.id}
+            item={item}
+            coins={coins}
+            onToggleBought={onToggleBought}
+            onDelete={onDeleteItem}
+            onShowCoinToast={onShowCoinToast}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ShopSection({ S, update, active, onOpenModal, onShowCoinToast }) {
+  const { shopItems, shopCategories, shopFilter, coins } = S;
+
+  const total = shopItems.length;
+  const bought = shopItems.filter(s => s.bought).length;
+  const totalVal = shopItems.filter(s => s.price).reduce((acc, s) => {
+    const n = parseFloat(s.price.replace(/[^0-9.]/g, ''));
+    return acc + (isNaN(n) ? 0 : n);
+  }, 0);
+
+  function setFilter(f) {
+    update(prev => ({ ...prev, shopFilter: f }));
+  }
+
+  function handleToggleBought(id) {
+    update(prev => {
+      const item = prev.shopItems.find(s => s.id === id);
+      if (!item) return prev;
+      let newCoins = prev.coins || 0;
+      let newHistory = [...(prev.coinHistory || [])];
+      if (!item.bought && item.coinCost > 0) {
+        if (newCoins < item.coinCost) {
+          onShowCoinToast('Need ' + item.coinCost + ' ⬡ — you have ' + newCoins, false);
+          return prev;
+        }
+        newCoins -= item.coinCost;
+        newHistory.unshift({ type: 'spend', label: item.name, amount: -item.coinCost, ts: Date.now() });
+        onShowCoinToast('-' + item.coinCost + ' ⬡ spent on ' + item.name + '!', false);
+      } else if (item.bought && item.coinCost > 0) {
+        newCoins += item.coinCost;
+      }
+      return {
+        ...prev,
+        shopItems: prev.shopItems.map(s => s.id === id ? { ...s, bought: !s.bought } : s),
+        coins: newCoins,
+        coinHistory: newHistory,
+      };
+    });
+  }
+
+  function handleDeleteItem(id) {
+    update(prev => ({ ...prev, shopItems: prev.shopItems.filter(s => s.id !== id) }));
+  }
+
+  function handleDeleteCategory(id) {
+    update(prev => ({
+      ...prev,
+      shopItems: prev.shopItems.map(s => s.categoryId === id ? { ...s, categoryId: null } : s),
+      shopCategories: prev.shopCategories.filter(c => c.id !== id),
+    }));
+  }
+
+  function handleDrop(itemId, categoryId) {
+    update(prev => ({
+      ...prev,
+      shopItems: prev.shopItems.map(s => s.id === itemId ? { ...s, categoryId: categoryId || null } : s),
+    }));
+  }
+
+  const filters = [
+    { key: 'all', label: 'All' },
+    { key: 'high', label: '🔴 High' },
+    { key: 'med', label: '🟡 Medium' },
+    { key: 'low', label: '🟢 Low' },
+    { key: 'bought', label: '✓ Bought' },
+  ];
+
+  let filtered = shopItems;
+  if (shopFilter === 'bought') filtered = filtered.filter(s => s.bought);
+  else if (shopFilter === 'high') filtered = filtered.filter(s => s.priority === 'high' && !s.bought);
+  else if (shopFilter === 'med') filtered = filtered.filter(s => s.priority === 'med' && !s.bought);
+  else if (shopFilter === 'low') filtered = filtered.filter(s => s.priority === 'low' && !s.bought);
+
+  return (
+    <section id="shop" className={`section${active ? ' active' : ''}`}>
+      <div className="shop-layout">
+        <div className="shop-toolbar">
+          <div>
+            <div className="eyebrow">Wishlist</div>
+            <div className="sec-title">Shopping List</div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn btn-ghost" onClick={() => onOpenModal('addCategoryModal')}>+ Add Category</button>
+            <button className="btn btn-primary" onClick={() => onOpenModal('addShopModal')}>+ Add Item</button>
+          </div>
+        </div>
+
+        <div className="shop-summary">
+          <div className="shop-summary-stat"><div className="shop-summary-val">{total}</div><div className="shop-summary-lbl">Items</div></div>
+          <div className="shop-summary-stat"><div className="shop-summary-val">{bought}</div><div className="shop-summary-lbl">Bought</div></div>
+          <div className="shop-summary-stat"><div className="shop-summary-val">{total - bought}</div><div className="shop-summary-lbl">Remaining</div></div>
+          {totalVal > 0 && <div className="shop-summary-stat"><div className="shop-summary-val">£{totalVal.toFixed(2)}</div><div className="shop-summary-lbl">Total Value</div></div>}
+        </div>
+
+        <div className="shop-filters">
+          {filters.map(f => (
+            <button
+              key={f.key}
+              className={`shop-filter-btn${shopFilter === f.key ? ' active' : ''}`}
+              onClick={() => setFilter(f.key)}
+            >{f.label}</button>
+          ))}
+        </div>
+
+        <div className="shop-grid" id="shopGrid" style={{ marginTop: '16px', display: 'block' }}>
+          {shopFilter === 'all' ? (
+            <>
+              <div className="shop-category-section">
+                <div className="shop-category-header">
+                  <div className="shop-category-label">Uncategorised</div>
+                  <div className="shop-category-line"></div>
+                  <div className="shop-category-count">{filtered.filter(s => !s.categoryId).length}</div>
+                </div>
+                <DropZone
+                  categoryId={null}
+                  items={filtered.filter(s => !s.categoryId)}
+                  coins={coins}
+                  onToggleBought={handleToggleBought}
+                  onDeleteItem={handleDeleteItem}
+                  onShowCoinToast={onShowCoinToast}
+                  onDrop={handleDrop}
+                />
+              </div>
+              {shopCategories.map(cat => (
+                <div key={cat.id} className="shop-category-section">
+                  <div className="shop-category-header">
+                    <div className="shop-category-label">{cat.name}</div>
+                    <div className="shop-category-line"></div>
+                    <div className="shop-category-count">{filtered.filter(s => s.categoryId === cat.id).length}</div>
+                    <button className="shop-category-del-btn" onClick={() => handleDeleteCategory(cat.id)} title="Delete category">✕</button>
+                  </div>
+                  <DropZone
+                    categoryId={cat.id}
+                    items={filtered.filter(s => s.categoryId === cat.id)}
+                    coins={coins}
+                    onToggleBought={handleToggleBought}
+                    onDeleteItem={handleDeleteItem}
+                    onShowCoinToast={onShowCoinToast}
+                    onDrop={handleDrop}
+                  />
+                </div>
+              ))}
+              {!shopItems.length && (
+                <div className="shop-empty">
+                  <div className="shop-empty-icon">🛍</div>
+                  <div>No items yet. Add something you want!</div>
+                </div>
+              )}
+            </>
+          ) : (
+            filtered.length === 0
+              ? <div className="shop-empty"><div className="shop-empty-icon">🛍</div><div>Nothing here.</div></div>
+              : (
+                <div className="shop-grid" style={{ display: 'grid' }}>
+                  {filtered.map(item => (
+                    <ShopCard
+                      key={item.id}
+                      item={item}
+                      coins={coins}
+                      onToggleBought={handleToggleBought}
+                      onDelete={handleDeleteItem}
+                      onShowCoinToast={onShowCoinToast}
+                    />
+                  ))}
+                </div>
+              )
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}

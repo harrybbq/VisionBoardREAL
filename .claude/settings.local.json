@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:/Users/Harry/source/repos/VisionBoard -name *.json -o -name *.jsx -o -name *.js -o -name *.css -o -name *.html)",
+      "Bash(npm install:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npx:*)",
+      "Bash(C:/Users/Harry/source/repos/VisionBoard/node_modules/.bin/vite --version)"
+    ]
+  }
+}
