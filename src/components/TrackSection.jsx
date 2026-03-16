@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
+import { fireGoal } from '../utils/confetti';
 
 function getWeekProgress(logs, trackerId, weeklyTarget) {
   const dateStr = getTodayStr();
@@ -12,13 +14,15 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
     <div className="card trackers-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <h3 style={{ margin: 0 }}>Trackers</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => onOpenModal('addTrackerModal')}>+</button>
+        <motion.button className="btn btn-primary btn-sm" onClick={() => onOpenModal('addTrackerModal')}
+          whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}>+</motion.button>
       </div>
       <div id="trackersList">
         {!trackers.length && (
           <div style={{ color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: '11px', textAlign: 'center', padding: '14px 0' }}>No trackers yet</div>
         )}
-        {trackers.map(t => {
+        {trackers.map((t, index) => {
           let challengeHtml = null;
           if (t.weeklyTarget && t.weeklyCoins) {
             const { count, target } = getWeekProgress(logs, t.id, t.weeklyTarget);
@@ -41,7 +45,14 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
             );
           }
           return (
-            <div key={t.id} className="tracker-item">
+            <motion.div
+              key={t.id}
+              className="tracker-item"
+              initial={{ opacity: 0, x: -16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: index * 0.06, ease: 'easeOut' }}
+            >
               <div style={{ width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div className="tracker-left">
@@ -58,7 +69,7 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
                 </div>
                 {challengeHtml}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -165,6 +176,7 @@ function CalendarView({ S, update, onShowCoinToast }) {
             ...(next.coinHistory || []),
           ];
           onShowCoinToast('+' + t.weeklyCoins + ' ⬡ — ' + t.name + ' weekly goal!', true);
+          fireGoal();
           next = { ...next, [awardKey]: true, coins, coinHistory };
         }
       });
@@ -295,10 +307,16 @@ function CalendarView({ S, update, onShowCoinToast }) {
 export default function TrackSection({ S, update, active, onOpenModal, onShowCoinToast }) {
   return (
     <section id="track" className={`section${active ? ' active' : ''}`}>
-      <div style={{ marginBottom: '20px' }}>
+      <motion.div
+        style={{ marginBottom: '20px' }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
         <div className="eyebrow">Daily Habits</div>
         <div className="sec-title">Track</div>
-      </div>
+      </motion.div>
       <div className="track-layout">
         <TrackersList
           trackers={S.trackers}

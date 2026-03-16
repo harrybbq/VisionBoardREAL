@@ -1,18 +1,25 @@
 import { useRef } from 'react';
+import { motion } from 'framer-motion';
+import { firePurchase } from '../utils/confetti';
 
 const PRIORITY_LABEL = { high: '🔴 High', med: '🟡 Medium', low: '🟢 Low' };
 const PRIORITY_CLASS = { high: 'priority-high', med: 'priority-med', low: 'priority-low' };
 
 let _dragItemId = null;
 
-function ShopCard({ item, coins, onToggleBought, onDelete, onShowCoinToast }) {
+function ShopCard({ item, coins, onToggleBought, onDelete, onShowCoinToast, revealDelay }) {
   const hasLink = !!item.url;
   const canAfford = (coins || 0) >= item.coinCost || item.bought;
 
   return (
-    <div
+    <motion.div
       className={`shop-item-card${item.bought ? ' bought' : ''}`}
       draggable
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -3, boxShadow: '0 12px 36px rgba(0,0,0,0.18)' }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.3, delay: revealDelay ?? 0, ease: 'easeOut' }}
       onDragStart={e => {
         _dragItemId = item.id;
         setTimeout(() => e.target.classList.add('dragging'), 0);
@@ -52,12 +59,15 @@ function ShopCard({ item, coins, onToggleBought, onDelete, onShowCoinToast }) {
           ? <a className="shop-link-btn" href={item.url} target="_blank" rel="noreferrer">View Online ↗</a>
           : <span className="shop-link-btn no-link">No link added</span>
         }
-        <button className="shop-bought-btn" onClick={() => onToggleBought(item.id)}>
+        <motion.button className="shop-bought-btn"
+          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          onClick={() => onToggleBought(item.id)}>
           {item.bought ? '✓ Bought' : 'Mark Bought'}
-        </button>
+        </motion.button>
         <button className="shop-del-btn" onClick={() => onDelete(item.id)}>✕</button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -103,13 +113,14 @@ function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onSh
       onDrop={handleDrop}
     >
       <div className="shop-grid" style={{ padding: 0, display: 'grid' }}>
-        {items.map(item => (
+        {items.map((item, index) => (
           <ShopCard
             key={item.id}
             item={item}
             coins={coins}
             onToggleBought={onToggleBought}
             onDelete={onDeleteItem}
+            revealDelay={index * 0.06}
             onShowCoinToast={onShowCoinToast}
           />
         ))}
@@ -149,6 +160,7 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
       } else if (item.bought && item.coinCost > 0) {
         newCoins += item.coinCost;
       }
+      if (!item.bought) firePurchase();
       return {
         ...prev,
         shopItems: prev.shopItems.map(s => s.id === id ? { ...s, bought: !s.bought } : s),
@@ -195,13 +207,22 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
     <section id="shop" className={`section${active ? ' active' : ''}`}>
       <div className="shop-layout">
         <div className="shop-toolbar">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
             <div className="eyebrow">Wishlist</div>
             <div className="sec-title">Shopping List</div>
-          </div>
+          </motion.div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="btn btn-ghost" onClick={() => onOpenModal('addCategoryModal')}>+ Add Category</button>
-            <button className="btn btn-primary" onClick={() => onOpenModal('addShopModal')}>+ Add Item</button>
+            <motion.button className="btn btn-ghost" onClick={() => onOpenModal('addCategoryModal')}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}>+ Add Category</motion.button>
+            <motion.button className="btn btn-primary" onClick={() => onOpenModal('addShopModal')}
+              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}>+ Add Item</motion.button>
           </div>
         </div>
 
@@ -272,7 +293,7 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
               ? <div className="shop-empty"><div className="shop-empty-icon">🛍</div><div>Nothing here.</div></div>
               : (
                 <div className="shop-grid" style={{ display: 'grid' }}>
-                  {filtered.map(item => (
+                  {filtered.map((item, index) => (
                     <ShopCard
                       key={item.id}
                       item={item}
@@ -280,6 +301,7 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
                       onToggleBought={handleToggleBought}
                       onDelete={handleDeleteItem}
                       onShowCoinToast={onShowCoinToast}
+                      revealDelay={index * 0.06}
                     />
                   ))}
                 </div>

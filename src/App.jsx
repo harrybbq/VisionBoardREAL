@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useVisionBoardState } from './hooks/useVisionBoardState';
 import Nav from './components/Nav';
 import PageHeader from './components/PageHeader';
@@ -12,6 +13,13 @@ import Modals from './components/Modals';
 import HubFooter from './components/HubFooter';
 import CoinToast from './components/CoinToast';
 import ConnectToast from './components/ConnectToast';
+
+const pageMotion = {
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 },
+  transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+};
 
 export default function App() {
   const { S, update } = useVisionBoardState();
@@ -82,8 +90,8 @@ export default function App() {
       {/* Spotify / Last.fm bar */}
       <SpotifyBar
         visible={activeSection === 'hub'}
-        lastfm={S.lastfm}
-        onUpdate={info => update(prev => ({ ...prev, lastfm: { ...prev.lastfm, ...info } }))}
+        username={S.lastfm?.username || ''}
+        onSetUsername={name => update(prev => ({ ...prev, lastfm: { ...prev.lastfm, username: name } }))}
       />
 
       {/* Sidebar nav */}
@@ -94,46 +102,37 @@ export default function App() {
         activeSection={activeSection}
         coins={S.coins || 0}
         onOpenCoinHistory={() => handleOpenModal('coinHistoryModal')}
+        profileName={S.profile?.name || ''}
       />
 
-      {/* Main sections */}
-      <HubSection
-        S={S}
-        update={update}
-        active={activeSection === 'hub'}
-        onOpenModal={handleOpenModal}
-      />
-
-      <AchievementsSection
-        S={S}
-        update={update}
-        active={activeSection === 'achievements'}
-        onOpenModal={handleOpenModal}
-        onShowCoinToast={showCoinToast}
-      />
-
-      <TrackSection
-        S={S}
-        update={update}
-        active={activeSection === 'track'}
-        onOpenModal={handleOpenModal}
-        onShowCoinToast={showCoinToast}
-      />
-
-      <ShopSection
-        S={S}
-        update={update}
-        active={activeSection === 'shop'}
-        onOpenModal={handleOpenModal}
-        onShowCoinToast={showCoinToast}
-      />
-
-      <HolidaySection
-        S={S}
-        update={update}
-        active={activeSection === 'holiday'}
-        onOpenModal={handleOpenModal}
-      />
+      {/* Main sections — conditionally rendered with Framer Motion page transitions */}
+      <AnimatePresence mode="wait">
+        {activeSection === 'hub' && (
+          <motion.div key="hub" {...pageMotion}>
+            <HubSection S={S} update={update} active={true} onOpenModal={handleOpenModal} />
+          </motion.div>
+        )}
+        {activeSection === 'achievements' && (
+          <motion.div key="achievements" {...pageMotion}>
+            <AchievementsSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+          </motion.div>
+        )}
+        {activeSection === 'track' && (
+          <motion.div key="track" {...pageMotion}>
+            <TrackSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+          </motion.div>
+        )}
+        {activeSection === 'shop' && (
+          <motion.div key="shop" {...pageMotion}>
+            <ShopSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+          </motion.div>
+        )}
+        {activeSection === 'holiday' && (
+          <motion.div key="holiday" {...pageMotion}>
+            <HolidaySection S={S} update={update} active={true} onOpenModal={handleOpenModal} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <Modals

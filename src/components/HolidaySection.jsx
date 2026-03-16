@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 const STATUS_LABEL = { planning: 'Planning', booked: 'Booked', completed: 'Completed' };
 
 export default function HolidaySection({ S, update, active, onOpenModal }) {
@@ -11,11 +13,18 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
     <section id="holiday" className={`section${active ? ' active' : ''}`}>
       <div className="holiday-layout">
         <div className="holiday-toolbar">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
             <div className="eyebrow">Adventures</div>
             <div className="sec-title">Holiday Planner</div>
-          </div>
-          <button className="btn btn-primary" onClick={() => onOpenModal('addHolidayModal')}>+ Plan Trip</button>
+          </motion.div>
+          <motion.button className="btn btn-primary" onClick={() => onOpenModal('addHolidayModal')}
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}>+ Plan Trip</motion.button>
         </div>
         <div className="holiday-grid" id="holidayGrid">
           {(!holidays || holidays.length === 0) ? (
@@ -24,7 +33,7 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
               No trips planned yet.<br />Hit <strong>+ Plan Trip</strong> to add your first holiday!
             </div>
           ) : (
-            holidays.map(h => {
+            holidays.map((h, index) => {
               const dateRange = h.from && h.to
                 ? `${new Date(h.from).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} → ${new Date(h.to).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
                 : h.from ? `From ${new Date(h.from).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : 'Dates TBC';
@@ -32,7 +41,15 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
                 ? Math.round((new Date(h.to) - new Date(h.from)) / (1000 * 60 * 60 * 24)) + ' nights'
                 : '';
               return (
-                <div key={h.id} className="holiday-card">
+                <motion.div
+                  key={h.id}
+                  className="holiday-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -4, boxShadow: '0 16px 48px rgba(0,0,0,0.22)' }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
+                >
                   <div className="holiday-card-hero">
                     <div className="holiday-card-hero-overlay"></div>
                     <div className="holiday-card-hero-info">
@@ -78,7 +95,7 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
                       onClick={() => handleDelete(h.id)}
                     >Delete</button>
                   </div>
-                </div>
+                </motion.div>
               );
             })
           )}
