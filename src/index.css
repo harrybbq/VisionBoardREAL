@@ -149,10 +149,8 @@ nav:hover .nav-tab-label{opacity:1;}
 }
 
 /* SECTIONS */
-.section{display:none;min-height:100vh;padding:68px 28px 60px 28px;margin-left:56px;animation:pageIn .4s cubic-bezier(.22,1,.36,1);}
+.section{display:block;min-height:100vh;padding:68px 28px 60px 28px;margin-left:56px;}
 #hub.section{padding-top:120px;} /* 52px header + 52px spotify bar + 16px */
-.section.active{display:block;}
-@keyframes pageIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
 /* SHARED */
 .eyebrow{font-family:var(--mono);font-size:10px;color:var(--em-mid);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
@@ -796,3 +794,19 @@ nav:hover .nav-tab-label{opacity:1;}
 .coin-hist-amount{font-family:var(--mono);font-size:13px;font-weight:700;}
 .coin-hist-amount.pos{color:var(--em);}
 .coin-hist-amount.neg{color:#b91c1c;}
+
+/* ── SKELETON SCREENS ── */
+@keyframes skeletonPulse{0%,100%{opacity:.55}50%{opacity:.25}}
+.skeleton-line,.skeleton-block{background:rgba(255,255,255,.18);border-radius:5px;animation:skeletonPulse 1.6s ease-in-out infinite;}
+.gh-skeleton{padding:12px 18px 16px;}
+.gh-skeleton .sk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.gh-skeleton .sk-stat{height:44px;background:rgba(255,255,255,.14);border-radius:8px;animation:skeletonPulse 1.6s ease-in-out infinite;}
+.gh-skeleton .sk-repo{height:56px;background:rgba(255,255,255,.12);border-radius:8px;animation:skeletonPulse 1.6s ease-in-out infinite;margin-bottom:8px;}
+.gh-skeleton .sk-repo:last-child{margin-bottom:0;}
+.yt-skeleton{padding:8px 14px 12px;display:flex;flex-direction:column;gap:10px;}
+.yt-skeleton-card{display:flex;gap:10px;align-items:flex-start;}
+.yt-skeleton-card .sk-thumb{width:100px;height:60px;border-radius:6px;flex-shrink:0;background:rgba(255,255,255,.14);animation:skeletonPulse 1.6s ease-in-out infinite;}
+.yt-skeleton-card .sk-info{flex:1;display:flex;flex-direction:column;gap:5px;}
+
+/* ── SCROLL REVEAL (Framer Motion whileInView) ── */
+.reveal-item{will-change:opacity,transform;}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { adjustColour, timeAgo } from '../utils/helpers';
 
 // ── GitHub helpers ──
@@ -119,8 +120,12 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
           />
         </div>
       </div>
-      <button className="hub-action-btn add-widget" onClick={onAddWidget}>＋ Add widget</button>
-      <button className="hub-action-btn sort-widgets" onClick={onSortWidgets}>⊞ Sort</button>
+      <motion.button className="hub-action-btn add-widget" onClick={onAddWidget}
+        whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}>＋ Add widget</motion.button>
+      <motion.button className="hub-action-btn sort-widgets" onClick={onSortWidgets}
+        whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}>⊞ Sort</motion.button>
     </div>
   );
 }
@@ -185,7 +190,7 @@ export default function HubSection({ S, update, active, onOpenModal }) {
 
       const isGH = !!link.ghUser;
       const bodyHtml = isGH
-        ? `<div class="link-island-body"><div class="gh-loading" id="gh-body-${link.id}">Loading GitHub data…</div></div>`
+        ? `<div class="link-island-body"><div class="gh-skeleton" id="gh-body-${link.id}"><div class="sk-stats"><div class="sk-stat"></div><div class="sk-stat"></div><div class="sk-stat"></div></div><div class="sk-repo"></div><div class="sk-repo"></div><div class="sk-repo"></div></div></div>`
         : (link.notes ? `<div class="link-island-body"><div class="link-island-notes">${link.notes}</div></div>` : '');
 
       island.innerHTML = `
@@ -249,7 +254,7 @@ export default function HubSection({ S, update, active, onOpenModal }) {
             <button class="link-del-btn" data-del-yt="${yt.id}">✕</button>
           </div>
         </div>
-        <div id="yt-body-${yt.id}" style="padding:0 0 10px;"><div class="yt-loading">Fetching subscriptions feed…</div></div>
+        <div id="yt-body-${yt.id}" style="padding:0 0 10px;"><div class="yt-skeleton">${[0,1,2,3].map(() => `<div class="yt-skeleton-card"><div class="sk-thumb"></div><div class="sk-info"><div class="skeleton-line" style="width:90%;height:11px;border-radius:4px;"></div><div class="skeleton-line" style="width:60%;height:10px;margin-top:5px;border-radius:4px;"></div><div class="skeleton-line" style="width:40%;height:9px;margin-top:5px;border-radius:4px;"></div></div></div>`).join('')}</div></div>
       `;
 
       island.querySelector('[data-del-yt]')?.addEventListener('click', e => {
@@ -277,6 +282,11 @@ export default function HubSection({ S, update, active, onOpenModal }) {
   return (
     <section id="hub" className={`section${active ? ' active' : ''}`}>
       <div className="hub-layout">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
         <ProfileCard
           profile={S.profile}
           onSaveName={name => update(prev => ({ ...prev, profile: { ...prev.profile, name } }))}
@@ -285,6 +295,7 @@ export default function HubSection({ S, update, active, onOpenModal }) {
           onAddWidget={() => onOpenModal('addLinkModal')}
           onSortWidgets={handleSortWidgets}
         />
+        </motion.div>
         <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
       </div>
     </section>
@@ -370,7 +381,7 @@ async function loadYouTubeFeed(yt) {
       return;
     }
 
-    bodyEl.innerHTML = `<div class="yt-loading">Fetching latest videos…</div>`;
+    bodyEl.innerHTML = `<div class="yt-skeleton">${[0,1,2,3].map(() => `<div class="yt-skeleton-card"><div class="sk-thumb"></div><div class="sk-info"><div class="skeleton-line" style="width:90%;height:11px;border-radius:4px;"></div><div class="skeleton-line" style="width:60%;height:10px;margin-top:5px;border-radius:4px;"></div></div></div>`).join('')}</div>`;
     const allVideos = [];
     await Promise.all(valid.map(async ch => {
       try {

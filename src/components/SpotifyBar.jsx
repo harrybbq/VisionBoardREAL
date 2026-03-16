@@ -1,27 +1,40 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-export default function SpotifyBar({ visible, lastfm, onUpdate }) {
-  const [inputVal, setInputVal] = useState(lastfm.username || '');
-  const pollRef = useRef(null);
+async function fetchLastFmTrack(username) {
+  const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(username)}&api_key=3b03e5843f63e88f5a7b3a2c6b2d1e4f&limit=1&format=json`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const track = data.recenttracks?.track?.[0];
+  if (!track) return null;
+  return {
+    track: track.name,
+    artist: track.artist['#text'] || track.artist.name || '',
+    album: track.album?.['#text'] || '',
+    artUrl: track.image?.find(i => i.size === 'medium')?.['#text'] || '',
+    trackUrl: track.url || '',
+    nowPlaying: track['@attr']?.nowplaying === 'true',
+  };
+}
 
-  useEffect(() => {
-    setInputVal(lastfm.username || '');
-    if (lastfm.username) {
-      fetchLastFm(lastfm.username, onUpdate);
-      clearInterval(pollRef.current);
-      pollRef.current = setInterval(() => fetchLastFm(lastfm.username, onUpdate), 30000);
-    }
-    return () => clearInterval(pollRef.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastfm.username]);
+export default function SpotifyBar({ visible, username, onSetUsername }) {
+  const [inputVal, setInputVal] = useState(username);
+
+  const { data: info } = useQuery({
+    queryKey: ['lastfm', username],
+    queryFn: () => fetchLastFmTrack(username),
+    enabled: !!username,
+    refetchInterval: 30_000,
+    staleTime: 25_000,
+    retry: false,
+  });
 
   function handleConnect() {
     const val = inputVal.trim();
     if (!val) return;
-    onUpdate({ username: val });
+    onSetUsername(val);
   }
-
-  const info = lastfm.track ? lastfm : null;
 
   return (
     <div id="spotifyBar" className={visible ? 'visible' : ''}>
@@ -32,12 +45,12 @@ export default function SpotifyBar({ visible, lastfm, onUpdate }) {
       </div>
       <div className="sp-track">
         <div className="sp-track-name">
-          {info ? info.track : (lastfm.username ? 'No recent tracks found' : 'Last.fm not set up')}
+          {info ? info.track : (username ? 'No recent tracks found' : 'Last.fm not set up')}
         </div>
         <div className="sp-track-sub">
           {info
             ? info.artist + (info.album ? ' · ' + info.album : '')
-            : (lastfm.username ? 'No recent tracks found' : 'Enter your Last.fm username to show recently played tracks')}
+            : (username ? 'No recent tracks found' : 'Enter your Last.fm username to show recently played tracks')}
         </div>
       </div>
       <div className="sp-right">
@@ -62,7 +75,7 @@ export default function SpotifyBar({ visible, lastfm, onUpdate }) {
           <a
             id="spOpenBtn"
             className="sp-open-btn"
-            href={info.trackUrl || `https://www.last.fm/user/${lastfm.username}`}
+            href={info.trackUrl || `https://www.last.fm/user/${username}`}
             target="_blank"
             rel="noreferrer"
           >
@@ -73,28 +86,4 @@ export default function SpotifyBar({ visible, lastfm, onUpdate }) {
       </div>
     </div>
   );
-}
-
-export async function fetchLastFm(username, onUpdate) {
-  if (!username) return;
-  try {
-    const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(username)}&api_key=3b03e5843f63e88f5a7b3a2c6b2d1e4f&limit=1&format=json`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.error) return;
-    const track = data.recenttracks?.track?.[0];
-    if (!track) return;
-    const nowPlaying = track['@attr']?.nowplaying === 'true';
-    const info = {
-      track: track.name,
-      artist: track.artist['#text'] || track.artist.name || '',
-      album: track.album?.['#text'] || '',
-      artUrl: track.image?.find(i => i.size === 'medium')?.['#text'] || '',
-      trackUrl: track.url || '',
-      nowPlaying,
-    };
-    onUpdate(info);
-  } catch (e) {
-    // silently fail
-  }
 }

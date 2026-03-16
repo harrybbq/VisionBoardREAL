@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
+import { fireGoal } from '../utils/confetti';
 
 function getWeekProgress(logs, trackerId, weeklyTarget) {
   const dateStr = getTodayStr();
@@ -12,13 +14,15 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
     <div className="card trackers-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <h3 style={{ margin: 0 }}>Trackers</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => onOpenModal('addTrackerModal')}>+</button>
+        <motion.button className="btn btn-primary btn-sm" onClick={() => onOpenModal('addTrackerModal')}
+          whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}>+</motion.button>
       </div>
       <div id="trackersList">
         {!trackers.length && (
           <div style={{ color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: '11px', textAlign: 'center', padding: '14px 0' }}>No trackers yet</div>
         )}
-        {trackers.map(t => {
+        {trackers.map((t, index) => {
           let challengeHtml = null;
           if (t.weeklyTarget && t.weeklyCoins) {
             const { count, target } = getWeekProgress(logs, t.id, t.weeklyTarget);
@@ -41,7 +45,14 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
             );
           }
           return (
-            <div key={t.id} className="tracker-item">
+            <motion.div
+              key={t.id}
+              className="tracker-item"
+              initial={{ opacity: 0, x: -16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: index * 0.06, ease: 'easeOut' }}
+            >
               <div style={{ width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div className="tracker-left">
@@ -58,7 +69,7 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
                 </div>
                 {challengeHtml}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -130,26 +141,6 @@ function CalendarView({ S, update, onShowCoinToast }) {
   const selectedDay = selectedKey ? parseInt(selectedKey.split('-')[2]) : null;
   const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  function checkWeeklyChallenges(changedDateStr) {
-    const newRewards = [];
-    trackers.forEach(t => {
-      if (!t.weeklyTarget || !t.weeklyCoins) return;
-      const weekKey = getWeekKey(changedDateStr);
-      const awardKey = 'awarded_' + t.id + '_' + weekKey;
-      update(prev => {
-        if (prev[awardKey]) return prev;
-        const count = countWeekLogs(prev.logs, t.id, changedDateStr);
-        if (count >= t.weeklyTarget) {
-          const coins = (prev.coins || 0) + t.weeklyCoins;
-          const coinHistory = [{ type: 'earn', label: t.name + ' weekly goal (' + t.weeklyTarget + 'x)', amount: t.weeklyCoins, ts: Date.now() }, ...(prev.coinHistory || [])];
-          onShowCoinToast('+' + t.weeklyCoins + ' ⬡ — ' + t.name + ' weekly goal!', true);
-          return { ...prev, [awardKey]: true, coins, coinHistory };
-        }
-        return prev;
-      });
-    });
-  }
-
   function saveLog() {
     const key = selectedKey;
     if (!key) return;
@@ -160,15 +151,51 @@ function CalendarView({ S, update, onShowCoinToast }) {
       if (t.type === 'boolean') { if (el.checked) logData[t.id] = true; }
       else { const v = parseFloat(el.value); if (!isNaN(v) && v !== 0) logData[t.id] = v; }
     });
+
+    // Merge log save + weekly coin check into ONE atomic update to avoid
+    // stale-state races across multiple setS calls.
     update(prev => {
+      // 1. Save the log entry
       const newLogs = { ...prev.logs };
       if (Object.keys(logData).length) newLogs[key] = logData;
       else delete newLogs[key];
-      return { ...prev, logs: newLogs };
+
+      let next = { ...prev, logs: newLogs };
+
+      // 2. Check every weekly challenge against the freshly updated logs
+      trackers.forEach(t => {
+        if (!t.weeklyTarget || !t.weeklyCoins) return;
+        const weekKey = getWeekKey(key);
+        const awardKey = 'awarded_' + t.id + '_' + weekKey;
+        if (next[awardKey]) return; // already rewarded this week
+        const count = countWeekLogs(newLogs, t.id, key);
+        if (count >= t.weeklyTarget) {
+          const coins = (next.coins || 0) + t.weeklyCoins;
+          const coinHistory = [
+            { type: 'earn', label: t.name + ' weekly goal (' + t.weeklyTarget + 'x)', amount: t.weeklyCoins, ts: Date.now() },
+            ...(next.coinHistory || []),
+          ];
+          onShowCoinToast('+' + t.weeklyCoins + ' ⬡ — ' + t.name + ' weekly goal!', true);
+          fireGoal();
+          next = { ...next, [awardKey]: true, coins, coinHistory };
+        }
+      });
+
+      return next;
     });
-    checkWeeklyChallenges(key);
+
     const btn = document.querySelector('.log-save-btn');
     if (btn) { btn.textContent = '✓ Saved'; btn.style.background = 'var(--em-light)'; setTimeout(() => { btn.textContent = 'Save'; btn.style.background = 'var(--em)'; }, 1400); }
+  }
+
+  function clearDay() {
+    if (!selectedKey) return;
+    if (!window.confirm('Remove all markers for this day?')) return;
+    update(prev => {
+      const newLogs = { ...prev.logs };
+      delete newLogs[selectedKey];
+      return { ...prev, logs: newLogs, selectedLogDate: null };
+    });
   }
 
   return (
@@ -263,7 +290,14 @@ function CalendarView({ S, update, onShowCoinToast }) {
               );
             })}
           </div>
-          <button className="log-save-btn" onClick={saveLog}>Save</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="log-save-btn" onClick={saveLog}>Save</button>
+            <button
+              onClick={clearDay}
+              style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--mono)' }}
+              title="Remove all markers for this day"
+            >🗑 Clear Day</button>
+          </div>
         </div>
       )}
     </div>
@@ -273,10 +307,16 @@ function CalendarView({ S, update, onShowCoinToast }) {
 export default function TrackSection({ S, update, active, onOpenModal, onShowCoinToast }) {
   return (
     <section id="track" className={`section${active ? ' active' : ''}`}>
-      <div style={{ marginBottom: '20px' }}>
+      <motion.div
+        style={{ marginBottom: '20px' }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
         <div className="eyebrow">Daily Habits</div>
         <div className="sec-title">Track</div>
-      </div>
+      </motion.div>
       <div className="track-layout">
         <TrackersList
           trackers={S.trackers}

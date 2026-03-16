@@ -1,4 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { fireAchievement } from '../utils/confetti';
 
 function allParentsComplete(achievements, connections, targetId) {
   const parents = connections.filter(([, t]) => t === targetId).map(([f]) => f);
@@ -148,6 +150,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
       const reward = ach.coins || 0;
       let coins = prev.coins || 0;
       let coinHistory = [...(prev.coinHistory || [])];
+      if (newCompleted) fireAchievement();
       if (newCompleted && reward > 0) {
         coins += reward;
         coinHistory.unshift({ type: 'earn', label: ach.name, amount: reward, ts: Date.now() });
@@ -194,13 +197,20 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
   return (
     <section id="achievements" className={`section${active ? ' active' : ''}`}>
       <div className="board-toolbar">
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
           <div className="eyebrow">Progress Map</div>
           <div className="sec-title">Achievement Board</div>
-        </div>
+        </motion.div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>Drag · ✦ Connect · ★ Complete</span>
-          <button className="btn btn-primary" onClick={() => onOpenModal('addAchievementModal')}>+ New</button>
+          <motion.button className="btn btn-primary" onClick={() => onOpenModal('addAchievementModal')}
+            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}>+ New</motion.button>
         </div>
       </div>
       <div className="board-canvas" id="boardCanvas">
