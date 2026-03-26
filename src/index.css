@@ -897,3 +897,96 @@ nav:hover .nav-tab-label{opacity:1;}
 
 /* ── SCROLL REVEAL (Framer Motion whileInView) ── */
 .reveal-item{will-change:opacity,transform;}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE / iPHONE
+   ══════════════════════════════════════════════════════════════════════════ */
+*{-webkit-tap-highlight-color:transparent;}
+input,select,textarea,button{touch-action:manipulation;}
+.mobile-signout-btn{display:none;}
+
+@media(max-width:768px){
+  body{min-height:100dvh;}
+
+  /* ── Bottom navigation bar ── */
+  nav{
+    width:100%!important;height:auto;
+    top:auto;bottom:0;left:0;right:0;
+    flex-direction:row;
+    padding:0 4px;
+    padding-bottom:env(safe-area-inset-bottom);
+    border-right:none;
+    border-top:1px solid rgba(255,255,255,.1);
+  }
+  nav:hover{width:100%!important;}
+  .nav-logo{display:none;}
+  .nav-bottom{display:none;}
+  .nav-tabs{
+    flex-direction:row;padding:4px 0 2px;
+    gap:0;justify-content:space-around;width:100%;
+  }
+  .nav-tab{
+    flex-direction:column;height:auto;
+    padding:4px 2px;gap:1px;
+    border-radius:8px;flex:1;
+    align-items:center;justify-content:center;
+    min-width:0;
+  }
+  .nav-tab-icon{width:32px;min-width:32px;height:32px;font-size:15px;border-radius:8px;}
+  .nav-tab-label{opacity:1!important;font-size:10px;letter-spacing:0;white-space:nowrap;}
+  nav:hover .nav-tab-label{opacity:1;}
+
+  /* ── Page header ── */
+  #pageHeader{
+    left:0!important;
+    padding:0 14px;
+    padding-top:env(safe-area-inset-top);
+    height:calc(50px + env(safe-area-inset-top));
+  }
+  nav:hover~#pageHeader{left:0!important;}
+  #pageHeader-title{font-size:14px;}
+  #pageHeader-sub{display:none;}
+  .mobile-signout-btn{
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+    border-radius:8px;color:rgba(255,255,255,.7);
+    font-size:14px;padding:5px 10px;cursor:pointer;
+    margin-left:6px;order:99;
+  }
+
+  /* ── Sections ── */
+  .section{
+    margin-left:0!important;
+    padding:calc(58px + env(safe-area-inset-top)) 14px calc(80px + env(safe-area-inset-bottom));
+  }
+  #hub.section{padding-top:calc(100px + env(safe-area-inset-top));}
+
+  /* ── Prevent iOS input zoom (requires 16px) ── */
+  input,select,textarea,.fg input,.fg select,.fg textarea{font-size:16px!important;}
+
+  /* ── Modals: sheet from bottom ── */
+  .modal-overlay{align-items:flex-end;}
+  .modal{
+    width:100%;max-width:100%;border-radius:22px 22px 0 0;
+    padding:24px 18px;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+    max-height:88dvh;overflow-y:auto;
+  }
+
+  /* ── Coin wallet compact ── */
+  #coinWallet{padding:6px 10px;gap:6px;}
+  .cw-label{display:none;}
+
+  /* ── Touch targets ── */
+  .btn{min-height:44px;}
+  .nav-tab{min-height:48px;}
+
+  /* ── Hub profile card ── */
+  .profile-col{width:100%;}
+
+  /* ── Shop grid ── */
+  .shop-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+
+  /* ── Spotify bar ── */
+  #spotifyBar{left:0!important;right:0;bottom:calc(60px + env(safe-area-inset-bottom));}
+}

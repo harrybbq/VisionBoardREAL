@@ -22,7 +22,7 @@ function getDynamicGreeting(name) {
   return `Still up${n}? 🌙`;
 }
 
-export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg }) {
+export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg, onSignOut }) {
   const greeting = getDynamicGreeting(profileName);
 
   return (
@@ -65,6 +65,13 @@ export default function PageHeader({ activeSection, coins, onOpenCoinHistory, pr
           </button>
         )}
       </div>
+
+      {/* Sign out — mobile only */}
+      <button
+        className="mobile-signout-btn"
+        onClick={onSignOut}
+        title="Sign out"
+      >→</button>
 
       <div id="coinWallet" onClick={onOpenCoinHistory} title="Your coins — click for history">
         <span className="cw-icon">⬡</span>

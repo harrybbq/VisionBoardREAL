@@ -168,12 +168,9 @@ function Board({ userId, onSignOut }) {
         }} />
       )}
 
-      {/* Built-in background layers */}
-      <div id="hub-bg" className={activeSection === 'hub' && !currentBg ? 'visible' : ''}></div>
-      <div id="hub-overlay" className={activeSection === 'hub' ? 'visible' : ''}></div>
-      <div id="shop-bg" className={activeSection === 'shop' && !currentBg ? 'visible' : ''}></div>
-      <div id="shop-overlay" className={activeSection === 'shop' ? 'visible' : ''}></div>
-      <div id="achievementsBg" className={activeSection === 'achievements' && !currentBg ? 'visible' : ''}></div>
+      {/* Overlays — only shown when a custom background is active */}
+      <div id="hub-overlay" className={activeSection === 'hub' && currentBg ? 'visible' : ''}></div>
+      <div id="shop-overlay" className={activeSection === 'shop' && currentBg ? 'visible' : ''}></div>
 
       {/* Spotify / Last.fm bar */}
       <SpotifyBar
@@ -193,6 +190,7 @@ function Board({ userId, onSignOut }) {
         profileName={S.profile?.name || ''}
         onChangeBg={handleChangeBgClick}
         onRemoveBg={currentBg ? handleRemoveBg : null}
+        onSignOut={onSignOut}
       />
 
       {/* Main sections */}
