@@ -248,7 +248,15 @@ export default function App() {
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // If user logged in without "remember me", sign out on next page load
+      if (session && localStorage.getItem('vb4_remember') === '0') {
+        await supabase.auth.signOut();
+        setSession(null);
+      } else {
+        setSession(session);
+      }
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
     return () => subscription.unsubscribe();
   }, []);

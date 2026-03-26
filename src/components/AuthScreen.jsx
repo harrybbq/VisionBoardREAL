@@ -5,6 +5,7 @@ export default function AuthScreen() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('vb4_remember') !== '0');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -19,6 +20,7 @@ export default function AuthScreen() {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        localStorage.setItem('vb4_remember', rememberMe ? '1' : '0');
       } else if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
@@ -82,6 +84,18 @@ export default function AuthScreen() {
                 minLength={6}
               />
             </div>
+          )}
+
+          {mode === 'login' && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                style={{ width: '15px', height: '15px', accentColor: 'var(--em, #2a9e62)', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '13px', color: 'var(--text-muted, #6b7280)' }}>Remember me</span>
+            </label>
           )}
 
           <button style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }} type="submit" disabled={loading}>

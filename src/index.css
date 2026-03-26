@@ -990,3 +990,13 @@ input,select,textarea,button{touch-action:manipulation;}
   /* ── Spotify bar ── */
   #spotifyBar{left:0!important;right:0;bottom:calc(60px + env(safe-area-inset-bottom));}
 }
+
+/* Hub vertical layout on mobile */
+@media(max-width:768px){
+  .hub-layout{flex-direction:column;gap:14px;}
+  .profile-col{width:100%;flex-direction:row;align-items:center;gap:12px;}
+  .profile-card{width:100%;flex-direction:row;}
+  .hub-links-col{width:100%;}
+  .hub-right-col{width:100%;}
+  .hub-add-row{display:flex;}
+}
