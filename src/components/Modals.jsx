@@ -146,6 +146,13 @@ function CoinHistoryModal({ openId, onClose, coins, coinHistory }) {
 }
 
 // ── Add Achievement ──
+const PRESET_EMOJIS = [
+  '🏆','⭐','💰','🏠','🏃','🎯','📚','💪','🎓','🚗',
+  '✈️','🏅','🎮','💻','🎸','🏋️','🌟','💎','🔑','🧘',
+  '🎨','🏊','🚴','🌍','📱','🎤','🧠','💼','🏡','🎉',
+  '🤝','📈','🍎','⚽','🎵','🧗','🦋','🌱','🔥','👑',
+];
+
 function AddAchievementModal({ openId, onClose, onAdd }) {
   const [form, setForm] = useState({ name: '', desc: '', icon: '', coins: '' });
   function submit() {
@@ -159,7 +166,25 @@ function AddAchievementModal({ openId, onClose, onAdd }) {
       <h3>New Achievement</h3>
       <div className="fg"><label>Title</label><input type="text" placeholder="e.g. Save £10,000" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
       <div className="fg"><label>Description</label><input type="text" placeholder="e.g. Build emergency fund" value={form.desc} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))} /></div>
-      <div className="fg"><label>Icon (emoji)</label><input type="text" placeholder="🏆" maxLength={2} value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Icon</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '8px' }}>
+          {PRESET_EMOJIS.map(e => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => setForm(f => ({ ...f, icon: e }))}
+              style={{
+                fontSize: '18px', padding: '4px', borderRadius: '7px', cursor: 'pointer', lineHeight: 1,
+                border: form.icon === e ? '2px solid var(--em)' : '2px solid transparent',
+                background: form.icon === e ? 'rgba(42,158,98,0.15)' : 'rgba(0,0,0,0.06)',
+                transition: 'all .12s',
+              }}
+            >{e}</button>
+          ))}
+        </div>
+        <input type="text" placeholder="Or type a custom emoji…" maxLength={2} value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
+      </div>
       <div className="fg"><label>⬡ Coin Reward on Completion</label><input type="number" placeholder="e.g. 50" min="0" value={form.coins} onChange={e => setForm(f => ({ ...f, coins: e.target.value }))} /></div>
       <div className="modal-actions">
         <button className="btn btn-ghost" onClick={() => onClose('addAchievementModal')}>Cancel</button>
@@ -419,6 +444,107 @@ function AddHolidayModal({ openId, onClose, onAdd }) {
   );
 }
 
+// ── Add Habit ──
+function AddHabitModal({ openId, onClose, onAdd }) {
+  const emptyMs = () => ({ _id: 'ms' + Date.now() + Math.random(), amount: '1', unit: 'weeks', coins: '' });
+  const [form, setForm] = useState({ name: '', color: '#1a7a4a', endless: false, milestones: [emptyMs()] });
+
+  function toDuration(amount, unit) {
+    const mul = { hours: 3600000, days: 86400000, weeks: 604800000, months: 2592000000 };
+    return parseInt(amount) * (mul[unit] || mul.days);
+  }
+  function msLabel(amount, unit) {
+    const n = parseInt(amount);
+    const s = { hours: 'hour', days: 'day', weeks: 'week', months: 'month' };
+    return `${n} ${n === 1 ? s[unit] : unit}`;
+  }
+  function updateMs(_id, key, val) {
+    setForm(f => ({ ...f, milestones: f.milestones.map(m => m._id === _id ? { ...m, [key]: val } : m) }));
+  }
+  function removeMs(_id) {
+    setForm(f => ({ ...f, milestones: f.milestones.filter(m => m._id !== _id) }));
+  }
+
+  function submit() {
+    if (!form.name.trim()) return;
+    const milestones = form.milestones
+      .filter(m => m.amount && m.coins && parseInt(m.coins) > 0)
+      .map((m, i) => ({
+        id: 'm' + Date.now() + i,
+        duration: toDuration(parseInt(m.amount), m.unit),
+        coins: parseInt(m.coins),
+        label: msLabel(parseInt(m.amount), m.unit),
+        awarded: false,
+      }))
+      .sort((a, b) => a.duration - b.duration);
+    onAdd({
+      id: 'hb' + Date.now(),
+      name: form.name.trim(),
+      color: form.color,
+      endless: form.endless,
+      startTime: Date.now(),
+      relapseCount: 0,
+      milestones,
+    });
+    setForm({ name: '', color: '#1a7a4a', endless: false, milestones: [emptyMs()] });
+    onClose('addHabitModal');
+  }
+
+  return (
+    <Modal id="addHabitModal" openId={openId} onClose={onClose} style={{ maxWidth: '460px' }}>
+      <h3>New Habit</h3>
+      <div className="fg"><label>Habit Name</label><input type="text" placeholder="e.g. Alcohol, Fast Food, Smoking..." value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+      <div className="fg"><label>Colour</label><input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} /></div>
+
+      <div style={{ borderTop: '1px solid var(--border-lt)', margin: '14px 0' }}></div>
+      <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--em-mid)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>⬡ Reward Milestones</div>
+
+      {form.milestones.map((m, i) => (
+        <div key={m._id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', marginBottom: '10px' }}>
+          <div className="fg" style={{ flex: '0 0 54px', marginBottom: 0 }}>
+            {i === 0 && <label style={{ fontSize: '9px' }}>After</label>}
+            <input type="number" min="1" value={m.amount} onChange={e => updateMs(m._id, 'amount', e.target.value)} style={{ textAlign: 'center' }} />
+          </div>
+          <div className="fg" style={{ flex: 1, marginBottom: 0 }}>
+            {i === 0 && <label style={{ fontSize: '9px' }}>Unit</label>}
+            <select value={m.unit} onChange={e => updateMs(m._id, 'unit', e.target.value)}>
+              <option value="hours">Hours</option>
+              <option value="days">Days</option>
+              <option value="weeks">Weeks</option>
+              <option value="months">Months</option>
+            </select>
+          </div>
+          <div className="fg" style={{ flex: '0 0 72px', marginBottom: 0 }}>
+            {i === 0 && <label style={{ fontSize: '9px' }}>⬡ Coins</label>}
+            <input type="number" min="1" placeholder="e.g. 20" value={m.coins} onChange={e => updateMs(m._id, 'coins', e.target.value)} />
+          </div>
+          <button
+            onClick={() => removeMs(m._id)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', padding: '8px 4px', flexShrink: 0, lineHeight: 1, marginBottom: '1px' }}
+          >✕</button>
+        </div>
+      ))}
+      <button className="btn btn-ghost btn-sm" onClick={() => setForm(f => ({ ...f, milestones: [...f.milestones, emptyMs()] }))} style={{ marginBottom: '14px', fontSize: '12px' }}>
+        + Add Milestone
+      </button>
+
+      <div style={{ borderTop: '1px solid var(--border-lt)', margin: '4px 0 14px' }}></div>
+      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+        <input type="checkbox" checked={form.endless} onChange={e => setForm(f => ({ ...f, endless: e.target.checked }))} style={{ marginTop: '3px', accentColor: 'var(--em)', flexShrink: 0 }} />
+        <div>
+          <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text)' }}>∞ Endless</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Track this habit forever — the counter never ends, even after all milestones are earned</div>
+        </div>
+      </label>
+
+      <div className="modal-actions" style={{ marginTop: '18px' }}>
+        <button className="btn btn-ghost" onClick={() => onClose('addHabitModal')}>Cancel</button>
+        <button className="btn btn-primary" onClick={submit}>Start Tracking</button>
+      </div>
+    </Modal>
+  );
+}
+
 // ── Main Modals container ──
 export default function Modals({ openModal, S, update, onClose, onOpen, onShowCoinToast }) {
   function handleAddLink(link) {
@@ -455,6 +581,9 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
   function handleAddHoliday(holiday) {
     update(prev => ({ ...prev, holidays: [...(prev.holidays || []), holiday] }));
   }
+  function handleAddHabit(habit) {
+    update(prev => ({ ...prev, habits: [...(prev.habits || []), habit] }));
+  }
 
   // Determine effective openId — _multiLogOpen overrides
   const effectiveOpen = S._multiLogOpen ? 'multiLogModal' : openModal;
@@ -482,6 +611,7 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       <AddShopModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddShopItem} />
       <AddCategoryModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddCategory} />
       <AddHolidayModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddHoliday} />
+      <AddHabitModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddHabit} />
     </>
   );
 }

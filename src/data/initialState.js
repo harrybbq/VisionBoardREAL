@@ -36,4 +36,5 @@ export const DEFAULT_STATE = {
   ytWidgets: [],
   lastfm: { username: '', track: '', artist: '', album: '', artUrl: '', trackUrl: '', nowPlaying: false },
   ghCache: {},
+  habits: [],
 };

@@ -464,6 +464,93 @@ nav:hover .nav-tab-label{opacity:1;}
 .log-save-btn{margin-top:10px;padding:8px 20px;background:var(--em);border:none;border-radius:9px;color:#fff;font-family:var(--body);font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;}
 .log-save-btn:hover{background:var(--em-mid);transform:translateY(-1px);}
 
+/* ── TRACK PAGE — vision board background + dark contrast theme ── */
+#track.section{
+  background-image:
+    linear-gradient(rgba(4,10,7,0.52),rgba(4,10,7,0.52)),
+    url('/track-bg.jpg');
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+}
+/* Dark opaque cards so content reads clearly over the busy backdrop */
+#track .card{
+  background:rgba(7,16,11,0.86) !important;
+  border:1px solid rgba(255,255,255,0.13);
+  box-shadow:0 8px 32px rgba(0,0,0,0.55),0 1px 0 rgba(255,255,255,.06) inset;
+}
+/* Page title */
+#track .eyebrow{color:var(--em-light);}
+#track .sec-title{color:#e8f7f0;}
+/* Trackers panel */
+#track .trackers-panel h3{color:var(--em-light);}
+#track .tracker-item{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);}
+#track .tracker-item:hover{background:rgba(255,255,255,.14);border-color:rgba(77,196,133,.45);}
+#track .tracker-name{color:#f0f7f4;}
+#track .tracker-type{color:rgba(255,255,255,.45);}
+/* Calendar header */
+#track .cal-month-title{color:#e8f7f0;}
+#track .cal-nav-btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8);}
+#track .cal-nav-btn:hover{border-color:var(--em-light);color:var(--em-light);background:rgba(26,122,74,.22);}
+#track .multi-toggle-btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8);}
+#track .multi-toggle-btn:hover:not(.active){background:rgba(255,255,255,.18);border-color:rgba(77,196,133,.45);color:#fff;}
+/* Calendar grid — smaller cells */
+#track .cal-days-header{gap:2px;margin-bottom:2px;}
+#track .cal-day-label{font-size:8px;color:rgba(255,255,255,.45);padding:2px 0;}
+#track .cal-grid{gap:2px;}
+#track .cal-cell{
+  background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.1);
+  border-radius:5px;
+  min-height:0;
+}
+#track .cal-cell:hover{background:rgba(255,255,255,.15);border-color:rgba(77,196,133,.5);}
+#track .cal-cell.empty{background:transparent;border-color:transparent;}
+#track .cal-cell.today{border-color:var(--em-light);border-width:2px;}
+#track .cal-cell.selected{background:rgba(26,122,74,.28);border-color:var(--em-light);box-shadow:0 0 0 2px rgba(77,196,133,.25);}
+#track .cal-date{font-size:9px;color:rgba(255,255,255,.5);}
+#track .cal-cell.has-logs .cal-date{color:var(--em-light);font-weight:700;}
+#track .cal-dot{width:3px;height:3px;}
+#track .cal-legend{border-top-color:rgba(255,255,255,.1);}
+#track .legend-item{color:rgba(255,255,255,.55);}
+/* Log panel */
+#track .log-panel{background:rgba(7,20,13,0.92);border-color:rgba(77,196,133,.28);}
+#track .log-panel-header{color:var(--em-light);}
+#track .log-entry-label{color:rgba(255,255,255,.65);}
+#track .log-number-input{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.2);color:#fff;}
+#track .log-number-input:focus{border-color:var(--em-light);}
+/* Smaller calendar card (targets the calendar card, not the trackers panel) */
+#track .card:not(.trackers-panel){padding:16px !important;}
+
+/* ── HABITS ── */
+.habits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,240px));gap:20px;}
+.habit-card{background:var(--surface);border:1px solid var(--border-lt);border-radius:18px;padding:18px 16px 16px;display:flex;flex-direction:column;align-items:stretch;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,.07),0 1px 0 rgba(255,255,255,.9) inset;backdrop-filter:blur(12px);}
+.habit-card-top{display:flex;align-items:center;justify-content:space-between;}
+.habit-name{font-family:var(--display);font-size:15px;font-weight:700;color:var(--text);line-height:1.2;}
+.habit-del-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;line-height:1;transition:color .15s;flex-shrink:0;}
+.habit-del-btn:hover{color:#c84040;}
+.habit-endless-badge{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--em);background:var(--em-ghost);border:1px solid var(--em-pale);padding:1px 6px;border-radius:100px;flex-shrink:0;line-height:1.4;}
+/* Bar area: track on left, milestone labels on right */
+.habit-bar-area{position:relative;height:200px;}
+.habit-bar-track{position:absolute;left:0;top:0;bottom:0;width:38px;background:rgba(0,0,0,.07);border-radius:19px;overflow:hidden;}
+.habit-bar-fill{position:absolute;bottom:0;left:0;right:0;border-radius:19px;transition:height .9s ease;}
+/* Milestone marker row — positioned bottom:X% from bar base */
+.habit-ms{position:absolute;left:0;right:0;display:flex;align-items:center;transform:translateY(50%);pointer-events:none;}
+.habit-ms::before{content:'';display:block;flex-shrink:0;width:40px;border-top:1.5px dashed rgba(200,151,10,.75);}
+.habit-ms-label{margin-left:8px;font-family:var(--mono);font-size:9px;color:var(--gold);white-space:nowrap;letter-spacing:.3px;font-weight:600;}
+.habit-ms-coins{margin-left:4px;font-family:var(--mono);font-size:9px;color:var(--gold-lt);white-space:nowrap;}
+.habit-ms.awarded::before{border-color:rgba(200,151,10,.3);}
+.habit-ms.awarded .habit-ms-label,.habit-ms.awarded .habit-ms-coins{opacity:.4;text-decoration:line-through;}
+/* Footer info */
+.habit-elapsed{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text-mid);text-align:center;}
+.habit-relapse-count{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-align:center;margin-top:-4px;}
+.habit-relapse-btn{padding:8px 0;border-radius:9px;border:1px solid var(--border);background:none;color:var(--text-muted);font-family:var(--body);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;width:100%;}
+.habit-relapse-btn:hover{border-color:#c84040;color:#c84040;background:rgba(200,64,64,.06);}
+/* Empty state */
+.habits-empty{text-align:center;padding:80px 20px;color:var(--text-muted);font-family:var(--mono);font-size:13px;}
+.habits-empty-icon{font-size:44px;margin-bottom:16px;}
+@media(max-width:900px){.habits-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}}
+
 /* ── SHOPPING LIST ── */
 .shop-layout{max-width:1000px;margin:0 auto;} .shop-layout .eyebrow{color:rgba(255,255,255,.6);} .shop-layout .sec-title{color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.35);}
 .shop-toolbar{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;}
