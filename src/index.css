@@ -999,4 +999,30 @@ input,select,textarea,button{touch-action:manipulation;}
   .hub-links-col{width:100%;}
   .hub-right-col{width:100%;}
   .hub-add-row{display:flex;}
+  /* Force widget canvas to stack vertically — disable free-drag on touch */
+  #widgetCanvas{
+    position:static!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:14px!important;
+    min-height:unset!important;
+    height:auto!important;
+  }
+  #widgetCanvas .widget-wrapper{
+    position:static!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+  .widget-drag-handle{display:none!important;}
+}
+
+/* Settings — scheme picker grid */
+.scheme-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+@media(max-width:480px){
+  .scheme-grid{grid-template-columns:repeat(2,1fr);}
 }

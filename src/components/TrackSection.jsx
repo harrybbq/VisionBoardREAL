@@ -103,6 +103,16 @@ function CalendarView({ S, update, onShowCoinToast }) {
     update(prev => ({ ...prev, multiSelectMode: false, multiSelectedDays: [], selectedLogDate: null }));
   }
 
+  function clearSelectedDays() {
+    if (!multiSelectedDays.length) { alert('Select at least one day.'); return; }
+    if (!window.confirm(`Remove all markers from ${multiSelectedDays.length} selected day${multiSelectedDays.length !== 1 ? 's' : ''}?`)) return;
+    update(prev => {
+      const newLogs = { ...prev.logs };
+      (prev.multiSelectedDays || []).forEach(key => { delete newLogs[key]; });
+      return { ...prev, logs: newLogs, multiSelectMode: false, multiSelectedDays: [] };
+    });
+  }
+
   function handleDayClick(key) {
     if (multiSelectMode) {
       update(prev => ({
@@ -223,6 +233,7 @@ function CalendarView({ S, update, onShowCoinToast }) {
                 if (!multiSelectedDays.length) { alert('Select at least one day.'); return; }
                 update(prev => ({ ...prev, _multiLogOpen: true }));
               }}>Apply to Selected</button>
+              <button className="ms-btn" onClick={clearSelectedDays} style={{ background: 'rgba(220,38,38,0.12)', color: '#f87171', border: '1px solid rgba(220,38,38,0.3)' }}>Clear Days</button>
               <button className="ms-btn ms-btn-cancel" onClick={cancelMultiSelect}>Cancel</button>
             </div>
           </div>

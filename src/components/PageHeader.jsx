@@ -5,6 +5,7 @@ const SECTION_LABELS = {
   shop: 'Shopping',
   holiday: 'Holiday',
   habits: 'Habits',
+  settings: 'Settings',
 };
 
 function getDynamicGreeting(name) {

@@ -12,6 +12,8 @@ import TrackSection from './components/TrackSection';
 import ShopSection from './components/ShopSection';
 import HolidaySection from './components/HolidaySection';
 import HabitsSection from './components/HabitsSection';
+import SettingsSection from './components/SettingsSection';
+import { SCHEMES, applyScheme } from './components/SettingsSection';
 import Modals from './components/Modals';
 import HubFooter from './components/HubFooter';
 import CoinToast from './components/CoinToast';
@@ -42,6 +44,15 @@ function Board({ userId, onSignOut }) {
   const [backgrounds, setBackgrounds] = useState(() => loadBgs());
   const bgInputRef = useRef(null);
   const coinToastTimer = useRef(null);
+
+  // Apply stored colour scheme once state loads
+  useEffect(() => {
+    if (S.colorScheme) {
+      const scheme = SCHEMES.find(s => s.id === S.colorScheme);
+      if (scheme) applyScheme(scheme);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [S.colorScheme]);
 
   function showCoinToast(msg, isEarn) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');
@@ -223,6 +234,11 @@ function Board({ userId, onSignOut }) {
         {activeSection === 'habits' && (
           <motion.div key="habits" {...pageMotion}>
             <HabitsSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+          </motion.div>
+        )}
+        {activeSection === 'settings' && (
+          <motion.div key="settings" {...pageMotion}>
+            <SettingsSection S={S} update={update} active={true} userId={userId} />
           </motion.div>
         )}
       </AnimatePresence>

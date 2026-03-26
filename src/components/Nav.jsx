@@ -6,6 +6,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
     { id: 'shop', icon: '◈', label: 'Shopping' },
     { id: 'holiday', icon: '✈', label: 'Holiday' },
     { id: 'habits', icon: '⊘', label: 'Habits' },
+    { id: 'settings', icon: '⚙', label: 'Settings' },
   ];
 
   return (
