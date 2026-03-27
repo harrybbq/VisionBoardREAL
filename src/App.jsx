@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from './lib/supabase';
 import { useVisionBoardState, hasLocalStorageData, clearLocalStorageData } from './hooks/useVisionBoardState';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 import AuthScreen from './components/AuthScreen';
 import Nav from './components/Nav';
 import PageHeader from './components/PageHeader';
-import SpotifyBar from './components/SpotifyBar';
 import HubSection from './components/HubSection';
 import AchievementsSection from './components/AchievementsSection';
 import TrackSection from './components/TrackSection';
@@ -34,7 +34,7 @@ function saveBgs(bgs) {
   localStorage.setItem('vb4_bg', JSON.stringify(bgs));
 }
 
-function Board({ userId, onSignOut }) {
+function Board({ userId, userEmail, onSignOut }) {
   const { S, update, loading, justMigrated, dismissMigrationBanner } = useVisionBoardState(userId);
   const [activeSection, setActiveSection] = useState('hub');
   const [openModal, setOpenModal] = useState(null);
@@ -107,21 +107,6 @@ function Board({ userId, onSignOut }) {
     saveBgs(bgs);
   }
 
-  // Nav hover: shift spotify bar
-  useEffect(() => {
-    const nav = document.querySelector('nav');
-    const bar = document.getElementById('spotifyBar');
-    if (!nav || !bar) return;
-    const onEnter = () => { bar.style.left = '200px'; };
-    const onLeave = () => { bar.style.left = '56px'; };
-    nav.addEventListener('mouseenter', onEnter);
-    nav.addEventListener('mouseleave', onLeave);
-    return () => {
-      nav.removeEventListener('mouseenter', onEnter);
-      nav.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
-
   // Escape key to cancel connect
   useEffect(() => {
     const handler = e => {
@@ -183,13 +168,6 @@ function Board({ userId, onSignOut }) {
       <div id="hub-overlay" className={activeSection === 'hub' && currentBg ? 'visible' : ''}></div>
       <div id="shop-overlay" className={activeSection === 'shop' && currentBg ? 'visible' : ''}></div>
 
-      {/* Spotify / Last.fm bar */}
-      <SpotifyBar
-        visible={activeSection === 'hub'}
-        username={S.lastfm?.username || ''}
-        onSetUsername={name => update(prev => ({ ...prev, lastfm: { ...prev.lastfm, username: name } }))}
-      />
-
       {/* Sidebar nav */}
       <Nav activeSection={activeSection} onNavigate={navigate} onSignOut={onSignOut} />
 
@@ -208,7 +186,7 @@ function Board({ userId, onSignOut }) {
       <AnimatePresence mode="wait">
         {activeSection === 'hub' && (
           <motion.div key="hub" {...pageMotion}>
-            <HubSection S={S} update={update} active={true} onOpenModal={handleOpenModal} />
+            <HubSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} />
           </motion.div>
         )}
         {activeSection === 'achievements' && (
@@ -251,6 +229,8 @@ function Board({ userId, onSignOut }) {
         onClose={handleCloseModal}
         onOpen={handleOpenModal}
         onShowCoinToast={showCoinToast}
+        userId={userId}
+        userEmail={userEmail}
       />
 
       <ConnectToast onCancel={handleCancelConnect} />
@@ -290,5 +270,9 @@ export default function App() {
   }
 
   if (!session) return <AuthScreen />;
-  return <Board userId={session.user.id} onSignOut={handleSignOut} />;
+  return (
+    <SubscriptionProvider userId={session.user.id}>
+      <Board userId={session.user.id} userEmail={session.user.email} onSignOut={handleSignOut} />
+    </SubscriptionProvider>
+  );
 }

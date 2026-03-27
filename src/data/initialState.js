@@ -1,9 +1,6 @@
 export const DEFAULT_STATE = {
   profile: { name: '', tagline: '', photo: null },
-  links: [
-    { id: 'linkedin', name: 'LinkedIn', url: 'https://www.linkedin.com/in/harry-morton-377880294/', icon: 'in', color: '#0077b5', notes: 'Professional profile' },
-    { id: 'github', name: 'GitHub', url: 'https://github.com/harrybbq', icon: '⌥', color: '#1a7a4a', notes: 'Code repositories', ghUser: 'harrybbq' },
-  ],
+  links: [],
   achievements: [
     { id: 'a1', name: 'Save £10,000', desc: 'Build emergency fund', icon: '💰', x: 40, y: 40, completed: false, coins: 100 },
     { id: 'a2', name: 'Buy a House', desc: 'Get on the property ladder', icon: '🏠', x: 370, y: 40, completed: false, locked: true, coins: 500 },

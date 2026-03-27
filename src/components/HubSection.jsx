@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { adjustColour, timeAgo } from '../utils/helpers';
+import AiCoachWidget from './AiCoachWidget';
 
 // ── GitHub helpers ──
 async function fetchGitHub(username, cache) {
@@ -87,7 +88,7 @@ function useWidgetDrag(canvasRef, S, update) {
 }
 
 // ── Profile Card ──
-function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets }) {
+function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings }) {
   return (
     <div className="profile-col">
       <div className="card profile-card">
@@ -126,12 +127,15 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
       <motion.button className="hub-action-btn sort-widgets" onClick={onSortWidgets}
         whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}>⊞ Sort</motion.button>
+      <motion.button className="hub-action-btn settings-mobile-btn" onClick={onNavigateSettings}
+        whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}>⚙ Settings</motion.button>
     </div>
   );
 }
 
 // ── Widget Canvas (imperative DOM approach) ──
-export default function HubSection({ S, update, active, onOpenModal }) {
+export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings }) {
   const canvasRef = useRef(null);
   const renderedRef = useRef(false);
   const makeDraggable = useWidgetDrag(canvasRef, S, update);
@@ -294,7 +298,9 @@ export default function HubSection({ S, update, active, onOpenModal }) {
           onUploadPhoto={handleUploadPhoto}
           onAddWidget={() => onOpenModal('addLinkModal')}
           onSortWidgets={handleSortWidgets}
+          onNavigateSettings={onNavigateSettings}
         />
+        <AiCoachWidget S={S} onOpenWaitlist={onOpenWaitlist} />
         </motion.div>
         <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
       </div>

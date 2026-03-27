@@ -6,7 +6,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
     { id: 'shop', icon: '◈', label: 'Shopping' },
     { id: 'holiday', icon: '✈', label: 'Holiday' },
     { id: 'habits', icon: '⊘', label: 'Habits' },
-    { id: 'settings', icon: '⚙', label: 'Settings' },
+    { id: 'settings', icon: '⚙', label: 'Settings', mobileHide: true },
   ];
 
   return (
@@ -21,7 +21,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
         {tabs.map(tab => (
           <button
             key={tab.id}
-            className={`nav-tab${activeSection === tab.id ? ' active' : ''}`}
+            className={`nav-tab${activeSection === tab.id ? ' active' : ''}${tab.mobileHide ? ' nav-tab-mobile-hide' : ''}`}
             onClick={() => onNavigate(tab.id)}
           >
             <div className="nav-tab-icon">{tab.icon}</div>

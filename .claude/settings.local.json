@@ -5,7 +5,27 @@
       "Bash(npm install:*)",
       "mcp__Claude_Preview__preview_start",
       "Bash(where npx:*)",
-      "Bash(C:/Users/Harry/source/repos/VisionBoard/node_modules/.bin/vite --version)"
+      "Bash(C:/Users/Harry/source/repos/VisionBoard/node_modules/.bin/vite --version)",
+      "Bash(npm run:*)",
+      "Bash(powershell -Command \":*)",
+      "Bash(powershell -Command \"$desktop = [Environment]::GetFolderPath\\(''Desktop''\\); $WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut\\(\"\"$desktop\\\\VisionBoard.lnk\"\"\\); $Shortcut.TargetPath = ''C:\\\\Users\\\\Harry\\\\source\\\\repos\\\\VisionBoard\\\\launch-visionboard.bat''; $Shortcut.WorkingDirectory = ''C:\\\\Users\\\\Harry\\\\source\\\\repos\\\\VisionBoard''; $Shortcut.WindowStyle = 7; $Shortcut.IconLocation = ''C:\\\\Windows\\\\System32\\\\imageres.dll,14''; $Shortcut.Description = ''Launch VisionBoard''; $Shortcut.Save\\(\\); Write-Host \"\"Shortcut saved to $desktop\\\\VisionBoard.lnk\"\"\")",
+      "Bash(powershell -File:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(grep -E \"\\\\.\\(html|json|js\\)$\")",
+      "Bash(grep -r \"manifest\\\\|serviceWorker\\\\|pwa\\\\|offline\" C:/Users/Harry/source/repos/VisionBoard/src --include=*.js --include=*.jsx)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :51414)",
+      "Bash(taskkill /PID 1520 /F)",
+      "Bash(cmd /c \"taskkill /PID 1520 /F\")",
+      "Bash(cmd /c \"taskkill /PID 1520 /F 2>&1 || echo FAILED\")",
+      "Bash(cmd /c \"netstat -ano | findstr :51414\")",
+      "Bash(cmd /c \"ipconfig | findstr /i IPv4\")",
+      "Bash(cmd /c ipconfig)",
+      "Bash(findstr /i \"IPv4\")",
+      "Bash(find /c/Users/Harry/source/repos/VisionBoard -name .env* -o -name supabase*)"
     ]
   }
 }

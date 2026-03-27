@@ -981,6 +981,16 @@ input,select,textarea,button{touch-action:manipulation;}
   .btn{min-height:44px;}
   .nav-tab{min-height:48px;}
 
+  /* ── Header title short on mobile ── */
+  .header-title-full { display: none; }
+  .header-title-short { display: inline; }
+
+  /* ── Hide Settings from bottom nav on mobile ── */
+  .nav-tab-mobile-hide { display: none !important; }
+
+  /* ── Show Settings button in profile card on mobile ── */
+  .settings-mobile-btn { display: flex !important; }
+
   /* ── Hub profile card ── */
   .profile-col{width:100%;}
 
@@ -1026,3 +1036,131 @@ input,select,textarea,button{touch-action:manipulation;}
 @media(max-width:480px){
   .scheme-grid{grid-template-columns:repeat(2,1fr);}
 }
+
+/* ── Header title: full on desktop, short on mobile ─────────────────────── */
+.header-title-short { display: none; }
+.header-title-full  { display: inline; }
+
+/* ── Settings button in profile card: mobile only ───────────────────────── */
+.settings-mobile-btn { display: none !important; }
+
+/* ── AI Coach Widget ─────────────────────────────────────────────────────── */
+.ai-coach-card{
+  position:relative;
+  overflow:hidden;
+  padding:16px 18px 18px;
+  margin-top:12px;
+  background:linear-gradient(145deg,rgba(42,158,98,.12) 0%,rgba(15,30,20,.55) 100%);
+  border:1px solid rgba(42,158,98,.25);
+  border-top:3px solid rgba(42,158,98,.45);
+}
+
+.ai-coach-header{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:10px;
+}
+
+.ai-coach-icon{
+  font-size:14px;
+  color:var(--em);
+  line-height:1;
+  opacity:.85;
+}
+
+.ai-coach-title{
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--text-muted);
+}
+
+.ai-coach-pro-badge{
+  margin-left:auto;
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--em);
+  background:rgba(42,158,98,.15);
+  border:1px solid rgba(42,158,98,.3);
+  border-radius:4px;
+  padding:2px 6px;
+}
+
+.ai-coach-insight-wrap{
+  position:relative;
+}
+
+.ai-coach-insight{
+  font-family:var(--sans);
+  font-size:13px;
+  line-height:1.65;
+  color:var(--text);
+  margin:0;
+}
+
+.ai-coach-hook{
+  /* unblurred hook words */
+}
+
+.ai-coach-blurred{
+  filter:blur(5px);
+  user-select:none;
+  pointer-events:none;
+  opacity:.8;
+}
+
+/* Full insight for pro users — no blur */
+.ai-coach-insight-full{
+  filter:none;
+  user-select:text;
+  pointer-events:auto;
+}
+
+/* Frosted glass overlay */
+.ai-coach-overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:16px;
+  backdrop-filter:blur(10px) saturate(1.3);
+  -webkit-backdrop-filter:blur(10px) saturate(1.3);
+  background:rgba(10,18,14,.55);
+  text-align:center;
+}
+
+.ai-coach-overlay-icon{
+  font-size:18px;
+  color:var(--em);
+  opacity:.7;
+  margin-bottom:2px;
+}
+
+.ai-coach-overlay-title{
+  font-family:var(--mono);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:1px;
+  color:var(--text);
+}
+
+.ai-coach-overlay-sub{
+  font-family:var(--sans);
+  font-size:11px;
+  color:var(--text-muted);
+  line-height:1.5;
+}
+
+.ai-coach-cta{
+  margin-top:6px;
+  font-size:12px;
+  padding:7px 18px;
+}
+
