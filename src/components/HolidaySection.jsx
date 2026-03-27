@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import SectionHelp from './SectionHelp';
 
 const STATUS_LABEL = { planning: 'Planning', booked: 'Booked', completed: 'Completed' };
 
@@ -20,7 +21,7 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             <div className="eyebrow">Adventures</div>
-            <div className="sec-title">Holiday Planner</div>
+            <div className="sec-title">Holiday Planner <SectionHelp text="Plan upcoming trips — add dates, flights, accommodation, budget, and a cover photo. Status badges track each trip from planning to completed." /></div>
           </motion.div>
           <motion.button className="btn btn-primary" onClick={() => onOpenModal('addHolidayModal')}
             whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
@@ -51,6 +52,7 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
                   transition={{ duration: 0.35, delay: index * 0.06, ease: 'easeOut' }}
                 >
                   <div className="holiday-card-hero">
+                    {h.imageUrl && <img src={h.imageUrl} alt={h.dest} onError={e => { e.target.style.display = 'none'; }} />}
                     <div className="holiday-card-hero-overlay"></div>
                     <div className="holiday-card-hero-info">
                       <div className="holiday-dest">{h.dest}</div>

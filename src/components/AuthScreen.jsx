@@ -40,7 +40,7 @@ export default function AuthScreen() {
   }
 
   return (
-    <div style={styles.overlay}>
+    <div style={styles.overlay} id="authOverlay">
       <div style={styles.card}>
         <div style={styles.logo}>
           <div style={styles.logoIcon}>V</div>
@@ -128,7 +128,9 @@ export default function AuthScreen() {
 const styles = {
   overlay: {
     position: 'fixed', inset: 0,
-    background: 'var(--bg, #0f1117)',
+    backgroundImage: 'url(/login-bg-desktop.jpg.jpg)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontFamily: 'var(--sans, DM Sans, sans-serif)',
   },

@@ -300,10 +300,10 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
           onSortWidgets={handleSortWidgets}
           onNavigateSettings={onNavigateSettings}
         />
-        <AiCoachWidget S={S} onOpenWaitlist={onOpenWaitlist} />
         </motion.div>
         <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
       </div>
+      <AiCoachWidget S={S} onOpenWaitlist={onOpenWaitlist} />
     </section>
   );
 }

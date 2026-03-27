@@ -408,11 +408,11 @@ function AddCategoryModal({ openId, onClose, onAdd }) {
 
 // ── Add Holiday ──
 function AddHolidayModal({ openId, onClose, onAdd }) {
-  const [form, setForm] = useState({ dest: '', from: '', to: '', accom: '', flight: '', budget: '', status: 'planning', notes: '' });
+  const [form, setForm] = useState({ dest: '', from: '', to: '', accom: '', flight: '', budget: '', status: 'planning', notes: '', imageUrl: '' });
   function submit() {
     if (!form.dest.trim()) return;
     onAdd({ id: 'h' + Date.now(), ...form });
-    setForm({ dest: '', from: '', to: '', accom: '', flight: '', budget: '', status: 'planning', notes: '' });
+    setForm({ dest: '', from: '', to: '', accom: '', flight: '', budget: '', status: 'planning', notes: '', imageUrl: '' });
     onClose('addHolidayModal');
   }
   return (
@@ -436,6 +436,7 @@ function AddHolidayModal({ openId, onClose, onAdd }) {
           </select>
         </div>
       </div>
+      <div className="fg"><label>Cover Image URL (optional)</label><input type="url" placeholder="https://… paste any photo URL" value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} /></div>
       <div className="fg"><label>Notes</label><input type="text" placeholder="Things to do, pack list, ideas..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
       <div className="modal-actions">
         <button className="btn btn-ghost" onClick={() => onClose('addHolidayModal')}>Cancel</button>

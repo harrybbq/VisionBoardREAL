@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { fireAchievement } from '../utils/confetti';
+import SectionHelp from './SectionHelp';
 
 function allParentsComplete(achievements, connections, targetId) {
   const parents = connections.filter(([, t]) => t === targetId).map(([f]) => f);
@@ -204,7 +205,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           transition={{ duration: 0.4, ease: 'easeOut' }}
         >
           <div className="eyebrow">Progress Map</div>
-          <div className="sec-title">Achievement Board</div>
+          <div className="sec-title">Achievement Board <SectionHelp text="Place goals on a canvas and draw connections between them to map your path. Complete a parent goal to unlock its children." /></div>
         </motion.div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>Drag · ✦ Connect · ★ Complete</span>

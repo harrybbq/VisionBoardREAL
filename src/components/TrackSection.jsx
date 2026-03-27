@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
 import { fireGoal } from '../utils/confetti';
+import SectionHelp from './SectionHelp';
 
 function getWeekProgress(logs, trackerId, weeklyTarget) {
   const dateStr = getTodayStr();
@@ -326,7 +327,7 @@ export default function TrackSection({ S, update, active, onOpenModal, onShowCoi
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <div className="eyebrow">Daily Habits</div>
-        <div className="sec-title">Track</div>
+        <div className="sec-title">Track <SectionHelp text="Log daily habits and numbers against weekly targets. Click any day on the calendar to log, or multi-select to batch-log multiple days at once." /></div>
       </motion.div>
       <div className="track-layout">
         <TrackersList

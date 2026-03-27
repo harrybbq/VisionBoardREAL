@@ -9,105 +9,83 @@ function generateInsight(S) {
   const habits = S.habits || [];
   const trackers = S.trackers || [];
 
-  // Pick the most contextually relevant insight
   if (completedAchs > 0 && completedAchs === totalAchs && totalAchs > 0) {
-    return `${name}, you've completed every achievement on your board — it's time to dream bigger and set new milestones that push you further.`;
+    return `${name}, you've completed every achievement — time to dream bigger and set new goals.`;
   }
   if (coins >= 200) {
-    return `${name}, your coin balance of ${coins} shows real consistency — each coin represents a habit kept or a goal hit. Keep the streak going.`;
+    return `${name}, your coin balance of ${coins} shows real consistency. Keep the streak going.`;
   }
   if (habits.length > 0) {
-    const h = habits[0];
-    const daysSince = Math.floor((Date.now() - h.startTime) / 86400000);
+    const daysSince = Math.floor((Date.now() - habits[0].startTime) / 86400000);
     if (daysSince >= 7) {
-      return `${name}, ${daysSince} days into your "${h.name}" habit — the hardest part is over. Consistency this week will cement it for good.`;
+      return `${name}, ${daysSince} days into "${habits[0].name}" — the hardest part is behind you.`;
     }
-    return `${name}, you've started tracking "${h.name}" — the first week defines the pattern. Show up every day this week.`;
+    return `${name}, you've started "${habits[0].name}" — show up every day this week.`;
   }
   if (completedAchs > 0) {
-    return `${name}, ${completedAchs} of ${totalAchs} achievements complete. The next one won't complete itself — pick one and take a step today.`;
+    return `${name}, ${completedAchs} of ${totalAchs} achievements done. Pick one and take a step today.`;
   }
   if (trackers.length > 0) {
-    const t = trackers[0];
-    return `${name}, you're tracking "${t.name}" — data without action is just numbers. What's one thing you can do today to move the needle?`;
+    return `${name}, you're tracking "${trackers[0].name}" — what's one action you can take today?`;
   }
-  return `${name}, your board is set — now the work begins. Small daily actions compound into the life you're building here.`;
+  return `${name}, your board is set. Small daily actions compound into the life you're building here.`;
 }
 
-// ── Teaser overlay (pre-launch) ───────────────────────────────────────────
-function AiCoachTeaser({ insight, onJoinWaitlist }) {
+// ── Compact teaser banner (pre-launch) ───────────────────────────────────
+function AiCoachBanner({ insight, onJoinWaitlist }) {
   const words = insight.split(' ');
   const hook = words.slice(0, 5).join(' ');
   const rest = words.slice(5).join(' ');
 
   return (
-    <div className="card ai-coach-card">
-      <div className="ai-coach-header">
-        <span className="ai-coach-icon">✦</span>
-        <span className="ai-coach-title">AI Coach</span>
+    <div className="ai-coach-banner">
+      <span className="ai-coach-banner-icon">✦</span>
+      <div className="ai-coach-banner-body">
+        <span className="ai-coach-banner-label">AI Coach</span>
+        <span className="ai-coach-banner-insight">
+          {hook}
+          {rest && <span className="ai-coach-banner-blurred"> {rest}</span>}
+        </span>
       </div>
-
-      {/* Insight text — blurred except first 5 words */}
-      <div className="ai-coach-insight-wrap">
-        <p className="ai-coach-insight">
-          <span className="ai-coach-hook">{hook}</span>
-          {rest && <span className="ai-coach-blurred"> {rest}</span>}
-        </p>
-      </div>
-
-      {/* Frosted glass overlay */}
-      <div className="ai-coach-overlay">
-        <span className="ai-coach-overlay-icon">✦</span>
-        <div className="ai-coach-overlay-title">AI Coach — coming soon</div>
-        <div className="ai-coach-overlay-sub">Join the waitlist to be first to know</div>
-        <button className="btn btn-primary ai-coach-cta" onClick={onJoinWaitlist}>
-          Join Waitlist
-        </button>
-      </div>
+      <button className="btn btn-primary ai-coach-banner-btn" onClick={onJoinWaitlist}>
+        Join Waitlist
+      </button>
     </div>
   );
 }
 
-// ── Upgrade CTA (post-launch) ─────────────────────────────────────────────
-function AiCoachUpgradeCta({ insight, onUpgrade }) {
+// ── Compact upgrade CTA (post-launch) ────────────────────────────────────
+function AiCoachUpgradeBanner({ insight }) {
   const words = insight.split(' ');
   const hook = words.slice(0, 5).join(' ');
   const rest = words.slice(5).join(' ');
 
   return (
-    <div className="card ai-coach-card">
-      <div className="ai-coach-header">
-        <span className="ai-coach-icon">✦</span>
-        <span className="ai-coach-title">AI Coach</span>
+    <div className="ai-coach-banner">
+      <span className="ai-coach-banner-icon">✦</span>
+      <div className="ai-coach-banner-body">
+        <span className="ai-coach-banner-label">AI Coach</span>
+        <span className="ai-coach-banner-insight">
+          {hook}
+          {rest && <span className="ai-coach-banner-blurred"> {rest}</span>}
+        </span>
       </div>
-      <div className="ai-coach-insight-wrap">
-        <p className="ai-coach-insight">
-          <span className="ai-coach-hook">{hook}</span>
-          {rest && <span className="ai-coach-blurred"> {rest}</span>}
-        </p>
-      </div>
-      <div className="ai-coach-overlay">
-        <span className="ai-coach-overlay-icon">✦</span>
-        <div className="ai-coach-overlay-title">Upgrade to Pro</div>
-        <div className="ai-coach-overlay-sub">Unlock personalised AI coaching</div>
-        <button className="btn btn-primary ai-coach-cta" onClick={onUpgrade}>
-          Upgrade
-        </button>
-      </div>
+      <button className="btn btn-primary ai-coach-banner-btn">
+        Upgrade to Pro
+      </button>
     </div>
   );
 }
 
-// ── Full widget (Pro users) ───────────────────────────────────────────────
+// ── Full insight (Pro users) ──────────────────────────────────────────────
 function AiCoachFull({ insight }) {
   return (
-    <div className="card ai-coach-card ai-coach-full">
-      <div className="ai-coach-header">
-        <span className="ai-coach-icon">✦</span>
-        <span className="ai-coach-title">AI Coach</span>
-        <span className="ai-coach-pro-badge">Pro</span>
+    <div className="ai-coach-banner ai-coach-banner-pro">
+      <span className="ai-coach-banner-icon">✦</span>
+      <div className="ai-coach-banner-body">
+        <span className="ai-coach-banner-label">AI Coach <span className="ai-coach-pro-badge">Pro</span></span>
+        <span className="ai-coach-banner-insight-full">{insight}</span>
       </div>
-      <p className="ai-coach-insight ai-coach-insight-full">{insight}</p>
     </div>
   );
 }
@@ -118,8 +96,8 @@ export default function AiCoachWidget({ S, onOpenWaitlist }) {
 
   return (
     <ProGate
-      teaser={<AiCoachTeaser insight={insight} onJoinWaitlist={onOpenWaitlist} />}
-      upgradeCta={<AiCoachUpgradeCta insight={insight} onUpgrade={() => {}} />}
+      teaser={<AiCoachBanner insight={insight} onJoinWaitlist={onOpenWaitlist} />}
+      upgradeCta={<AiCoachUpgradeBanner insight={insight} />}
     >
       <AiCoachFull insight={insight} />
     </ProGate>

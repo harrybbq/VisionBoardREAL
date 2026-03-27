@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { firePurchase } from '../utils/confetti';
+import SectionHelp from './SectionHelp';
 
 const PRIORITY_LABEL = { high: '🔴 High', med: '🟡 Medium', low: '🟢 Low' };
 const PRIORITY_CLASS = { high: 'priority-high', med: 'priority-med', low: 'priority-low' };
@@ -214,7 +215,7 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             <div className="eyebrow">Wishlist</div>
-            <div className="sec-title">Shopping List</div>
+            <div className="sec-title">Shopping List <SectionHelp text="Build a wishlist with priorities and coin costs. Paste a product URL to auto-fill the name and price. Drag items between categories." /></div>
           </motion.div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <motion.button className="btn btn-ghost" onClick={() => onOpenModal('addCategoryModal')}

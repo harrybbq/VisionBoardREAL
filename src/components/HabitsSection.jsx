@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { fireGoal } from '../utils/confetti';
+import SectionHelp from './SectionHelp';
 
 function formatElapsed(ms) {
   if (ms < 0) ms = 0;
@@ -148,7 +149,7 @@ export default function HabitsSection({ S, update, active, onOpenModal, onShowCo
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <div className="eyebrow">Break the Cycle</div>
-        <div className="sec-title">Habits</div>
+        <div className="sec-title">Habits <SectionHelp text="Track long-term habits with a live streak timer. Set milestones at intervals (e.g. 1 week, 1 month) and earn coin rewards when you hit them." /></div>
       </motion.div>
 
       <div style={{ marginBottom: '28px' }}>
