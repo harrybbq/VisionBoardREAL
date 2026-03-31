@@ -108,24 +108,23 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
         }
       });
 
-      // Drag within board canvas
+      // Drag within board canvas (mouse + touch)
       let dragging = false, moved = false, sx, sy, ox, oy;
-      node.addEventListener('mousedown', e => {
-        if (e.target.tagName === 'BUTTON') return;
+
+      function startDrag(clientX, clientY) {
         dragging = true; moved = false;
-        sx = e.clientX; sy = e.clientY; ox = ach.x; oy = ach.y;
-        e.preventDefault();
-      });
-      document.addEventListener('mousemove', e => {
+        sx = clientX; sy = clientY; ox = ach.x; oy = ach.y;
+      }
+      function moveDrag(clientX, clientY) {
         if (!dragging) return;
-        const dx = e.clientX - sx, dy = e.clientY - sy;
+        const dx = clientX - sx, dy = clientY - sy;
         if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
         moved = true;
         ach.x = Math.max(0, ox + dx); ach.y = Math.max(0, oy + dy);
         node.style.left = ach.x + 'px'; node.style.top = ach.y + 'px';
         redrawSvg(S.achievements, S.connections);
-      });
-      document.addEventListener('mouseup', () => {
+      }
+      function endDrag() {
         if (!dragging) return;
         dragging = false;
         if (moved) {
@@ -135,7 +134,28 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           }));
         }
         moved = false;
+      }
+
+      node.addEventListener('mousedown', e => {
+        if (e.target.tagName === 'BUTTON') return;
+        startDrag(e.clientX, e.clientY);
+        e.preventDefault();
       });
+      document.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+      document.addEventListener('mouseup', endDrag);
+
+      // Touch events mirror mouse events — pinch-to-zoom not implemented (too risky)
+      node.addEventListener('touchstart', e => {
+        if (e.target.tagName === 'BUTTON') return;
+        const t = e.touches[0];
+        startDrag(t.clientX, t.clientY);
+      }, { passive: true });
+      node.addEventListener('touchmove', e => {
+        const t = e.touches[0];
+        moveDrag(t.clientX, t.clientY);
+        if (moved) e.preventDefault();
+      }, { passive: false });
+      node.addEventListener('touchend', endDrag);
 
       inner.appendChild(node);
     });

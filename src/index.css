@@ -1483,3 +1483,129 @@ body{font-size:var(--text-base);line-height:var(--lh-body);}
   .profile-name-input{font-size:15px !important;}
   .profile-tagline-input{font-size:13px !important;}
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SECTION 4 — MOBILE LAYOUT OVERHAUL
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Modal → Bottom sheet on mobile ── */
+@media(max-width:640px){
+  .modal-overlay{
+    align-items:flex-end;
+  }
+  .modal{
+    width:100%;
+    max-width:100%;
+    border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+    padding:8px var(--space-4) var(--space-6);
+    padding-bottom:calc(var(--space-6) + env(safe-area-inset-bottom));
+    max-height:90dvh;
+    overflow-y:auto;
+    /* Spring slide-up */
+    transform:translateY(0);
+    animation:sheet-up 320ms cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .modal::before{
+    content:'';
+    display:block;
+    width:32px;height:4px;
+    background:var(--border);
+    border-radius:var(--radius-full);
+    margin:0 auto var(--space-3);
+  }
+}
+@keyframes sheet-up{
+  from{transform:translateY(100%);}
+  to{transform:translateY(0);}
+}
+
+/* ── Hub: horizontal profile card on mobile ── */
+@media(max-width:640px){
+  .profile-card{
+    flex-direction:row;
+    align-items:center;
+    padding:var(--space-3);
+    gap:var(--space-3);
+  }
+  .profile-photo-wrap{
+    width:64px;height:64px;
+    border-radius:var(--radius-md);
+    flex-shrink:0;
+  }
+  .profile-photo{width:64px;height:64px;}
+  .profile-photo-placeholder{width:64px;height:64px;}
+  .profile-info-area{
+    flex:1;
+    padding:0;
+    border-top:none;
+    gap:var(--space-1);
+  }
+  .profile-name-input{font-size:var(--text-md) !important;font-weight:700;}
+  .profile-tagline-input{font-size:var(--text-sm) !important;}
+}
+
+/* ── Track: tracker chips row on mobile (horizontal scroll) ── */
+@media(max-width:640px){
+  .track-layout{
+    flex-direction:column;
+    gap:var(--space-4);
+  }
+  .trackers-panel{
+    overflow-x:auto;
+    padding:var(--space-3);
+  }
+  #trackersList{
+    display:flex;
+    flex-direction:row;
+    gap:var(--space-2);
+    overflow-x:auto;
+    padding-bottom:var(--space-2);
+    scrollbar-width:none;
+  }
+  #trackersList::-webkit-scrollbar{display:none;}
+  .tracker-item{
+    min-width:130px;
+    flex-shrink:0;
+    border-radius:var(--radius-md);
+    padding:var(--space-2) var(--space-3);
+    background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.18);
+  }
+}
+
+/* ── Quick log: ensure horizontal scroll on very small screens ── */
+@media(max-width:640px){
+  .quick-log-cards{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    gap:var(--space-2);
+    padding-bottom:var(--space-2);
+  }
+  .quick-log-card{
+    min-width:100px;
+    flex-shrink:0;
+  }
+}
+
+/* ── Hub footer: compact on mobile ── */
+@media(max-width:640px){
+  .hub-footer{
+    left:0 !important;
+    right:0;
+    padding-left:var(--space-4);
+    padding-right:var(--space-4);
+  }
+  .year-countdown{gap:var(--space-2);}
+  .yc-val{font-size:var(--text-lg);}
+}
+
+/* ── Achievement canvas: full-width scroll on mobile ── */
+@media(max-width:640px){
+  #achievementsBoardOuter{
+    overflow-x:auto;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    max-height:calc(100dvh - 180px);
+  }
+}
