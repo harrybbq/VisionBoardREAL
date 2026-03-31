@@ -63,6 +63,7 @@ function Board({ userId, userEmail, onSignOut }) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');
     // 30-day streak toast stays 4 s; default 2.6 s
     const ms = duration ?? (msg.includes('30 day streak') ? 4000 : 2600);
+    if (isEarn) navigator.vibrate?.([10, 30, 10]);
     setCoinToast({ message: msg, type, visible: true });
     clearTimeout(coinToastTimer.current);
     coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), ms);

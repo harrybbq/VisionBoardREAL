@@ -72,12 +72,14 @@ function TrackerCard({ tracker, value, streak, onChange }) {
   }
 
   function handleBoolToggle() {
+    navigator.vibrate?.(8);
     onChange(tracker.id, !value);
     flashSaved();
   }
 
   function handleStep(delta) {
     const next = Math.max(0, (typeof value === 'number' ? value : 0) + delta);
+    navigator.vibrate?.(4);
     onChange(tracker.id, next);
     flashSaved();
   }
@@ -107,7 +109,18 @@ function TrackerCard({ tracker, value, streak, onChange }) {
           whileTap={{ scale: 0.88 }}
           transition={{ type: 'spring', stiffness: 500, damping: 18 }}
         >
-          {checked ? '✓' : '✗'}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={checked ? 'on' : 'off'}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ duration: 0.24, times: [0, 0.6, 1], ease: 'easeOut' }}
+              style={{ display: 'inline-block' }}
+            >
+              {checked ? '✓' : '✗'}
+            </motion.span>
+          </AnimatePresence>
         </motion.button>
       ) : (
         <div className="quick-log-stepper">

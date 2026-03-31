@@ -27,6 +27,18 @@ function getDynamicGreeting(name) {
 
 export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg, onSignOut, onOpenPalette }) {
   const greeting = getDynamicGreeting(profileName);
+  const labelRef = useRef(null);
+  const prevSection = useRef(activeSection);
+
+  useEffect(() => {
+    if (prevSection.current === activeSection) return;
+    prevSection.current = activeSection;
+    const el = labelRef.current;
+    if (!el) return;
+    el.classList.add('fade-out');
+    const t = setTimeout(() => el.classList.remove('fade-out'), 220);
+    return () => clearTimeout(t);
+  }, [activeSection]);
 
   return (
     <div id="pageHeader">
@@ -37,8 +49,8 @@ export default function PageHeader({ activeSection, coins, onOpenCoinHistory, pr
       <span id="pageHeader-sub">// my space</span>
 
       {activeSection === 'hub'
-        ? <span id="pageHeader-section" key="greeting" style={{ fontSize: '13px', fontStyle: 'italic', opacity: 0.9 }}>{greeting}</span>
-        : <span id="pageHeader-section" key="section">{SECTION_LABELS[activeSection] || ''}</span>
+        ? <span ref={labelRef} id="pageHeader-section" key="greeting" style={{ fontSize: '13px', fontStyle: 'italic', opacity: 0.9 }}>{greeting}</span>
+        : <span ref={labelRef} id="pageHeader-section" key="section">{SECTION_LABELS[activeSection] || ''}</span>
       }
 
       {/* Push everything right */}

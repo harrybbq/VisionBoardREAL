@@ -22,7 +22,12 @@ function TrackersList({ trackers, logs, streaks, onDelete, onOpenModal }) {
       </div>
       <div id="trackersList">
         {!trackers.length && (
-          <div style={{ color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: '11px', textAlign: 'center', padding: '14px 0' }}>No trackers yet</div>
+          <div className="section-empty">
+            <div className="section-empty-icon">📊</div>
+            <div className="section-empty-title">No trackers yet</div>
+            <div className="section-empty-body">Track habits, workouts, water — anything you want to build consistency around.</div>
+            <button className="btn btn-primary btn-sm section-empty-cta" onClick={() => onOpenModal('addTrackerModal')}>Add first tracker</button>
+          </div>
         )}
         {trackers.map((t, index) => {
           let challengeHtml = null;
