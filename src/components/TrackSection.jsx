@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
-import { fireGoal } from '../utils/confetti';
+import { fireGoal, fireStreak7, fireStreak30 } from '../utils/confetti';
+import { recalcStreaks } from '../utils/streaks';
 import SectionHelp from './SectionHelp';
 
 function getWeekProgress(logs, trackerId, weeklyTarget) {
@@ -10,7 +11,7 @@ function getWeekProgress(logs, trackerId, weeklyTarget) {
   return { count, target: weeklyTarget };
 }
 
-function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
+function TrackersList({ trackers, logs, streaks, onDelete, onOpenModal }) {
   return (
     <div className="card trackers-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
@@ -69,6 +70,22 @@ function TrackersList({ trackers, logs, onDelete, onOpenModal }) {
                   >✕</button>
                 </div>
                 {challengeHtml}
+                {t.type === 'boolean' && (() => {
+                  const s = streaks?.[t.id];
+                  if (!s || !s.current) return null;
+                  return (
+                    <div style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--gold)', fontWeight: 700 }}>
+                        🔥 {s.current} day streak
+                      </span>
+                      {s.best > s.current && (
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--text-muted)' }}>
+                          Best: {s.best}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           );
@@ -173,7 +190,11 @@ function CalendarView({ S, update, onShowCoinToast }) {
 
       let next = { ...prev, logs: newLogs };
 
-      // 2. Check every weekly challenge against the freshly updated logs
+      // 2. Recalculate streaks
+      const newStreaks = recalcStreaks(newLogs, prev.trackers || [], prev.streaks || {});
+      next = { ...next, streaks: newStreaks };
+
+      // 3. Check every weekly challenge against the freshly updated logs
       trackers.forEach(t => {
         if (!t.weeklyTarget || !t.weeklyCoins) return;
         const weekKey = getWeekKey(key);
@@ -191,6 +212,22 @@ function CalendarView({ S, update, onShowCoinToast }) {
           next = { ...next, [awardKey]: true, coins, coinHistory };
         }
       });
+
+      // 4. Streak milestones (only for today's log)
+      const today = getTodayStr();
+      if (key === today) {
+        trackers.forEach(t => {
+          if (t.type !== 'boolean') return;
+          const updatedStreak = newStreaks[t.id]?.current;
+          if (updatedStreak === 7) {
+            fireStreak7();
+            onShowCoinToast(`🔥 7 day streak on ${t.name}!`, true);
+          } else if (updatedStreak === 30) {
+            fireStreak30();
+            onShowCoinToast(`🔥 30 day streak — incredible consistency!`, true);
+          }
+        });
+      }
 
       return next;
     });
@@ -333,6 +370,7 @@ export default function TrackSection({ S, update, active, onOpenModal, onShowCoi
         <TrackersList
           trackers={S.trackers}
           logs={S.logs}
+          streaks={S.streaks || {}}
           onDelete={id => update(prev => ({ ...prev, trackers: prev.trackers.filter(t => t.id !== id) }))}
           onOpenModal={onOpenModal}
         />
