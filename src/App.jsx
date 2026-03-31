@@ -59,11 +59,13 @@ function Board({ userId, userEmail, onSignOut }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.colorScheme]);
 
-  function showCoinToast(msg, isEarn) {
+  function showCoinToast(msg, isEarn, duration) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');
+    // 30-day streak toast stays 4 s; default 2.6 s
+    const ms = duration ?? (msg.includes('30 day streak') ? 4000 : 2600);
     setCoinToast({ message: msg, type, visible: true });
     clearTimeout(coinToastTimer.current);
-    coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), 2600);
+    coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), ms);
   }
 
   function navigate(id) { setActiveSection(id); }
