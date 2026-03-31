@@ -1231,3 +1231,12 @@ input,select,textarea,button{touch-action:manipulation;}
   transform:rotate(45deg);
 }
 
+
+/* ── COMMAND PALETTE (cmdk) ── */
+[cmdk-root]{width:100%;}
+[cmdk-group-heading]{padding:6px 14px 4px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);}
+[cmdk-item]{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;cursor:pointer;border-radius:9px;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.85);gap:10px;transition:background .1s;}
+[cmdk-item][data-selected]{background:rgba(42,158,98,.2);}
+[cmdk-item]:hover{background:rgba(255,255,255,.07);}
+[cmdk-empty]{padding:20px;text-align:center;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.35);}
+@media(max-width:768px){.header-search-hint{display:none;}}
