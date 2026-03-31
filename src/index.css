@@ -1338,3 +1338,148 @@ input,select,textarea,button{touch-action:manipulation;}
 [cmdk-item]:hover{background:rgba(255,255,255,.07);}
 [cmdk-empty]{padding:20px;text-align:center;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.35);}
 @media(max-width:768px){.header-search-hint{display:none;}}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SECTION 3 — TYPOGRAPHY OVERHAUL
+   Apply type scale vars; fix sub-13px text; improve contrast on image bgs
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Body default ── */
+body{font-size:var(--text-base);line-height:var(--lh-body);}
+
+/* ── Eyebrow labels ── */
+.eyebrow{font-size:var(--text-xs);letter-spacing:2.5px;}
+
+/* ── Buttons ── */
+.btn{font-size:var(--text-sm);}
+.btn-sm{font-size:12px;}
+
+/* ── Form labels (modal) ── */
+.fg label{font-size:11px;letter-spacing:1px;}
+
+/* ── Profile card inputs: too small, boost ── */
+.profile-name-input{font-size:14px !important;}
+.profile-tagline-input{font-size:12px !important;}
+.profile-photo-placeholder p{font-size:10px;}
+.profile-edit-overlay{font-size:11px;}
+
+/* ── Achievement cards ── */
+.ach-label{font-size:var(--text-xs);letter-spacing:.8px;}
+.ach-name{font-size:var(--text-sm);line-height:var(--lh-heading);}
+.ach-desc{font-size:12px;line-height:var(--lh-body);}
+.ach-btn{font-size:11px;}
+
+/* ── Tracker / Calendar labels ── */
+.tracker-name{font-size:var(--text-sm);}
+.tracker-type{font-size:11px;}
+.cal-day-label{font-size:var(--text-xs);}
+.cal-date{font-size:11px;}
+.legend-item{font-size:11px;}
+.log-panel-header{font-size:var(--text-base);}
+.log-entry-label{font-size:11px;}
+.log-save-btn{font-size:var(--text-sm);}
+#track .cal-day-label{font-size:var(--text-xs);}
+#track .cal-date{font-size:11px;}
+
+/* ── Habits ── */
+.habit-ms-label{font-size:var(--text-xs);}
+.habit-ms-coins{font-size:var(--text-xs);}
+.habit-relapse-count{font-size:11px;}
+.habit-elapsed{font-size:var(--text-base);}
+
+/* ── Shop ── */
+.shop-item-name{font-size:var(--text-base);}
+.shop-item-notes{font-size:var(--text-sm);}
+.shop-item-priority{font-size:var(--text-xs);letter-spacing:.3px;}
+.shop-link-btn{font-size:var(--text-sm);}
+.shop-bought-btn{font-size:12px;}
+.shop-category-label{font-size:11px;letter-spacing:1.5px;}
+.shop-category-count{font-size:11px;}
+.shop-summary-lbl{font-size:11px;}
+.shop-filter-btn{font-size:var(--text-sm);}
+
+/* ── Holiday cards — stronger text on image bg ── */
+.holiday-dest{
+  font-size:var(--text-lg);
+  line-height:var(--lh-heading);
+  text-shadow:0 2px 8px rgba(0,0,0,.65),0 1px 2px rgba(0,0,0,.5);
+}
+.holiday-dates{
+  font-size:12px;
+  color:rgba(255,255,255,.9);
+  text-shadow:0 1px 4px rgba(0,0,0,.55);
+}
+.holiday-row-label{font-size:11px;letter-spacing:.3px;}
+.holiday-row-value{font-size:var(--text-sm);}
+.holiday-status{font-size:var(--text-xs);letter-spacing:.3px;}
+.holiday-countdown{font-size:12px;text-shadow:0 1px 4px rgba(0,0,0,.55);}
+.holiday-countdown-today{font-size:var(--text-base);}
+
+/* ── Quick Log ── */
+.quick-log-date{font-size:var(--text-sm);}
+.quick-log-card-name{font-size:11px;}
+.step-num{font-size:var(--text-base);}
+.step-unit{font-size:var(--text-xs);}
+.quick-log-empty{font-size:var(--text-sm);}
+
+/* ── Streak badges (sub-13 is fine for badge, but boost to 10px) ── */
+.streak-flame-badge{font-size:10px;}
+.streak-broken-row{font-size:var(--text-sm);}
+
+/* ── Coin wallet ── */
+.cw-amount{font-size:var(--text-base);font-weight:700;}
+.cw-label{font-size:var(--text-xs);}
+.coin-hist-label{font-size:var(--text-sm);}
+.coin-hist-amount{font-size:var(--text-sm);}
+
+/* ── Hub footer (overlaid on dark bg, fine) ── */
+.hub-footer-label{font-size:11px;}
+.yc-val{font-size:var(--text-xl);}
+.yc-lbl{font-size:var(--text-xs);letter-spacing:1px;}
+.year-progress-pct{font-size:11px;}
+
+/* ── Notepad ── */
+.notepad-header-title{font-size:var(--text-base);}
+.notepad-date{font-size:11px;}
+.notepad-char-count{font-size:11px;}
+
+/* ── Nav labels ── */
+.nav-tab-label{font-size:var(--text-xs) !important;}
+
+/* ── Page header ── */
+#pageHeader-sub{font-size:var(--text-xs);letter-spacing:2px;}
+#pageHeader-section{font-size:11px;letter-spacing:1.5px;}
+
+/* ── Section help tooltip ── */
+.section-help-tooltip{font-size:var(--text-sm);line-height:var(--lh-body);}
+
+/* ── AI Coach banner ── */
+.ai-coach-banner-insight{font-size:var(--text-sm);}
+.ai-coach-banner-insight-full{font-size:var(--text-sm);}
+.ai-coach-banner-label{font-size:var(--text-xs);}
+
+/* ── GitHub widget ── */
+.gh-stat-val{font-size:var(--text-md);}
+.gh-stat-lbl{font-size:var(--text-xs);}
+.gh-repo-name{font-size:var(--text-sm);}
+.gh-repo-desc{font-size:12px;}
+.gh-repo-meta{font-size:var(--text-xs);}
+
+/* ── YouTube widget ── */
+.yt-video-title{font-size:var(--text-sm);}
+.yt-video-channel{font-size:var(--text-xs);}
+.yt-video-date{font-size:var(--text-xs);}
+
+/* ── Mobile minimum: nothing below 11px on screens ── */
+@media(max-width:640px){
+  /* Enforce readable minimums on very small screens */
+  .ach-label,.cal-day-label,.tracker-type,.holiday-row-label,
+  .streak-flame-badge,.step-unit,.yc-lbl,.habit-ms-label,
+  .habit-ms-coins,.nav-tab-label{
+    font-size:11px;
+  }
+  .holiday-dest{font-size:var(--text-md);}
+  .quick-log-card-name{font-size:var(--text-xs);}
+  .profile-name-input{font-size:15px !important;}
+  .profile-tagline-input{font-size:13px !important;}
+}
