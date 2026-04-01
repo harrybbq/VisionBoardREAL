@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getTodayStr, getWeekKey, countWeekLogs } from '../utils/helpers';
 import { recalcStreaks } from '../utils/streaks';
 import { fireGoal, fireStreak7, fireStreak30 } from '../utils/confetti';
+import { haptic } from '../hooks/useCapacitor';
 
 // ── Long-press hook for number steppers ──────────────────────────────────
 function useLongPress(callback, delay = 120) {
@@ -72,14 +73,14 @@ function TrackerCard({ tracker, value, streak, onChange }) {
   }
 
   function handleBoolToggle() {
-    navigator.vibrate?.(8);
+    haptic('MEDIUM');
     onChange(tracker.id, !value);
     flashSaved();
   }
 
   function handleStep(delta) {
     const next = Math.max(0, (typeof value === 'number' ? value : 0) + delta);
-    navigator.vibrate?.(4);
+    haptic('LIGHT');
     onChange(tracker.id, next);
     flashSaved();
   }

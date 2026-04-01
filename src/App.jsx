@@ -24,6 +24,7 @@ import ShortcutsModal from './components/ShortcutsModal';
 import LegalPage from './components/LegalPage';
 import CookieBanner from './components/CookieBanner';
 import InstallPrompt from './components/InstallPrompt';
+import { useCapacitor, haptic } from './hooks/useCapacitor';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -51,6 +52,12 @@ function Board({ userId, userEmail, onSignOut }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [legalPage, setLegalPage] = useState(null);
+
+  // Native plugins (no-op on web)
+  useCapacitor({
+    onPushToken: token => console.info('[Push] Device token:', token),
+    onPushMessage: msg => console.info('[Push] Message:', msg),
+  });
   const bgInputRef = useRef(null);
   const coinToastTimer = useRef(null);
 
@@ -67,7 +74,7 @@ function Board({ userId, userEmail, onSignOut }) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');
     // 30-day streak toast stays 4 s; default 2.6 s
     const ms = duration ?? (msg.includes('30 day streak') ? 4000 : 2600);
-    if (isEarn) navigator.vibrate?.([10, 30, 10]);
+    if (isEarn) haptic('HEAVY');
     setCoinToast({ message: msg, type, visible: true });
     clearTimeout(coinToastTimer.current);
     coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), ms);
