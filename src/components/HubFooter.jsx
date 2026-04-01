@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function HubFooter({ visible }) {
+export default function HubFooter({ visible, onOpenLegal }) {
   const [countdown, setCountdown] = useState({ days: '--', hours: '--', mins: '--', secs: '--', pct: 0, year: new Date().getFullYear() });
 
   useEffect(() => {
@@ -43,6 +43,25 @@ export default function HubFooter({ visible }) {
           <div className="year-progress-fill" style={{ width: countdown.pct + '%' }}></div>
         </div>
         <div className="year-progress-pct">{countdown.pctStr}% of {countdown.year} gone</div>
+      </div>
+
+      {/* Legal footer links */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+        {[['privacy', 'Privacy Policy'], ['terms', 'Terms of Service']].map(([page, label]) => (
+          <button
+            key={page}
+            onClick={() => onOpenLegal?.(page)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--mono, DM Mono, monospace)',
+              fontSize: '10px', letterSpacing: '0.5px',
+              color: 'rgba(255,255,255,.3)',
+              textDecoration: 'underline', padding: 0,
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
     </div>
   );

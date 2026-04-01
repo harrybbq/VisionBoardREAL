@@ -21,6 +21,8 @@ import CoinToast from './components/CoinToast';
 import ConnectToast from './components/ConnectToast';
 import CommandPalette from './components/CommandPalette';
 import ShortcutsModal from './components/ShortcutsModal';
+import LegalPage from './components/LegalPage';
+import CookieBanner from './components/CookieBanner';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -47,6 +49,7 @@ function Board({ userId, userEmail, onSignOut }) {
   const [backgrounds, setBackgrounds] = useState(() => loadBgs());
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [legalPage, setLegalPage] = useState(null);
   const bgInputRef = useRef(null);
   const coinToastTimer = useRef(null);
 
@@ -236,7 +239,7 @@ function Board({ userId, userEmail, onSignOut }) {
         )}
         {activeSection === 'settings' && (
           <motion.div key="settings" {...pageMotion}>
-            <SettingsSection S={S} update={update} active={true} userId={userId} />
+            <SettingsSection S={S} update={update} active={true} userId={userId} onOpenLegal={setLegalPage} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -254,7 +257,7 @@ function Board({ userId, userEmail, onSignOut }) {
       />
 
       <ConnectToast onCancel={handleCancelConnect} />
-      <HubFooter visible={activeSection === 'hub'} />
+      <HubFooter visible={activeSection === 'hub'} onOpenLegal={setLegalPage} />
       <CoinToast message={coinToast.message} type={coinToast.type} visible={coinToast.visible} />
       <CommandPalette
         open={paletteOpen}
@@ -264,12 +267,15 @@ function Board({ userId, userEmail, onSignOut }) {
         S={S}
       />
       <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
+      <CookieBanner onOpenLegal={setLegalPage} />
+      {legalPage && <LegalPage page={legalPage} onClose={() => setLegalPage(null)} />}
     </>
   );
 }
 
 export default function App() {
   const [session, setSession] = useState(undefined);
+  const [legalPage, setLegalPage] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -289,6 +295,11 @@ export default function App() {
     await supabase.auth.signOut();
   }
 
+  // Legal page overlay — accessible before login
+  if (legalPage) {
+    return <LegalPage page={legalPage} onClose={() => setLegalPage(null)} />;
+  }
+
   if (session === undefined) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: '13px', letterSpacing: '2px' }}>
@@ -297,7 +308,7 @@ export default function App() {
     );
   }
 
-  if (!session) return <AuthScreen />;
+  if (!session) return <AuthScreen onOpenLegal={setLegalPage} />;
   return (
     <SubscriptionProvider userId={session.user.id}>
       <Board userId={session.user.id} userEmail={session.user.email} onSignOut={handleSignOut} />

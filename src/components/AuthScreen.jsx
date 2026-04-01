@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function AuthScreen() {
+export default function AuthScreen({ onOpenLegal }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('vb4_remember') !== '0');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -22,6 +23,7 @@ export default function AuthScreen() {
         if (error) throw error;
         localStorage.setItem('vb4_remember', rememberMe ? '1' : '0');
       } else if (mode === 'signup') {
+        if (!ageConfirmed) { setError('Please confirm you are 13 or older.'); setLoading(false); return; }
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         setInfo('Check your email to confirm your account, then log in.');
@@ -98,6 +100,23 @@ export default function AuthScreen() {
             </label>
           )}
 
+          {mode === 'signup' && (
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={e => setAgeConfirmed(e.target.checked)}
+                style={{ width: '15px', height: '15px', marginTop: '1px', accentColor: 'var(--em, #2a9e62)', cursor: 'pointer', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: '12px', color: 'var(--text-muted, #6b7280)', lineHeight: 1.5 }}>
+                I am 13 years of age or older and I agree to the{' '}
+                <button type="button" onClick={() => onOpenLegal?.('terms')} style={styles.legalLink}>Terms of Service</button>
+                {' '}and{' '}
+                <button type="button" onClick={() => onOpenLegal?.('privacy')} style={styles.legalLink}>Privacy Policy</button>
+              </span>
+            </label>
+          )}
+
           <button style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }} type="submit" disabled={loading}>
             {loading ? '...' : mode === 'login' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset email'}
           </button>
@@ -119,6 +138,13 @@ export default function AuthScreen() {
               Back to sign in
             </button>
           )}
+        </div>
+
+        {/* Legal footer */}
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,.07)', display: 'flex', justifyContent: 'center', gap: '16px' }}>
+          <button type="button" onClick={() => onOpenLegal?.('privacy')} style={styles.legalLink}>Privacy Policy</button>
+          <span style={{ color: 'rgba(255,255,255,.15)', fontSize: '11px' }}>·</span>
+          <button type="button" onClick={() => onOpenLegal?.('terms')} style={styles.legalLink}>Terms of Service</button>
         </div>
       </div>
     </div>
@@ -214,6 +240,14 @@ const styles = {
     fontSize: '12px', cursor: 'pointer',
     textDecoration: 'underline',
     fontFamily: 'var(--sans, DM Sans, sans-serif)',
+  },
+  legalLink: {
+    background: 'none', border: 'none',
+    color: 'rgba(255,255,255,.4)',
+    fontSize: '11px', cursor: 'pointer',
+    textDecoration: 'underline',
+    fontFamily: 'var(--sans, DM Sans, sans-serif)',
+    padding: 0,
   },
   error: {
     background: 'rgba(220,38,38,0.1)',
