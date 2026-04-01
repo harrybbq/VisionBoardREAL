@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { adjustColour, timeAgo } from '../utils/helpers';
 import AiCoachWidget from './AiCoachWidget';
+import QuickLog from './QuickLog';
 
 // ── GitHub helpers ──
 async function fetchGitHub(username, cache) {
@@ -135,7 +136,7 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
 }
 
 // ── Widget Canvas (imperative DOM approach) ──
-export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings }) {
+export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast }) {
   const canvasRef = useRef(null);
   const renderedRef = useRef(false);
   const makeDraggable = useWidgetDrag(canvasRef, S, update);
@@ -303,6 +304,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
         </motion.div>
         <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
       </div>
+      <QuickLog S={S} update={update} onNavigateTrack={onNavigateTrack} onShowCoinToast={onShowCoinToast} />
       <AiCoachWidget S={S} onOpenWaitlist={onOpenWaitlist} />
     </section>
   );

@@ -446,6 +446,86 @@ function AddHolidayModal({ openId, onClose, onAdd }) {
   );
 }
 
+// ── Edit Holiday ──
+function EditHolidayModal({ openId, onClose, holidays, onEdit, onDelete }) {
+  // openId format: 'editHolidayModal:${id}'
+  const isOpen = typeof openId === 'string' && openId.startsWith('editHolidayModal:');
+  const holidayId = isOpen ? openId.split(':')[1] : null;
+  const holiday = holidayId ? (holidays || []).find(h => h.id === holidayId) : null;
+
+  const [form, setForm] = useState({ dest: '', from: '', to: '', accom: '', flight: '', budget: '', status: 'planning', notes: '', imageUrl: '' });
+
+  // Sync form when holiday changes
+  useEffect(() => {
+    if (holiday) {
+      setForm({
+        dest: holiday.dest || '',
+        from: holiday.from || '',
+        to: holiday.to || '',
+        accom: holiday.accom || '',
+        flight: holiday.flight || '',
+        budget: holiday.budget || '',
+        status: holiday.status || 'planning',
+        notes: holiday.notes || '',
+        imageUrl: holiday.imageUrl || '',
+      });
+    }
+  }, [holidayId]);
+
+  function submit() {
+    if (!form.dest.trim() || !holidayId) return;
+    onEdit(holidayId, form);
+    onClose(openId);
+  }
+
+  function handleDelete() {
+    if (!holidayId) return;
+    if (!window.confirm('Delete this trip? This cannot be undone.')) return;
+    onDelete(holidayId);
+    onClose(openId);
+  }
+
+  return (
+    <div
+      className={`modal-overlay${isOpen ? ' open' : ''}`}
+      onClick={e => { if (e.target === e.currentTarget) onClose(openId); }}
+    >
+      <div className="modal" style={{ maxWidth: '480px' }}>
+        <h3>Edit Trip</h3>
+        <div className="fg"><label>Destination</label><input type="text" placeholder="e.g. Lisbon, Portugal" value={form.dest} onChange={e => setForm(f => ({ ...f, dest: e.target.value }))} /></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="fg"><label>Departure</label><input type="date" value={form.from} onChange={e => setForm(f => ({ ...f, from: e.target.value }))} /></div>
+          <div className="fg"><label>Return</label><input type="date" value={form.to} onChange={e => setForm(f => ({ ...f, to: e.target.value }))} /></div>
+        </div>
+        <div className="fg"><label>Accommodation</label><input type="text" placeholder="e.g. Hotel Lisboa, Airbnb..." value={form.accom} onChange={e => setForm(f => ({ ...f, accom: e.target.value }))} /></div>
+        <div className="fg"><label>Flight Info</label><input type="text" placeholder="e.g. EasyJet EZY1234, 06:30 LGW→LIS" value={form.flight} onChange={e => setForm(f => ({ ...f, flight: e.target.value }))} /></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="fg"><label>Total Budget</label><input type="text" placeholder="£1,200" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} /></div>
+          <div className="fg">
+            <label>Status</label>
+            <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
+              <option value="planning">🟡 Planning</option>
+              <option value="booked">🟢 Booked</option>
+              <option value="completed">✓ Completed</option>
+            </select>
+          </div>
+        </div>
+        <div className="fg"><label>Cover Image URL (optional)</label><input type="url" placeholder="https://… paste any photo URL" value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} /></div>
+        <div className="fg"><label>Notes</label><input type="text" placeholder="Things to do, pack list, ideas..." value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
+        <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={handleDelete}
+            style={{ marginRight: 'auto' }}
+          >Delete Trip</button>
+          <button className="btn btn-ghost" onClick={() => onClose(openId)}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Add Habit ──
 function AddHabitModal({ openId, onClose, onAdd }) {
   const emptyMs = () => ({ _id: 'ms' + Date.now() + Math.random(), amount: '1', unit: 'weeks', coins: '' });
@@ -685,11 +765,21 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
   function handleAddHoliday(holiday) {
     update(prev => ({ ...prev, holidays: [...(prev.holidays || []), holiday] }));
   }
+  function handleEditHoliday(id, data) {
+    update(prev => ({
+      ...prev,
+      holidays: (prev.holidays || []).map(h => h.id === id ? { ...h, ...data } : h),
+    }));
+  }
+  function handleDeleteHoliday(id) {
+    update(prev => ({ ...prev, holidays: (prev.holidays || []).filter(h => h.id !== id) }));
+  }
   function handleAddHabit(habit) {
     update(prev => ({ ...prev, habits: [...(prev.habits || []), habit] }));
   }
 
   // Determine effective openId — _multiLogOpen overrides
+  // editHolidayModal uses a compound id (editHolidayModal:id) so check for prefix
   const effectiveOpen = S._multiLogOpen ? 'multiLogModal' : openModal;
 
   return (
@@ -715,6 +805,7 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       <AddShopModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddShopItem} />
       <AddCategoryModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddCategory} />
       <AddHolidayModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddHoliday} />
+      <EditHolidayModal openId={effectiveOpen} onClose={onClose} holidays={S.holidays} onEdit={handleEditHoliday} onDelete={handleDeleteHoliday} />
       <AddHabitModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddHabit} />
       <WaitlistModal openId={effectiveOpen} onClose={onClose} userId={userId} userEmail={userEmail} />
     </>

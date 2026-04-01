@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from './lib/supabase';
 import { useVisionBoardState, hasLocalStorageData, clearLocalStorageData } from './hooks/useVisionBoardState';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import AuthScreen from './components/AuthScreen';
 import Nav from './components/Nav';
 import PageHeader from './components/PageHeader';
@@ -18,6 +19,8 @@ import Modals from './components/Modals';
 import HubFooter from './components/HubFooter';
 import CoinToast from './components/CoinToast';
 import ConnectToast from './components/ConnectToast';
+import CommandPalette from './components/CommandPalette';
+import ShortcutsModal from './components/ShortcutsModal';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -42,6 +45,8 @@ function Board({ userId, userEmail, onSignOut }) {
   const [localDataExists, setLocalDataExists] = useState(() => hasLocalStorageData());
   const [noBanner, setNoBanner] = useState(() => localStorage.getItem('vb4_no_banner') === '1');
   const [backgrounds, setBackgrounds] = useState(() => loadBgs());
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const bgInputRef = useRef(null);
   const coinToastTimer = useRef(null);
 
@@ -54,11 +59,14 @@ function Board({ userId, userEmail, onSignOut }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.colorScheme]);
 
-  function showCoinToast(msg, isEarn) {
+  function showCoinToast(msg, isEarn, duration) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');
+    // 30-day streak toast stays 4 s; default 2.6 s
+    const ms = duration ?? (msg.includes('30 day streak') ? 4000 : 2600);
+    if (isEarn) navigator.vibrate?.([10, 30, 10]);
     setCoinToast({ message: msg, type, visible: true });
     clearTimeout(coinToastTimer.current);
-    coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), 2600);
+    coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), ms);
   }
 
   function navigate(id) { setActiveSection(id); }
@@ -116,6 +124,17 @@ function Board({ userId, userEmail, onSignOut }) {
     return () => window.removeEventListener('keydown', handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.connectingFrom]);
+
+  // Global keyboard shortcuts
+  useKeyboardShortcuts({
+    navigate,
+    openModal: handleOpenModal,
+    activeSection,
+    openPalette: () => setPaletteOpen(true),
+    openShortcuts: () => setShortcutsOpen(true),
+    activeModalId: openModal,
+    closeModal: handleCloseModal,
+  });
 
   if (loading) {
     return (
@@ -180,13 +199,14 @@ function Board({ userId, userEmail, onSignOut }) {
         onChangeBg={handleChangeBgClick}
         onRemoveBg={currentBg ? handleRemoveBg : null}
         onSignOut={onSignOut}
+        onOpenPalette={() => setPaletteOpen(true)}
       />
 
       {/* Main sections */}
       <AnimatePresence mode="wait">
         {activeSection === 'hub' && (
           <motion.div key="hub" {...pageMotion}>
-            <HubSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} />
+            <HubSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} />
           </motion.div>
         )}
         {activeSection === 'achievements' && (
@@ -236,6 +256,14 @@ function Board({ userId, userEmail, onSignOut }) {
       <ConnectToast onCancel={handleCancelConnect} />
       <HubFooter visible={activeSection === 'hub'} />
       <CoinToast message={coinToast.message} type={coinToast.type} visible={coinToast.visible} />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        navigate={navigate}
+        openModal={handleOpenModal}
+        S={S}
+      />
+      <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </>
   );
 }

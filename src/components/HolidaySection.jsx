@@ -1,13 +1,42 @@
 import { motion } from 'framer-motion';
 import SectionHelp from './SectionHelp';
 
+const STATUS_ORDER = ['planning', 'booked', 'completed'];
 const STATUS_LABEL = { planning: 'Planning', booked: 'Booked', completed: 'Completed' };
+
+// ── Countdown helper ──────────────────────────────────────────────────────
+function getCountdown(h) {
+  if (!h.from) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dep = new Date(h.from); dep.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((dep - today) / 86400000);
+
+  if (h.status === 'completed') {
+    if (h.from && h.to) {
+      const nights = Math.round((new Date(h.to) - new Date(h.from)) / 86400000);
+      return { label: `${nights} nights`, style: 'muted' };
+    }
+    return null;
+  }
+
+  if (diffDays < 0) return null;
+  if (diffDays === 0) return { label: 'Today! ✈', style: 'today' };
+  if (diffDays <= 7) return { label: `${diffDays} days to go`, style: 'amber' };
+  if (diffDays <= 60) return { label: `${diffDays} days to go`, style: 'gold' };
+  const months = Math.round(diffDays / 30);
+  return { label: `${months} month${months !== 1 ? 's' : ''} to go`, style: 'muted' };
+}
 
 export default function HolidaySection({ S, update, active, onOpenModal }) {
   const { holidays } = S;
 
-  function handleDelete(id) {
-    update(prev => ({ ...prev, holidays: (prev.holidays || []).filter(h => h.id !== id) }));
+  function cycleStatus(id, current) {
+    const idx = STATUS_ORDER.indexOf(current);
+    const next = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
+    update(prev => ({
+      ...prev,
+      holidays: (prev.holidays || []).map(h => h.id === id ? { ...h, status: next } : h),
+    }));
   }
 
   return (
@@ -41,6 +70,8 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
               const nights = h.from && h.to
                 ? Math.round((new Date(h.to) - new Date(h.from)) / (1000 * 60 * 60 * 24)) + ' nights'
                 : '';
+              const countdown = getCountdown(h);
+
               return (
                 <motion.div
                   key={h.id}
@@ -54,7 +85,18 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
                   <div className="holiday-card-hero">
                     {h.imageUrl && <img src={h.imageUrl} alt={h.dest} onError={e => { e.target.style.display = 'none'; }} />}
                     <div className="holiday-card-hero-overlay"></div>
+                    {/* Pencil edit button */}
+                    <button
+                      className="holiday-edit-btn"
+                      onClick={() => onOpenModal('editHolidayModal:' + h.id)}
+                      title="Edit trip"
+                    >✏</button>
                     <div className="holiday-card-hero-info">
+                      {countdown && (
+                        <div className={`holiday-countdown holiday-countdown-${countdown.style}`}>
+                          {countdown.label}
+                        </div>
+                      )}
                       <div className="holiday-dest">{h.dest}</div>
                       <div className="holiday-dates">{dateRange}{nights ? ' · ' + nights : ''}</div>
                     </div>
@@ -90,12 +132,16 @@ export default function HolidaySection({ S, update, active, onOpenModal }) {
                     )}
                   </div>
                   <div className="holiday-card-footer">
-                    <span className={`holiday-status ${h.status}`}>{STATUS_LABEL[h.status] || h.status}</span>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
-                      onClick={() => handleDelete(h.id)}
-                    >Delete</button>
+                    <motion.span
+                      className={`holiday-status ${h.status}`}
+                      onClick={() => cycleStatus(h.id, h.status)}
+                      style={{ cursor: 'pointer' }}
+                      whileHover={{ scale: 1.06 }}
+                      whileTap={{ scale: 0.93 }}
+                      title="Click to change status"
+                    >
+                      {STATUS_LABEL[h.status] || h.status}
+                    </motion.span>
                   </div>
                 </motion.div>
               );

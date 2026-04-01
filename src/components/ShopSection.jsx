@@ -283,9 +283,11 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
                 </div>
               ))}
               {!shopItems.length && (
-                <div className="shop-empty">
-                  <div className="shop-empty-icon">🛍</div>
-                  <div>No items yet. Add something you want!</div>
+                <div className="section-empty">
+                  <div className="section-empty-icon">🛍</div>
+                  <div className="section-empty-title">Nothing here yet</div>
+                  <div className="section-empty-body">Add things you want to save up for. Earn coins by hitting your tracker goals.</div>
+                  <button className="btn btn-primary btn-sm section-empty-cta" onClick={() => onOpenModal('addShopModal')}>Add first item</button>
                 </div>
               )}
             </>

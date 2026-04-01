@@ -34,4 +34,5 @@ export const DEFAULT_STATE = {
   lastfm: { username: '', track: '', artist: '', album: '', artUrl: '', trackUrl: '', nowPlaying: false },
   ghCache: {},
   habits: [],
+  streaks: {},
 };

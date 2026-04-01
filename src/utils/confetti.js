@@ -24,3 +24,15 @@ export function fireGoal() {
 export function firePurchase() {
   fireBurst({ count: 60, spread: 55, origin: { y: 0.7 }, colors: ['#4dc485', '#6bbf90', '#c8970a', '#fff'] });
 }
+
+export function fireStreak7() {
+  fireBurst({ count: 100, spread: 70, origin: { y: 0.6 }, colors: ['#f5c842', '#c8970a', '#fff', '#ff9900'] });
+  setTimeout(() => fireBurst({ count: 40, spread: 40, origin: { x: 0.3, y: 0.65 }, colors: ['#f5c842', '#fff'] }), 200);
+}
+
+export function fireStreak30() {
+  fireBurst({ count: 160, spread: 90, origin: { y: 0.5 }, colors: ['#f5c842', '#c8970a', '#ff6600', '#fff', '#ffdd00'] });
+  setTimeout(() => fireBurst({ count: 60, spread: 55, origin: { x: 0.2, y: 0.55 }, colors: ['#f5c842', '#fff'] }), 200);
+  setTimeout(() => fireBurst({ count: 60, spread: 55, origin: { x: 0.8, y: 0.55 }, colors: ['#ff6600', '#fff'] }), 400);
+  setTimeout(() => fireBurst({ count: 80, spread: 70, origin: { y: 0.6 }, colors: ['#c8970a', '#f5c842', '#fff'] }), 700);
+}
