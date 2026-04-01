@@ -361,3 +361,13 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Capacitor — generated native project folders (large, regeneratable)
+# android/  ← uncomment to exclude; keeping tracked so CI can build
+# ios/       ← uncomment to exclude; requires macOS to regenerate
+
+# Capacitor build artefacts
+android/.gradle/
+android/app/build/
+android/build/
+ios/App/Pods/
+ios/App/DerivedData/
