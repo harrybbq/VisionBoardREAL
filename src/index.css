@@ -1061,16 +1061,20 @@ input,select,textarea,button{touch-action:manipulation;}
     border-radius:8px;
     background:none;
     display:flex;align-items:center;justify-content:center;
+    color:var(--text-mid);
   }
   .nav-tab-label{
     opacity:1!important;
     font-size:10px;
     letter-spacing:0;
     white-space:nowrap;
-    color:var(--text-muted);
+    color:var(--text-mid);
   }
-  .nav-tab.active .nav-tab-label{color:var(--em);}
-  .nav-tab.active .nav-tab-icon{color:var(--em);}
+  .nav-tab.active .nav-tab-label{color:var(--em);font-weight:600;}
+  .nav-tab.active .nav-tab-icon{
+    color:var(--em);
+    background:var(--em-ghost);
+  }
   .nav-tab.active::before{
     content:'';
     position:absolute;
