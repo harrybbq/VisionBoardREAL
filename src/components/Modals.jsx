@@ -725,6 +725,14 @@ function WaitlistModal({ openId, onClose, userId, userEmail }) {
           {count} {count === 1 ? 'person' : 'people'} already waiting
         </div>
       )}
+
+      {/* Subscription transparency */}
+      <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(255,255,255,.04)', borderRadius: '10px', border: '1px solid rgba(255,255,255,.07)' }}>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', lineHeight: 1.7, letterSpacing: '0.3px' }}>
+          <strong style={{ color: 'var(--text)', display: 'block', marginBottom: '4px' }}>Subscription transparency</strong>
+          Joining the waitlist is free — no payment details required. If AI Coach launches as a paid feature, you will be told the price and what is included before any charge. You can cancel at any time. Free features remain free.
+        </div>
+      </div>
     </Modal>
   );
 }
