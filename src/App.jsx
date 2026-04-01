@@ -23,6 +23,7 @@ import CommandPalette from './components/CommandPalette';
 import ShortcutsModal from './components/ShortcutsModal';
 import LegalPage from './components/LegalPage';
 import CookieBanner from './components/CookieBanner';
+import InstallPrompt from './components/InstallPrompt';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -268,6 +269,7 @@ function Board({ userId, userEmail, onSignOut }) {
       />
       <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <CookieBanner onOpenLegal={setLegalPage} />
+      <InstallPrompt />
       {legalPage && <LegalPage page={legalPage} onClose={() => setLegalPage(null)} />}
     </>
   );
