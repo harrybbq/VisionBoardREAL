@@ -4,6 +4,7 @@ import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
 import { fireGoal, fireStreak7, fireStreak30 } from '../utils/confetti';
 import { recalcStreaks } from '../utils/streaks';
 import SectionHelp from './SectionHelp';
+import NutritionSection from './NutritionSection';
 
 function getWeekProgress(logs, trackerId, weeklyTarget) {
   const dateStr = getTodayStr();
@@ -358,7 +359,7 @@ function CalendarView({ S, update, onShowCoinToast }) {
   );
 }
 
-export default function TrackSection({ S, update, active, onOpenModal, onShowCoinToast }) {
+export default function TrackSection({ S, update, active, onOpenModal, onShowCoinToast, userId }) {
   return (
     <section id="track" className={`section${active ? ' active' : ''}`}>
       <motion.div
@@ -381,6 +382,15 @@ export default function TrackSection({ S, update, active, onOpenModal, onShowCoi
         />
         <CalendarView S={S} update={update} onShowCoinToast={onShowCoinToast} />
       </div>
+      {userId && (
+        <NutritionSection
+          userId={userId}
+          selectedDate={S.selectedLogDate || null}
+          calYear={S.calYear}
+          calMonth={S.calMonth}
+          onShowCoinToast={onShowCoinToast}
+        />
+      )}
     </section>
   );
 }

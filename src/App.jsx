@@ -227,7 +227,7 @@ function Board({ userId, userEmail, onSignOut }) {
         )}
         {activeSection === 'track' && (
           <motion.div key="track" {...pageMotion}>
-            <TrackSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            <TrackSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} userId={userId} />
           </motion.div>
         )}
         {activeSection === 'shop' && (
