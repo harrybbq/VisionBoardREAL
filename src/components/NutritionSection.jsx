@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useNutrition } from '../hooks/useNutrition';
 import { getTodayStr } from '../utils/helpers';
 import FoodLogSheet from './FoodLogSheet';
+import FoodLogList from './FoodLogList';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 function fmt(n) {
@@ -385,6 +386,17 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
         style={{ marginTop: '18px', width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--em)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
         + Log Food
       </button>
+
+      {/* Food log list */}
+      <FoodLogList
+        logEntries={logEntries}
+        date={date}
+        onAddFood={() => setShowFoodSheet(true)}
+        onDeleteEntry={async (entryId) => {
+          await recalcSummary(date);
+          reload();
+        }}
+      />
 
       {/* Sheets */}
       <AnimatePresence>
