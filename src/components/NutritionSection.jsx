@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useNutrition } from '../hooks/useNutrition';
 import { getTodayStr } from '../utils/helpers';
+import FoodLogSheet from './FoodLogSheet';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 function fmt(n) {
@@ -390,13 +391,13 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
         {showAddSheet && <AddMacroSheet onClose={() => setShowAddSheet(false)} onSave={handleAddMacro} />}
       </AnimatePresence>
 
-      {/* FoodLogSheet placeholder — implemented in Section 4 */}
       {showFoodSheet && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'flex-end' }} onClick={() => setShowFoodSheet(false)}>
-          <div style={{ width: '100%', background: 'var(--bg-base)', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', animation: 'sheet-up 300ms ease both' }}>
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Food logging — coming in Section 4</div>
-          </div>
-        </div>
+        <FoodLogSheet
+          userId={userId}
+          logDate={date}
+          onClose={() => setShowFoodSheet(false)}
+          onSaved={() => { recalcSummary(date); reload(); }}
+        />
       )}
     </div>
   );
