@@ -210,7 +210,7 @@ function AddMacroSheet({ onClose, onSave }) {
 }
 
 // ── Main NutritionSection ────────────────────────────────────────────────
-export default function NutritionSection({ userId, selectedDate, calYear, calMonth, onShowCoinToast }) {
+export default function NutritionSection({ userId, selectedDate, calYear, calMonth, onShowCoinToast, onMonthDataReady }) {
   const date = selectedDate || getTodayStr();
   const { macros, summary, logEntries, monthSummary, loading, reload, recalcSummary, setMacros, loadMonth } = useNutrition(userId, date);
 
@@ -222,10 +222,16 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
   const [foodPrefill, setFoodPrefill] = useState(null);
   const goalHitRef = useRef({});
 
-  // Load month summary when calendar month changes
+  // Load month summary when calendar month changes, and notify parent
   useEffect(() => {
-    if (userId) loadMonth(calYear, calMonth);
+    if (!userId) return;
+    loadMonth(calYear, calMonth).then?.(() => {});
   }, [userId, calYear, calMonth, loadMonth]);
+
+  // Propagate monthSummary up so CalendarView can render nutrition dots
+  useEffect(() => {
+    onMonthDataReady?.(monthSummary);
+  }, [monthSummary, onMonthDataReady]);
 
   // Goal hit detection
   useEffect(() => {
