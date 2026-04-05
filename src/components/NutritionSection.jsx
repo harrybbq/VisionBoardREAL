@@ -5,6 +5,7 @@ import { useNutrition } from '../hooks/useNutrition';
 import { getTodayStr } from '../utils/helpers';
 import FoodLogSheet from './FoodLogSheet';
 import FoodLogList from './FoodLogList';
+import FoodSearch from './FoodSearch';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 function fmt(n) {
@@ -217,6 +218,8 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
   const [editingId, setEditingId] = useState(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [showFoodSheet, setShowFoodSheet] = useState(false);
+  const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [foodPrefill, setFoodPrefill] = useState(null);
   const goalHitRef = useRef({});
 
   // Load month summary when calendar month changes
@@ -382,7 +385,7 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
 
       {/* Log Food button */}
       <button
-        onClick={() => setShowFoodSheet(true)}
+        onClick={() => setShowFoodSearch(true)}
         style={{ marginTop: '18px', width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--em)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
         + Log Food
       </button>
@@ -391,8 +394,8 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
       <FoodLogList
         logEntries={logEntries}
         date={date}
-        onAddFood={() => setShowFoodSheet(true)}
-        onDeleteEntry={async (entryId) => {
+        onAddFood={() => setShowFoodSearch(true)}
+        onDeleteEntry={async () => {
           await recalcSummary(date);
           reload();
         }}
@@ -403,11 +406,23 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
         {showAddSheet && <AddMacroSheet onClose={() => setShowAddSheet(false)} onSave={handleAddMacro} />}
       </AnimatePresence>
 
+      {showFoodSearch && (
+        <FoodSearch
+          onClose={() => setShowFoodSearch(false)}
+          onSelectFood={(prefill) => {
+            setShowFoodSearch(false);
+            setFoodPrefill(prefill || null);
+            setShowFoodSheet(true);
+          }}
+        />
+      )}
+
       {showFoodSheet && (
         <FoodLogSheet
           userId={userId}
           logDate={date}
-          onClose={() => setShowFoodSheet(false)}
+          prefill={foodPrefill}
+          onClose={() => { setShowFoodSheet(false); setFoodPrefill(null); }}
           onSaved={() => { recalcSummary(date); reload(); }}
         />
       )}

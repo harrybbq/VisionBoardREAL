@@ -1,0 +1,186 @@
+import { useState, useRef, useEffect } from 'react';
+
+const OFF_API = 'https://world.openfoodfacts.org';
+
+// Map Open Food Facts nutriments keys → our schema fields
+function mapOffProduct(product) {
+  const n = product.nutriments || {};
+  const per100 = (key) => parseFloat(n[key + '_100g'] ?? n[key] ?? 0) || 0;
+  return {
+    food_name: product.product_name || product.abbreviated_product_name || '',
+    brand: product.brands || '',
+    barcode: product.code || '',
+    serving_g: parseFloat(product.serving_quantity) || 100,
+    calories:  per100('energy-kcal'),
+    protein_g: per100('proteins'),
+    carbs_g:   per100('carbohydrates'),
+    fat_g:     per100('fat'),
+    fibre_g:   per100('fiber'),
+    sugar_g:   per100('sugars'),
+    sodium_mg: Math.round(per100('sodium') * 1000), // OFF stores sodium in g
+    source: 'openfoodfacts',
+  };
+}
+
+async function searchByBarcode(barcode) {
+  const res = await fetch(`${OFF_API}/api/v0/product/${barcode}.json`);
+  const json = await res.json();
+  if (json.status === 1 && json.product) return [mapOffProduct({ ...json.product, code: barcode })];
+  return [];
+}
+
+async function searchByName(query) {
+  const params = new URLSearchParams({
+    action: 'process',
+    json: '1',
+    search_terms: query,
+    page_size: '12',
+    fields: 'product_name,brands,code,nutriments,serving_quantity',
+  });
+  const res = await fetch(`${OFF_API}/cgi/search.pl?${params}`);
+  const json = await res.json();
+  return (json.products || [])
+    .filter(p => p.product_name)
+    .map(p => mapOffProduct(p));
+}
+
+export default function FoodSearch({ onSelectFood, onClose }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [mode, setMode] = useState('search'); // 'search' | 'barcode'
+  const debounceRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  function handleQueryChange(val) {
+    setQuery(val);
+    setError('');
+    clearTimeout(debounceRef.current);
+    if (!val.trim() || val.trim().length < 2) { setResults([]); return; }
+    debounceRef.current = setTimeout(() => doSearch(val.trim()), 500);
+  }
+
+  async function doSearch(q) {
+    setLoading(true);
+    try {
+      const res = mode === 'barcode' ? await searchByBarcode(q) : await searchByName(q);
+      if (res.length === 0) setError('No results found. Try a different search or add manually.');
+      setResults(res);
+    } catch {
+      setError('Search failed — check your connection.');
+    }
+    setLoading(false);
+  }
+
+  async function handleBarcodeSearch() {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await searchByBarcode(query.trim());
+      if (res.length === 0) setError('Barcode not found in Open Food Facts. Add manually instead.');
+      setResults(res);
+    } catch {
+      setError('Lookup failed — check your connection.');
+    }
+    setLoading(false);
+  }
+
+  const inputStyle = {
+    flex: 1, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+    background: 'var(--bg-base)', color: 'var(--text)', fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--sans)', outline: 'none',
+  };
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 510, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'flex-end' }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{ width: '100%', background: 'var(--bg-base)', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', animation: 'sheet-up 300ms cubic-bezier(0.34,1.56,0.64,1) both', maxHeight: '88dvh', display: 'flex', flexDirection: 'column' }}>
+        {/* Handle */}
+        <div style={{ width: '40px', height: '4px', background: 'var(--border)', borderRadius: '2px', margin: '0 auto 18px', flexShrink: 0 }} />
+
+        {/* Title + close */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexShrink: 0 }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--text-md)', color: 'var(--text)', fontFamily: 'var(--serif)' }}>Search Foods</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '18px', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+        </div>
+
+        {/* Mode toggle */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexShrink: 0 }}>
+          {[['search', '🔍 Name'], ['barcode', '🔢 Barcode']].map(([m, label]) => (
+            <button key={m} onClick={() => { setMode(m); setQuery(''); setResults([]); setError(''); }}
+              style={{ padding: '6px 14px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border)', background: mode === m ? 'var(--em)' : 'transparent', color: mode === m ? '#fff' : 'var(--text-mid)', fontSize: 'var(--text-sm)', cursor: 'pointer', fontFamily: 'var(--sans)' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search row */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexShrink: 0 }}>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={e => mode === 'search' ? handleQueryChange(e.target.value) : setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && mode === 'barcode' && handleBarcodeSearch()}
+            style={inputStyle}
+            placeholder={mode === 'search' ? 'e.g. chicken breast, oat milk…' : 'Enter barcode number…'}
+            type={mode === 'barcode' ? 'number' : 'text'}
+          />
+          {mode === 'barcode' && (
+            <button onClick={handleBarcodeSearch} style={{ padding: '10px 16px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--em)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              Look up
+            </button>
+          )}
+        </div>
+
+        {/* Attribution */}
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginBottom: '10px', flexShrink: 0 }}>
+          Data: Open Food Facts (openfoodfacts.org) — CC BY-SA
+        </div>
+
+        {/* Results */}
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Searching…</div>
+          )}
+          {!loading && error && (
+            <div style={{ padding: '12px', background: 'rgba(220,38,38,.08)', borderRadius: 'var(--radius-md)', color: '#e05252', fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)' }}>{error}</div>
+          )}
+          {!loading && !error && results.map((item, i) => (
+            <button key={i} onClick={() => onSelectFood(item)}
+              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', textAlign: 'left', marginBottom: '8px', fontFamily: 'var(--sans)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.food_name || '—'}</div>
+                {item.brand && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '1px' }}>{item.brand}</div>}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-mid)' }}>{Math.round(item.calories)} kcal</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>P {Math.round(item.protein_g)}g</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>C {Math.round(item.carbs_g)}g</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>F {Math.round(item.fat_g)}g</span>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>per 100g</span>
+                </div>
+              </div>
+              <span style={{ color: 'var(--em)', fontSize: '18px', flexShrink: 0, alignSelf: 'center' }}>+</span>
+            </button>
+          ))}
+          {!loading && !error && !results.length && query.trim().length >= 2 && mode === 'search' && (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Searching…</div>
+          )}
+        </div>
+
+        {/* Enter manually shortcut */}
+        <button onClick={() => onSelectFood(null)}
+          style={{ marginTop: '14px', width: '100%', padding: '10px', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', flexShrink: 0 }}>
+          Enter manually instead
+        </button>
+      </div>
+    </div>
+  );
+}
