@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import MacroGoalsPanel from './MacroGoalsPanel';
 
 export const SCHEMES = [
   { id: 'green',  name: 'Forest Green', em: '#1a7a4a', mid: '#2a9e62', light: '#4dc485', grad: 'linear-gradient(145deg,#f0f7f3 0%,#d8eee5 40%,#b0d9c5 70%,#7ec8a8 100%)' },
@@ -151,6 +152,9 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             </div>
           )}
         </div>
+
+        {/* Nutrition Goals */}
+        {userId && <MacroGoalsPanel userId={userId} />}
 
         {/* Danger Zone */}
         <div className="card" style={{ padding: '22px', borderColor: 'rgba(220,38,38,0.3)' }}>
