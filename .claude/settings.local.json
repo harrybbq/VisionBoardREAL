@@ -25,7 +25,19 @@
       "Bash(cmd /c \"ipconfig | findstr /i IPv4\")",
       "Bash(cmd /c ipconfig)",
       "Bash(findstr /i \"IPv4\")",
-      "Bash(find /c/Users/Harry/source/repos/VisionBoard -name .env* -o -name supabase*)"
+      "Bash(find /c/Users/Harry/source/repos/VisionBoard -name .env* -o -name supabase*)",
+      "Bash(sed -n '409,450p' src/components/Modals.jsx)",
+      "Bash(sed -n '640,730p' src/components/Modals.jsx)",
+      "Bash(git push:*)",
+      "Bash(identify /c/Users/Harry/source/repos/VisionBoard/visionboard-icon.png)",
+      "Bash(npx cap:*)",
+      "Bash(npm list:*)",
+      "Bash(/c/Users/Harry/source/repos/VisionBoard/.gitignore:*)",
+      "Bash(ls /c/Users/Harry/source/repos/VisionBoard/src/components/Nutrition* /c/Users/Harry/source/repos/VisionBoard/src/components/Food* /c/Users/Harry/source/repos/VisionBoard/src/components/Macro* /c/Users/Harry/source/repos/VisionBoard/src/hooks/useNutrition*)",
+      "Bash(/c/Users/Harry/source/repos/VisionBoard/netlify.toml:*)",
+      "Bash(git -C \"C:\\\\Users\\\\Harry\\\\source\\\\repos\\\\VisionBoard\" add -A)",
+      "Bash(git -C:*)",
+      "Bash(git -C \"C:\\\\Users\\\\Harry\\\\source\\\\repos\\\\VisionBoard\" push)"
     ]
   }
 }

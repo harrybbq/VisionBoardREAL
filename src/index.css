@@ -1773,6 +1773,13 @@ button:active:not(:disabled),
   margin-top:var(--space-2);
 }
 
+/* ── Camera scanner scan-line animation ── */
+@keyframes cam-scan {
+  0%   { top: 25%; opacity: 0.6; }
+  50%  { top: 72%; opacity: 1; }
+  100% { top: 25%; opacity: 0.6; }
+}
+
 /* ── Quick-log empty state ── */
 .quick-log-empty{
   display:flex;

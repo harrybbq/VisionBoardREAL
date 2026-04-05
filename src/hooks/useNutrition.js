@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { getTodayStr } from '../utils/helpers';
 
@@ -9,9 +9,13 @@ export function useNutrition(userId, selectedDate) {
   const [logEntries, setLogEntries] = useState([]);
   const [monthSummary, setMonthSummary] = useState({});
   const [loading, setLoading] = useState(true);
+  // Guard against React StrictMode double-invocation causing duplicate seeds
+  const seedingRef = useRef(false);
 
   // Seed default macros on first use
   const seedDefaults = useCallback(async () => {
+    if (seedingRef.current) return;
+    seedingRef.current = true;
     const { count } = await supabase
       .from('nutrition_macros')
       .select('*', { count: 'exact', head: true })
