@@ -4,6 +4,7 @@ import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
 import { fireGoal, fireStreak7, fireStreak30 } from '../utils/confetti';
 import { recalcStreaks } from '../utils/streaks';
 import SectionHelp from './SectionHelp';
+import NutritionSection from './NutritionSection';
 
 function getWeekProgress(logs, trackerId, weeklyTarget) {
   const dateStr = getTodayStr();
@@ -100,7 +101,7 @@ function TrackersList({ trackers, logs, streaks, onDelete, onOpenModal }) {
   );
 }
 
-function CalendarView({ S, update, onShowCoinToast }) {
+function CalendarView({ S, update, onShowCoinToast, nutritionMonthData }) {
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const { calYear, calMonth, trackers, logs, multiSelectMode, multiSelectedDays } = S;
 
@@ -299,12 +300,19 @@ function CalendarView({ S, update, onShowCoinToast }) {
             >
               {firstTracker && <div className="cal-cell-fill" style={{ background: firstTracker.color }}></div>}
               <div className="cal-date">{cell.day}</div>
-              {cell.tids.length > 0 && (
+              {(cell.tids.length > 0 || (nutritionMonthData && nutritionMonthData[cell.key])) && (
                 <div className="cal-dots">
                   {cell.tids.map(tid => {
                     const tr = trackers.find(t => t.id === tid);
                     return tr ? <div key={tid} className="cal-dot" style={{ background: tr.color }}></div> : null;
                   })}
+                  {nutritionMonthData && nutritionMonthData[cell.key] && (
+                    <div
+                      className="cal-dot"
+                      style={{ background: '#1a7a4a', boxShadow: '0 0 0 1px rgba(26,122,74,.3)' }}
+                      title={`${Math.round(nutritionMonthData[cell.key].calories || 0)} kcal logged`}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -319,6 +327,12 @@ function CalendarView({ S, update, onShowCoinToast }) {
             {t.name}
           </div>
         ))}
+        {Object.keys(nutritionMonthData || {}).length > 0 && (
+          <div className="legend-item">
+            <div className="legend-dot" style={{ background: '#1a7a4a', boxShadow: '0 0 0 1px rgba(26,122,74,.3)' }}></div>
+            Nutrition
+          </div>
+        )}
       </div>
 
       {selectedKey && !multiSelectMode && (
@@ -358,7 +372,9 @@ function CalendarView({ S, update, onShowCoinToast }) {
   );
 }
 
-export default function TrackSection({ S, update, active, onOpenModal, onShowCoinToast }) {
+export default function TrackSection({ S, update, active, onOpenModal, onShowCoinToast, userId }) {
+  const [nutritionMonthData, setNutritionMonthData] = useState({});
+
   return (
     <section id="track" className={`section${active ? ' active' : ''}`}>
       <motion.div
@@ -379,8 +395,18 @@ export default function TrackSection({ S, update, active, onOpenModal, onShowCoi
           onDelete={id => update(prev => ({ ...prev, trackers: prev.trackers.filter(t => t.id !== id) }))}
           onOpenModal={onOpenModal}
         />
-        <CalendarView S={S} update={update} onShowCoinToast={onShowCoinToast} />
+        <CalendarView S={S} update={update} onShowCoinToast={onShowCoinToast} nutritionMonthData={nutritionMonthData} />
       </div>
+      {userId && (
+        <NutritionSection
+          userId={userId}
+          selectedDate={S.selectedLogDate || null}
+          calYear={S.calYear}
+          calMonth={S.calMonth}
+          onShowCoinToast={onShowCoinToast}
+          onMonthDataReady={setNutritionMonthData}
+        />
+      )}
     </section>
   );
 }

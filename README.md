@@ -155,6 +155,41 @@ The app is also installable as a PWA:
 
 ---
 
+## Nutrition tracker
+
+The nutrition section on the Track screen uses:
+
+- **Supabase tables** — `nutrition_macros`, `nutrition_log`, `nutrition_daily_summary` (see `supabase/nutrition_schema.sql`)
+- **Supabase Edge Function** — `recalculate-nutrition-summary` (see `supabase/functions/recalculate-nutrition-summary/index.ts`)
+- **Netlify serverless function** — `netlify/functions/nutrition-search.js` — proxies Nutritionix API calls
+- **Open Food Facts** — barcode + fallback search, no API key required
+
+### Nutritionix API setup (free tier)
+
+1. Register at [developer.nutritionix.com](https://developer.nutritionix.com) — free tier gives 500 req/day
+2. Create an app and copy your **App ID** and **API Key**
+3. Add to Netlify environment variables:
+
+```
+NUTRITIONIX_APP_ID=your_app_id_here
+NUTRITIONIX_API_KEY=your_api_key_here
+```
+
+In Netlify: Site settings → Environment variables → Add variable.
+
+The function is deployed automatically with the site build. It lives at `/.netlify/functions/nutrition-search`.
+
+### Supabase setup
+
+Run `supabase/nutrition_schema.sql` in the Supabase SQL Editor.
+Deploy the Edge Function:
+
+```bash
+supabase functions deploy recalculate-nutrition-summary
+```
+
+---
+
 ## Legal
 
 - Privacy Policy and Terms of Service are accessible in-app (Settings) and from the login screen
