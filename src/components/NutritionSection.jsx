@@ -49,27 +49,27 @@ function MacroBar({ macro, consumed, isCal, index, onMenuClick }) {
   }, [pct, index]);
 
   const colour = over ? 'var(--amber)' : macro.color;
-  const textColour = over ? 'var(--amber)' : 'var(--text-mid)';
+  const valueColour = over ? 'var(--amber)' : 'var(--text)';
 
   return (
     <div style={{ marginBottom: isCal ? '16px' : '10px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
-        <span style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--text)', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {macro.name}
         </span>
-        <span style={{ fontSize: 'var(--text-sm)', color: textColour, whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: 'var(--text-sm)', color: valueColour, whiteSpace: 'nowrap', opacity: 0.85 }}>
           {fmt(consumed)}{macro.unit !== 'kcal' ? macro.unit : ''} / {fmt(goal)}{macro.unit}
         </span>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 'var(--text-xs)', color: over ? 'var(--amber)' : 'var(--text-muted)', minWidth: '34px', textAlign: 'right' }}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 'var(--text-xs)', color: over ? 'var(--amber)' : 'var(--text-mid)', minWidth: '34px', textAlign: 'right' }}>
           {Math.round(pct)}%
         </span>
         <button
           onClick={() => onMenuClick(macro)}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '14px', padding: '2px 4px', borderRadius: 'var(--radius-sm)', lineHeight: 1 }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-mid)', cursor: 'pointer', fontSize: '14px', padding: '2px 4px', borderRadius: 'var(--radius-sm)', lineHeight: 1 }}
           title="Macro options"
         >···</button>
       </div>
-      <div style={{ height: isCal ? '12px' : '8px', background: 'rgba(0,0,0,.08)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+      <div style={{ height: isCal ? '12px' : '8px', background: 'rgba(128,128,128,.18)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
         <motion.div
           style={{ height: '100%', borderRadius: 'var(--radius-full)', background: colour, boxShadow: over ? `0 0 8px ${macro.color}66` : 'none' }}
           animate={{ width: `${animated}%` }}
