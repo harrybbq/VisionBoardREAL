@@ -136,6 +136,12 @@ function InlineEdit({ macro, onSave, onCancel }) {
 }
 
 // ── Add Macro Sheet ───────────────────────────────────────────────────────
+const CORE_MACROS = [
+  { name: 'Calories', unit: 'kcal', daily_goal: 2000, color: '#e8b830' },
+  { name: 'Protein',  unit: 'g',    daily_goal: 150,  color: '#1a7a4a' },
+  { name: 'Carbs',    unit: 'g',    daily_goal: 250,  color: '#d4700a' },
+  { name: 'Fat',      unit: 'g',    daily_goal: 70,   color: '#c84040' },
+];
 const SUGGESTED = [
   { name: 'Fibre', unit: 'g' }, { name: 'Sugar', unit: 'g' }, { name: 'Sodium', unit: 'mg' },
   { name: 'Saturated Fat', unit: 'g' }, { name: 'Vitamin C', unit: 'mg' }, { name: 'Vitamin D', unit: 'µg' },
@@ -158,8 +164,25 @@ function AddMacroSheet({ onClose, onSave }) {
         <div style={{ width: '40px', height: '4px', background: 'var(--border)', borderRadius: '2px', margin: '0 auto 20px' }} />
         <h3 style={{ margin: '0 0 16px', fontSize: 'var(--text-md)', color: 'var(--text)' }}>Add Macro</h3>
 
+        {/* Core macros */}
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--mono)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Quick add</div>
+          <div style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--mono)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Core macros</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {CORE_MACROS.map(s => {
+              const active = form.name === s.name;
+              return (
+                <button key={s.name} onClick={() => setForm(f => ({ ...f, name: s.name, unit: s.unit, daily_goal: s.daily_goal, color: s.color }))}
+                  style={{ padding: '6px 14px', borderRadius: 'var(--radius-full)', border: `2px solid ${active ? s.color : 'var(--border)'}`, background: active ? s.color : 'transparent', color: active ? '#fff' : 'var(--text)', fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--sans)', transition: 'all .15s' }}>
+                  {s.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Extended nutrients */}
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--mono)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Other nutrients</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             {SUGGESTED.map(s => (
               <button key={s.name} onClick={() => setForm(f => ({ ...f, name: s.name, unit: s.unit }))}
@@ -303,7 +326,7 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
       <div style={{ marginBottom: '16px' }}>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '2px' }}>Nutrition</div>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px' }}>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-xl)', fontWeight: 700, color: 'var(--text)' }}>Daily Macros</div>
+          <div style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-xl)', fontWeight: 700, color: 'var(--em)' }}>Daily Macros</div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{formatDate(date)}</div>
         </div>
       </div>

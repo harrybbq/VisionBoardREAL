@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import CameraScanner from './CameraScanner';
 
 const OFF_API = 'https://world.openfoodfacts.org';
+
+// Detect mobile device (camera tab only shown on mobile)
+const IS_MOBILE = typeof navigator !== 'undefined' &&
+  (/Android|iPhone|iPad/i.test(navigator.userAgent) || ('ontouchstart' in window && navigator.maxTouchPoints > 1));
 
 // Map Open Food Facts nutriments keys → our schema fields
 function mapOffProduct(product) {
@@ -49,13 +54,14 @@ export default function FoodSearch({ onSelectFood, onClose }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mode, setMode] = useState('search'); // 'search' | 'barcode'
+  // mode: 'search' | 'barcode' | 'camera' (camera only available on mobile)
+  const [mode, setMode] = useState('search');
   const debounceRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (mode !== 'camera') inputRef.current?.focus();
+  }, [mode]);
 
   function handleQueryChange(val) {
     setQuery(val);
@@ -91,11 +97,52 @@ export default function FoodSearch({ onSelectFood, onClose }) {
     setLoading(false);
   }
 
+  // Called when CameraScanner detects a barcode
+  async function handleCameraBarcode(code) {
+    setMode('search'); // switch away from camera to show results
+    setLoading(true);
+    setError('');
+    try {
+      const res = await searchByBarcode(code);
+      if (res.length === 0) {
+        setError(`Barcode ${code} not found — add manually.`);
+      } else {
+        setResults(res);
+      }
+    } catch {
+      setError('Barcode lookup failed — check your connection.');
+    }
+    setLoading(false);
+  }
+
+  // Called when CameraScanner returns AI-identified food
+  function handleAIResult(food) {
+    // Pass AI result directly to the food log sheet (as prefill)
+    onSelectFood(food);
+  }
+
+  function handleCameraError(msg) {
+    setError(msg);
+  }
+
+  function switchMode(m) {
+    setMode(m);
+    setQuery('');
+    setResults([]);
+    setError('');
+  }
+
   const inputStyle = {
     flex: 1, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
     background: 'var(--bg-base)', color: 'var(--text)', fontSize: 'var(--text-sm)',
     fontFamily: 'var(--sans)', outline: 'none',
   };
+
+  const tabs = [
+    ['search', '🔍 Name'],
+    ['barcode', '🔢 Barcode'],
+    ...(IS_MOBILE ? [['camera', '📷 Camera']] : []),
+  ];
 
   return (
     <div
@@ -112,74 +159,102 @@ export default function FoodSearch({ onSelectFood, onClose }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '18px', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
         </div>
 
-        {/* Mode toggle */}
+        {/* Mode tabs */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexShrink: 0 }}>
-          {[['search', '🔍 Name'], ['barcode', '🔢 Barcode']].map(([m, label]) => (
-            <button key={m} onClick={() => { setMode(m); setQuery(''); setResults([]); setError(''); }}
+          {tabs.map(([m, label]) => (
+            <button key={m} onClick={() => switchMode(m)}
               style={{ padding: '6px 14px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border)', background: mode === m ? 'var(--em)' : 'transparent', color: mode === m ? '#fff' : 'var(--text-mid)', fontSize: 'var(--text-sm)', cursor: 'pointer', fontFamily: 'var(--sans)' }}>
               {label}
             </button>
           ))}
         </div>
 
-        {/* Search row */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexShrink: 0 }}>
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={e => mode === 'search' ? handleQueryChange(e.target.value) : setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && mode === 'barcode' && handleBarcodeSearch()}
-            style={inputStyle}
-            placeholder={mode === 'search' ? 'e.g. chicken breast, oat milk…' : 'Enter barcode number…'}
-            type={mode === 'barcode' ? 'number' : 'text'}
-          />
-          {mode === 'barcode' && (
-            <button onClick={handleBarcodeSearch} style={{ padding: '10px 16px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--em)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-              Look up
-            </button>
-          )}
-        </div>
-
-        {/* Attribution */}
-        <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginBottom: '10px', flexShrink: 0 }}>
-          Data: Open Food Facts (openfoodfacts.org) — CC BY-SA
-        </div>
-
-        {/* Results */}
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {loading && (
-            <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Searching…</div>
-          )}
-          {!loading && error && (
-            <div style={{ padding: '12px', background: 'rgba(220,38,38,.08)', borderRadius: 'var(--radius-md)', color: '#e05252', fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)' }}>{error}</div>
-          )}
-          {!loading && !error && results.map((item, i) => (
-            <button key={i} onClick={() => onSelectFood(item)}
-              style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', textAlign: 'left', marginBottom: '8px', fontFamily: 'var(--sans)' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.food_name || '—'}</div>
-                {item.brand && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '1px' }}>{item.brand}</div>}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-mid)' }}>{Math.round(item.calories)} kcal</span>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>P {Math.round(item.protein_g)}g</span>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>C {Math.round(item.carbs_g)}g</span>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>F {Math.round(item.fat_g)}g</span>
-                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>per 100g</span>
-                </div>
+        {/* Camera view */}
+        {mode === 'camera' && (
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <CameraScanner
+              onBarcode={handleCameraBarcode}
+              onAIResult={handleAIResult}
+              onError={handleCameraError}
+            />
+            <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+              Point at a barcode to auto-scan, or tap <strong style={{ color: 'var(--text-mid)' }}>Identify Food with AI</strong> to detect what's in frame.
+            </p>
+            {error && (
+              <div style={{ padding: '10px 14px', background: 'rgba(220,38,38,.08)', borderRadius: 'var(--radius-md)', color: '#e05252', fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)' }}>
+                {error}
               </div>
-              <span style={{ color: 'var(--em)', fontSize: '18px', flexShrink: 0, alignSelf: 'center' }}>+</span>
+            )}
+            <button onClick={() => onSelectFood(null)}
+              style={{ marginTop: 'auto', padding: '10px', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)' }}>
+              Enter manually instead
             </button>
-          ))}
-          {!loading && !error && !results.length && query.trim().length >= 2 && mode === 'search' && (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Searching…</div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Enter manually shortcut */}
-        <button onClick={() => onSelectFood(null)}
-          style={{ marginTop: '14px', width: '100%', padding: '10px', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', flexShrink: 0 }}>
-          Enter manually instead
-        </button>
+        {/* Text / barcode search UI */}
+        {mode !== 'camera' && (
+          <>
+            {/* Search row */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexShrink: 0 }}>
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={e => mode === 'search' ? handleQueryChange(e.target.value) : setQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && mode === 'barcode' && handleBarcodeSearch()}
+                style={inputStyle}
+                placeholder={mode === 'search' ? 'e.g. chicken breast, oat milk…' : 'Enter barcode number…'}
+                type={mode === 'barcode' ? 'number' : 'text'}
+              />
+              {mode === 'barcode' && (
+                <button onClick={handleBarcodeSearch} style={{ padding: '10px 16px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--em)', color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  Look up
+                </button>
+              )}
+            </div>
+
+            {/* Attribution */}
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', marginBottom: '10px', flexShrink: 0 }}>
+              Data: Open Food Facts (openfoodfacts.org) — CC BY-SA
+            </div>
+
+            {/* Results */}
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+              {loading && (
+                <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Searching…</div>
+              )}
+              {!loading && error && (
+                <div style={{ padding: '12px', background: 'rgba(220,38,38,.08)', borderRadius: 'var(--radius-md)', color: '#e05252', fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)' }}>{error}</div>
+              )}
+              {!loading && !error && results.map((item, i) => (
+                <button key={i} onClick={() => onSelectFood(item)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', textAlign: 'left', marginBottom: '8px', fontFamily: 'var(--sans)' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.food_name || '—'}</div>
+                    {item.brand && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '1px' }}>{item.brand}</div>}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-mid)' }}>{Math.round(item.calories)} kcal</span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>P {Math.round(item.protein_g)}g</span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>C {Math.round(item.carbs_g)}g</span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>F {Math.round(item.fat_g)}g</span>
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)' }}>per 100g</span>
+                    </div>
+                  </div>
+                  <span style={{ color: 'var(--em)', fontSize: '18px', flexShrink: 0, alignSelf: 'center' }}>+</span>
+                </button>
+              ))}
+              {!loading && !error && !results.length && query.trim().length >= 2 && mode === 'search' && (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontFamily: 'var(--mono)', fontSize: 'var(--text-sm)' }}>Searching…</div>
+              )}
+            </div>
+
+            {/* Enter manually shortcut */}
+            <button onClick={() => onSelectFood(null)}
+              style={{ marginTop: '14px', width: '100%', padding: '10px', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', flexShrink: 0 }}>
+              Enter manually instead
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
