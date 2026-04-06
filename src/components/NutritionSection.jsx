@@ -233,7 +233,7 @@ function AddMacroSheet({ onClose, onSave }) {
 }
 
 // ── Main NutritionSection ────────────────────────────────────────────────
-export default function NutritionSection({ userId, selectedDate, calYear, calMonth, onShowCoinToast, onMonthDataReady }) {
+export default function NutritionSection({ userId, selectedDate, calYear, calMonth, onShowCoinToast, onMonthDataReady, onOpenModal }) {
   const date = selectedDate || getTodayStr();
   const { macros, summary, logEntries, monthSummary, loading, reload, recalcSummary, setMacros, loadMonth } = useNutrition(userId, date);
 
@@ -438,6 +438,7 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
       {showFoodSearch && (
         <FoodSearch
           onClose={() => setShowFoodSearch(false)}
+          onOpenModal={onOpenModal}
           onSelectFood={(prefill) => {
             setShowFoodSearch(false);
             setFoodPrefill(prefill || null);

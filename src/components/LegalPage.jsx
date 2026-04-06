@@ -39,9 +39,11 @@ function PrivacyPolicyContent() {
         <P>We collect only what is necessary to provide the service:</P>
         <Ul items={[
           'Email address — used to create and authenticate your account.',
-          'User-generated content — boards, trackers, achievements, shop wish-list items, holiday plans, habit entries, and notes that you create inside the App. This is stored as encrypted JSON in our database.',
+          'User-generated content — boards, trackers, achievements, shop wish-list items, holiday plans, habit entries, and notes that you create inside the App. This is stored in our database.',
+          'Nutrition data — food log entries and macro goals you record in the App, stored in our database and linked to your account.',
           'Session data — a short-lived session token stored in your browser to keep you signed in.',
           'Preferences — colour scheme and background image choice, stored in your browser\'s localStorage.',
+          'Camera images (Pro users only, optional) — if you use the AI food scanner, a single frame is captured from your device camera and sent to Anthropic\'s API to identify the food. This image is not stored by us or by Anthropic beyond the duration of the API request.',
         ]} />
         <P>We do not collect payment card details, precise location data, biometric data, or any special-category personal data.</P>
       </Section>
@@ -66,7 +68,12 @@ function PrivacyPolicyContent() {
       </Section>
 
       <Section title="6. Third Parties">
-        <P>We use <strong>Supabase</strong> (hosted in the EU) as our database and authentication provider. Supabase processes your email and app data on our behalf under a Data Processing Agreement. No other third-party services receive your personal data.</P>
+        <P>We use the following third-party processors:</P>
+        <Ul items={[
+          'Supabase (EU-hosted) — database and authentication. Processes your email, app data, and nutrition logs under a Data Processing Agreement.',
+          'Anthropic (AI camera scanner, Pro users only) — if you use the AI food identification feature, a camera image is sent to Anthropic\'s API. The image is used solely to identify the food and is not retained. Anthropic\'s privacy policy applies to this processing.',
+          'Open Food Facts (openfoodfacts.org) — food search results are sourced from the Open Food Facts database (CC BY-SA 4.0). No personal data is sent to Open Food Facts; only your search query is included in the API request.',
+        ]} />
         <P>We do not sell, rent, or share your data with advertisers or data brokers.</P>
       </Section>
 
@@ -97,7 +104,7 @@ function PrivacyPolicyContent() {
 
       <Section title="10. Changes to This Policy">
         <P>We will notify registered users of material changes by updating the "Last updated" date below. Continued use of the App after changes constitutes acceptance.</P>
-        <P style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,255,255,.4)' }}>Last updated: April 2025</P>
+        <P style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,255,255,.4)' }}>Last updated: April 2026</P>
       </Section>
 
       <Section title="11. Complaints">
@@ -175,7 +182,7 @@ function TermsContent() {
 
       <Section title="12. Governing Law">
         <P>These terms are governed by the law of England and Wales. Any disputes will be subject to the exclusive jurisdiction of the courts of England and Wales.</P>
-        <P style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,255,255,.4)' }}>Last updated: April 2025</P>
+        <P style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'rgba(255,255,255,.4)' }}>Last updated: April 2026</P>
       </Section>
     </>
   );

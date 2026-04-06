@@ -405,6 +405,7 @@ export default function TrackSection({ S, update, active, onOpenModal, onShowCoi
           calMonth={S.calMonth}
           onShowCoinToast={onShowCoinToast}
           onMonthDataReady={setNutritionMonthData}
+          onOpenModal={onOpenModal}
         />
       )}
     </section>

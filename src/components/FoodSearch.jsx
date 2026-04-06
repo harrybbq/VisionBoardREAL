@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import CameraScanner from './CameraScanner';
+import { useSubscriptionContext } from '../context/SubscriptionContext';
 
 // Detect mobile device (camera tab only shown on mobile)
 const IS_MOBILE = typeof navigator !== 'undefined' &&
@@ -19,12 +20,15 @@ async function searchByName(query) {
   return json.products || [];
 }
 
-export default function FoodSearch({ onSelectFood, onClose }) {
+export default function FoodSearch({ onSelectFood, onClose, onOpenModal }) {
+  const { isPro, isLifetime, loading: subLoading } = useSubscriptionContext();
+  const canUseCamera = IS_MOBILE && (isPro || isLifetime);
+
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // mode: 'search' | 'barcode' | 'camera' (camera only available on mobile)
+  // mode: 'search' | 'barcode' | 'camera' (camera only available on mobile + pro)
   const [mode, setMode] = useState('search');
   const debounceRef = useRef(null);
   const inputRef = useRef(null);
@@ -111,7 +115,7 @@ export default function FoodSearch({ onSelectFood, onClose }) {
   const tabs = [
     ['search', '🔍 Name'],
     ['barcode', '🔢 Barcode'],
-    ...(IS_MOBILE ? [['camera', '📷 Camera']] : []),
+    ...(IS_MOBILE ? [['camera', canUseCamera ? '📷 Camera' : '📷 Camera 🔒']] : []),
   ];
 
   return (
@@ -142,17 +146,34 @@ export default function FoodSearch({ onSelectFood, onClose }) {
         {/* Camera view */}
         {mode === 'camera' && (
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <CameraScanner
-              onBarcode={handleCameraBarcode}
-              onAIResult={handleAIResult}
-              onError={handleCameraError}
-            />
-            <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
-              Point at a barcode to auto-scan, or tap <strong style={{ color: 'var(--text-mid)' }}>Identify Food with AI</strong> to detect what's in frame.
-            </p>
-            {error && (
-              <div style={{ padding: '10px 14px', background: 'rgba(220,38,38,.08)', borderRadius: 'var(--radius-md)', color: '#e05252', fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)' }}>
-                {error}
+            {canUseCamera ? (
+              <>
+                <CameraScanner
+                  onBarcode={handleCameraBarcode}
+                  onAIResult={handleAIResult}
+                  onError={handleCameraError}
+                />
+                <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+                  Point at a barcode to auto-scan, or tap <strong style={{ color: 'var(--text-mid)' }}>Identify Food with AI</strong> to detect what's in frame.
+                </p>
+                {error && (
+                  <div style={{ padding: '10px 14px', background: 'rgba(220,38,38,.08)', borderRadius: 'var(--radius-md)', color: '#e05252', fontSize: 'var(--text-sm)', fontFamily: 'var(--mono)' }}>
+                    {error}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px', padding: '32px 20px', textAlign: 'center' }}>
+                <div style={{ fontSize: '40px' }}>📷</div>
+                <div style={{ fontFamily: 'var(--serif)', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--text)' }}>Camera Scanner</div>
+                <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '260px' }}>
+                  Scan barcodes and identify food with AI. Available on the Pro plan.
+                </div>
+                <button
+                  onClick={() => { onClose(); onOpenModal?.('waitlistModal'); }}
+                  style={{ padding: '11px 28px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--em)', color: '#fff', fontFamily: 'var(--sans)', fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer' }}>
+                  Join the waitlist
+                </button>
               </div>
             )}
             <button onClick={() => onSelectFood(null)}
