@@ -1,52 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 import CameraScanner from './CameraScanner';
 
-const OFF_API = 'https://world.openfoodfacts.org';
-
 // Detect mobile device (camera tab only shown on mobile)
 const IS_MOBILE = typeof navigator !== 'undefined' &&
   (/Android|iPhone|iPad/i.test(navigator.userAgent) || ('ontouchstart' in window && navigator.maxTouchPoints > 1));
 
-// Map Open Food Facts nutriments keys → our schema fields
-function mapOffProduct(product) {
-  const n = product.nutriments || {};
-  const per100 = (key) => parseFloat(n[key + '_100g'] ?? n[key] ?? 0) || 0;
-  return {
-    food_name: product.product_name || product.abbreviated_product_name || '',
-    brand: product.brands || '',
-    barcode: product.code || '',
-    serving_g: parseFloat(product.serving_quantity) || 100,
-    calories:  per100('energy-kcal'),
-    protein_g: per100('proteins'),
-    carbs_g:   per100('carbohydrates'),
-    fat_g:     per100('fat'),
-    fibre_g:   per100('fiber'),
-    sugar_g:   per100('sugars'),
-    sodium_mg: Math.round(per100('sodium') * 1000), // OFF stores sodium in g
-    source: 'openfoodfacts',
-  };
-}
-
 async function searchByBarcode(barcode) {
-  const res = await fetch(`${OFF_API}/api/v0/product/${barcode}.json`);
+  const res = await fetch(`/.netlify/functions/food-search?mode=barcode&q=${encodeURIComponent(barcode)}`);
   const json = await res.json();
-  if (json.status === 1 && json.product) return [mapOffProduct({ ...json.product, code: barcode })];
-  return [];
+  if (!res.ok) throw new Error(json.error || 'Lookup failed');
+  return json.products || [];
 }
 
 async function searchByName(query) {
-  const params = new URLSearchParams({
-    action: 'process',
-    json: '1',
-    search_terms: query,
-    page_size: '12',
-    fields: 'product_name,brands,code,nutriments,serving_quantity',
-  });
-  const res = await fetch(`${OFF_API}/cgi/search.pl?${params}`);
+  const res = await fetch(`/.netlify/functions/food-search?mode=name&q=${encodeURIComponent(query)}`);
   const json = await res.json();
-  return (json.products || [])
-    .filter(p => p.product_name)
-    .map(p => mapOffProduct(p));
+  if (!res.ok) throw new Error(json.error || 'Search failed');
+  return json.products || [];
 }
 
 export default function FoodSearch({ onSelectFood, onClose }) {
