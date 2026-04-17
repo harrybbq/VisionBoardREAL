@@ -1142,38 +1142,25 @@ input,select,textarea,button{touch-action:manipulation;}
   /* ── Show Settings button in profile card on mobile ── */
   .settings-mobile-btn { display: flex !important; }
 
-  /* ── Hub profile card ── */
-  .profile-col{width:100%;}
-
   /* ── Shop grid ── */
   .shop-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
 
   /* ── Spotify bar ── */
   #spotifyBar{left:0!important;right:0;bottom:calc(var(--nav-height) + env(safe-area-inset-bottom));}
-}
 
-/* Hub vertical layout on mobile */
-@media(max-width:768px){
+  /* ── Hub vertical layout ── */
   .hub-layout{flex-direction:column;gap:14px;}
   .profile-col{width:100%;flex-direction:row;align-items:center;gap:12px;}
   .profile-card{width:100%;flex-direction:row;}
-  .hub-links-col{width:100%;}
-  .hub-right-col{width:100%;}
+  .hub-links-col,.hub-right-col{width:100%;}
   .hub-add-row{display:flex;}
-  /* Force widget canvas to stack vertically — disable free-drag on touch */
+  /* Stack widget canvas vertically — disable free-drag on touch */
   #widgetCanvas{
-    position:static!important;
-    display:flex!important;
-    flex-direction:column!important;
-    gap:14px!important;
-    min-height:unset!important;
-    height:auto!important;
+    position:static!important;display:flex!important;flex-direction:column!important;
+    gap:14px!important;min-height:unset!important;height:auto!important;
   }
   #widgetCanvas .widget-wrapper{
-    position:static!important;
-    width:100%!important;
-    max-width:none!important;
-    min-width:0!important;
+    position:static!important;width:100%!important;max-width:none!important;min-width:0!important;
   }
   .widget-drag-handle{display:none!important;}
 }
@@ -1475,144 +1462,78 @@ body{font-size:var(--text-base);line-height:var(--lh-body);}
 .yt-video-date{font-size:var(--text-xs);}
 
 /* ── Mobile minimum: nothing below 11px on screens ── */
+/* ══════════════════════════════════════════════════════════════════════════
+   SECTION 4 — MOBILE LAYOUT OVERHAUL (consolidated @640px block)
+   ═══════════════════════════════════════════════════════════════════════ */
 @media(max-width:640px){
-  /* Enforce readable minimums on very small screens */
+  /* Readable minimums on small screens */
   .ach-label,.cal-day-label,.tracker-type,.holiday-row-label,
   .streak-flame-badge,.step-unit,.yc-lbl,.habit-ms-label,
-  .habit-ms-coins,.nav-tab-label{
-    font-size:11px;
-  }
+  .habit-ms-coins,.nav-tab-label{font-size:11px;}
   .holiday-dest{font-size:var(--text-md);}
   .quick-log-card-name{font-size:var(--text-xs);}
-  .profile-name-input{font-size:15px !important;}
-  .profile-tagline-input{font-size:13px !important;}
-}
 
-/* ══════════════════════════════════════════════════════════════════════════
-   SECTION 4 — MOBILE LAYOUT OVERHAUL
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* ── Modal → Bottom sheet on mobile ── */
-@media(max-width:640px){
-  .modal-overlay{
-    align-items:flex-end;
-  }
+  /* Modal → bottom sheet */
+  .modal-overlay{align-items:flex-end;}
   .modal{
-    width:100%;
-    max-width:100%;
+    width:100%;max-width:100%;
     border-radius:var(--radius-xl) var(--radius-xl) 0 0;
     padding:8px var(--space-4) var(--space-6);
     padding-bottom:calc(var(--space-6) + env(safe-area-inset-bottom));
-    max-height:90dvh;
-    overflow-y:auto;
-    /* Spring slide-up */
+    max-height:90dvh;overflow-y:auto;
     transform:translateY(0);
     animation:sheet-up 320ms cubic-bezier(0.34,1.56,0.64,1) both;
   }
   .modal::before{
-    content:'';
-    display:block;
-    width:32px;height:4px;
-    background:var(--border);
-    border-radius:var(--radius-full);
+    content:'';display:block;width:32px;height:4px;
+    background:var(--border);border-radius:var(--radius-full);
     margin:0 auto var(--space-3);
   }
-}
-@keyframes sheet-up{
-  from{transform:translateY(100%);}
-  to{transform:translateY(0);}
-}
 
-/* ── Hub: horizontal profile card on mobile ── */
-@media(max-width:640px){
-  .profile-card{
-    flex-direction:row;
-    align-items:center;
-    padding:var(--space-3);
-    gap:var(--space-3);
-  }
-  .profile-photo-wrap{
-    width:64px;height:64px;
-    border-radius:var(--radius-md);
-    flex-shrink:0;
-  }
-  .profile-photo{width:64px;height:64px;}
-  .profile-photo-placeholder{width:64px;height:64px;}
-  .profile-info-area{
-    flex:1;
-    padding:0;
-    border-top:none;
-    gap:var(--space-1);
-  }
+  /* Hub: horizontal profile card */
+  .profile-card{flex-direction:row;align-items:center;padding:var(--space-3);gap:var(--space-3);}
+  .profile-photo-wrap{width:64px;height:64px;border-radius:var(--radius-md);flex-shrink:0;}
+  .profile-photo,.profile-photo-placeholder{width:64px;height:64px;}
+  .profile-info-area{flex:1;padding:0;border-top:none;gap:var(--space-1);}
   .profile-name-input{font-size:var(--text-md) !important;font-weight:700;}
   .profile-tagline-input{font-size:var(--text-sm) !important;}
-}
 
-/* ── Track: tracker chips row on mobile (horizontal scroll) ── */
-@media(max-width:640px){
-  .track-layout{
-    flex-direction:column;
-    gap:var(--space-4);
-  }
-  .trackers-panel{
-    overflow-x:auto;
-    padding:var(--space-3);
-  }
+  /* Track: tracker chips row (horizontal scroll) */
+  .track-layout{flex-direction:column;gap:var(--space-4);}
+  .trackers-panel{overflow-x:auto;padding:var(--space-3);}
   #trackersList{
-    display:flex;
-    flex-direction:row;
-    gap:var(--space-2);
-    overflow-x:auto;
-    padding-bottom:var(--space-2);
-    scrollbar-width:none;
+    display:flex;flex-direction:row;gap:var(--space-2);
+    overflow-x:auto;padding-bottom:var(--space-2);scrollbar-width:none;
   }
   #trackersList::-webkit-scrollbar{display:none;}
   .tracker-item{
-    min-width:130px;
-    flex-shrink:0;
+    min-width:130px;flex-shrink:0;
     border-radius:var(--radius-md);
     padding:var(--space-2) var(--space-3);
     background:rgba(255,255,255,.1);
     border:1px solid rgba(255,255,255,.18);
   }
-}
 
-/* ── Quick log: ensure horizontal scroll on very small screens ── */
-@media(max-width:640px){
+  /* Quick log: horizontal scroll */
   .quick-log-cards{
-    display:flex;
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    gap:var(--space-2);
-    padding-bottom:var(--space-2);
+    display:flex;flex-wrap:nowrap;overflow-x:auto;
+    gap:var(--space-2);padding-bottom:var(--space-2);
   }
-  .quick-log-card{
-    min-width:100px;
-    flex-shrink:0;
-  }
-}
+  .quick-log-card{min-width:100px;flex-shrink:0;}
 
-/* ── Hub footer: compact on mobile ── */
-@media(max-width:640px){
-  .hub-footer{
-    left:0 !important;
-    right:0;
-    padding-left:var(--space-4);
-    padding-right:var(--space-4);
-  }
+  /* Hub footer: compact */
+  .hub-footer{left:0 !important;right:0;padding-left:var(--space-4);padding-right:var(--space-4);}
   .year-countdown{gap:var(--space-2);}
   .yc-val{font-size:var(--text-lg);}
-}
 
-/* ── Achievement canvas: full-width scroll on mobile ── */
-@media(max-width:640px){
+  /* Achievement canvas: full-width scroll */
   #achievementsBoardOuter{
-    overflow-x:auto;
-    overflow-y:auto;
+    overflow-x:auto;overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     max-height:calc(100dvh - 180px);
   }
 }
+@keyframes sheet-up{from{transform:translateY(100%);}to{transform:translateY(0);}}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SECTION 5 — MICRO-INTERACTIONS & ANIMATION

@@ -217,37 +217,37 @@ function Board({ userId, userEmail, onSignOut }) {
       <AnimatePresence mode="wait">
         {activeSection === 'hub' && (
           <motion.div key="hub" {...pageMotion}>
-            <HubSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} />
+            <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} />
           </motion.div>
         )}
         {activeSection === 'achievements' && (
           <motion.div key="achievements" {...pageMotion}>
-            <AchievementsSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            <AchievementsSection S={S} update={update} active onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
           </motion.div>
         )}
         {activeSection === 'track' && (
           <motion.div key="track" {...pageMotion}>
-            <TrackSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} userId={userId} />
+            <TrackSection S={S} update={update} active onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} userId={userId} />
           </motion.div>
         )}
         {activeSection === 'shop' && (
           <motion.div key="shop" {...pageMotion}>
-            <ShopSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            <ShopSection S={S} update={update} active onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
           </motion.div>
         )}
         {activeSection === 'holiday' && (
           <motion.div key="holiday" {...pageMotion}>
-            <HolidaySection S={S} update={update} active={true} onOpenModal={handleOpenModal} />
+            <HolidaySection S={S} update={update} active onOpenModal={handleOpenModal} />
           </motion.div>
         )}
         {activeSection === 'habits' && (
           <motion.div key="habits" {...pageMotion}>
-            <HabitsSection S={S} update={update} active={true} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            <HabitsSection S={S} update={update} active onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
           </motion.div>
         )}
         {activeSection === 'settings' && (
           <motion.div key="settings" {...pageMotion}>
-            <SettingsSection S={S} update={update} active={true} userId={userId} onOpenLegal={setLegalPage} />
+            <SettingsSection S={S} update={update} active userId={userId} onOpenLegal={setLegalPage} />
           </motion.div>
         )}
       </AnimatePresence>

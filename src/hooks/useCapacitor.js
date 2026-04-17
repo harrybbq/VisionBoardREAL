@@ -52,7 +52,6 @@ export function useCapacitor({ onPushToken, onPushMessage } = {}) {
         if (needsRequest) {
           const { receive: granted } = await PushNotifications.requestPermissions();
           if (granted !== 'granted') {
-            console.info('Push notification permission denied.');
             return;
           }
         }
@@ -60,7 +59,6 @@ export function useCapacitor({ onPushToken, onPushMessage } = {}) {
         await PushNotifications.register();
 
         const t1 = await PushNotifications.addListener('registration', token => {
-          console.info('Push token:', token.value);
           onPushToken?.(token.value);
         });
 

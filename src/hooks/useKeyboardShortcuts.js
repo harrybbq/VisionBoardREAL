@@ -17,7 +17,7 @@ function isTyping(e) {
  * @param {string}   opts.activeSection   - current active section
  * @param {function} opts.openPalette     - opens command palette
  * @param {function} opts.openShortcuts   - opens shortcut reference modal
- * @param {string|null} opts.openModal    - currently open modal id
+ * @param {string|null} opts.activeModalId - currently open modal id
  * @param {function} opts.closeModal      - close active modal
  */
 export function useKeyboardShortcuts({

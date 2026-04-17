@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { getWeekKey, countWeekLogs, getTodayStr } from '../utils/helpers';
 import { fireGoal, fireStreak7, fireStreak30 } from '../utils/confetti';
@@ -36,10 +36,6 @@ function TrackersList({ trackers, logs, streaks, onDelete, onOpenModal }) {
             const { count, target } = getWeekProgress(logs, t.id, t.weeklyTarget);
             const done = count >= target;
             const pct = Math.min(100, Math.round((count / target) * 100));
-            const dateStr = getTodayStr();
-            const weekKey = getWeekKey(dateStr);
-            const awardKey = 'awarded_' + t.id + '_' + weekKey;
-            const awarded = false; // we don't store these in the main state object easily, simplified
             challengeHtml = (
               <div style={{ marginTop: '6px', padding: '6px 8px', background: done ? 'rgba(200,151,10,.12)' : 'rgba(255,255,255,.5)', border: `1px solid ${done ? 'rgba(200,151,10,.3)' : 'var(--border-lt)'}`, borderRadius: '7px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
