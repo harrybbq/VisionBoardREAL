@@ -21,7 +21,7 @@ async function searchByName(query) {
 }
 
 export default function FoodSearch({ onSelectFood, onClose, onOpenModal }) {
-  const { isPro, isLifetime, loading: subLoading } = useSubscriptionContext();
+  const { isPro, isLifetime } = useSubscriptionContext();
   const canUseCamera = IS_MOBILE && (isPro || isLifetime);
 
   const [query, setQuery] = useState('');

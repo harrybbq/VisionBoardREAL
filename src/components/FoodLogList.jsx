@@ -73,7 +73,7 @@ function MealGroup({ mealType, entries, onDeleteEntry }) {
   );
 }
 
-export default function FoodLogList({ logEntries, onDeleteEntry, onAddFood, date }) {
+export default function FoodLogList({ logEntries, onDeleteEntry, onAddFood }) {
   if (!logEntries || logEntries.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '20px 0 8px' }}>

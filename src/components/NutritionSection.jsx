@@ -40,11 +40,9 @@ function MacroBar({ macro, consumed, isCal, index, onMenuClick }) {
   const pct = Math.min(100, (consumed / goal) * 100);
   const over = consumed > goal;
   const [animated, setAnimated] = useState(0);
-  const mounted = useRef(false);
 
   useEffect(() => {
     const t = setTimeout(() => setAnimated(pct), 60 + index * 60);
-    if (!mounted.current) mounted.current = true;
     return () => clearTimeout(t);
   }, [pct, index]);
 
@@ -235,7 +233,7 @@ function AddMacroSheet({ onClose, onSave }) {
 // ── Main NutritionSection ────────────────────────────────────────────────
 export default function NutritionSection({ userId, selectedDate, calYear, calMonth, onShowCoinToast, onMonthDataReady, onOpenModal }) {
   const date = selectedDate || getTodayStr();
-  const { macros, summary, logEntries, monthSummary, loading, reload, recalcSummary, setMacros, loadMonth } = useNutrition(userId, date);
+  const { macros, summary, logEntries, monthSummary, loading, reload, recalcSummary, loadMonth } = useNutrition(userId, date);
 
   const [menuMacro, setMenuMacro] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -365,7 +363,7 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
                       onEdit={() => { setEditingId(calMacro.id); setMenuMacro(null); }}
                       onMoveUp={() => handleMove(calMacro, -1)} onMoveDown={() => handleMove(calMacro, 1)}
                       onDelete={() => handleDeleteMacro(calMacro)}
-                      isFirst={true} isLast={otherMacros.length === 0} />
+                      isFirst isLast={otherMacros.length === 0} />
                   )}
                 </div>
               )
@@ -383,7 +381,7 @@ export default function NutritionSection({ userId, selectedDate, calYear, calMon
                 ? <InlineEdit macro={macro} onSave={d => handleSaveMacro(macro.id, d)} onCancel={() => setEditingId(null)} />
                 : (
                   <>
-                    <MacroBar macro={macro} consumed={consumed} isCal={false} index={i + 1} onMenuClick={m => setMenuMacro(menuMacro?.id === m.id ? null : m)} />
+                    <MacroBar macro={macro} consumed={consumed} index={i + 1} onMenuClick={m => setMenuMacro(menuMacro?.id === m.id ? null : m)} />
                     {menuMacro?.id === macro.id && (
                       <MacroMenu macro={macro} onClose={() => setMenuMacro(null)}
                         onEdit={() => { setEditingId(macro.id); setMenuMacro(null); }}

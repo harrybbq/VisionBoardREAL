@@ -15,7 +15,7 @@ async function fetchGitHub(username, cache) {
     const user = await userRes.json();
     const repos = await reposRes.json();
     return { user, repos: Array.isArray(repos) ? repos : [] };
-  } catch (e) { return null; }
+  } catch { return null; }
 }
 
 // ── YouTube helpers ──
@@ -26,7 +26,7 @@ async function resolveChannelId(handle, apiKey) {
     const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=${encodeURIComponent('@' + h)}&key=${apiKey}`);
     const d = await r.json();
     if (d.items?.[0]) return { id: d.items[0].id, resolvedName: d.items[0].snippet.title, thumb: d.items[0].snippet.thumbnails?.default?.url };
-  } catch (e) { /* fallthrough */ }
+  } catch { /* fallthrough */ }
   const r2 = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(h)}&maxResults=1&key=${apiKey}`);
   const d2 = await r2.json();
   if (d2.error) throw new Error(d2.error.message);
@@ -138,7 +138,6 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
 // ── Widget Canvas (imperative DOM approach) ──
 export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast }) {
   const canvasRef = useRef(null);
-  const renderedRef = useRef(false);
   const makeDraggable = useWidgetDrag(canvasRef, S, update);
 
   function handleUploadPhoto(e) {
@@ -153,7 +152,6 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
 
   function handleSortWidgets() {
     update(prev => ({ ...prev, widgetPositions: {}, notepadPos: null }));
-    // DOM reset will happen on next render
   }
 
   // Render all widgets imperatively into the canvas
@@ -407,7 +405,7 @@ async function loadYouTubeFeed(yt) {
             pubRelative: timeAgo(new Date(v.snippet.publishedAt)),
           });
         });
-      } catch (e) { /* skip */ }
+      } catch { /* skip */ }
     }));
 
     allVideos.sort((a, b) => b.published - a.published);

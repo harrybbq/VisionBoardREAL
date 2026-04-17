@@ -322,7 +322,7 @@ function AddShopModal({ openId, onClose, onAdd }) {
       } else {
         setStatus('Could not extract info — fill in manually');
       }
-    } catch (e) {
+    } catch {
       setStatus('Auto-fill unavailable — fill in manually');
     }
     setFetching(false);
