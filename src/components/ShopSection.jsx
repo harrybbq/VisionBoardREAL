@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { firePurchase } from '../utils/confetti';
 import SectionHelp from './SectionHelp';
