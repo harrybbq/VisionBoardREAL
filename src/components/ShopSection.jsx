@@ -7,7 +7,7 @@ const PRIORITY_CLASS = { high: 'priority-high', med: 'priority-med', low: 'prior
 
 let _dragItemId = null;
 
-function ShopCard({ item, coins, onToggleBought, onDelete, onShowCoinToast, revealDelay }) {
+function ShopCard({ item, coins, onToggleBought, onDelete, revealDelay }) {
   const hasLink = !!item.url;
   const canAfford = (coins || 0) >= item.coinCost || item.bought;
 
@@ -71,7 +71,7 @@ function ShopCard({ item, coins, onToggleBought, onDelete, onShowCoinToast, reve
   );
 }
 
-function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onShowCoinToast, onDrop }) {
+function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onDrop }) {
   const handleDragEnter = e => {
     e.preventDefault();
     e.currentTarget._enterCount = (e.currentTarget._enterCount || 0) + 1;
@@ -121,7 +121,6 @@ function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onSh
             onToggleBought={onToggleBought}
             onDelete={onDeleteItem}
             revealDelay={index * 0.06}
-            onShowCoinToast={onShowCoinToast}
           />
         ))}
       </div>
@@ -258,7 +257,6 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
                   coins={coins}
                   onToggleBought={handleToggleBought}
                   onDeleteItem={handleDeleteItem}
-                  onShowCoinToast={onShowCoinToast}
                   onDrop={handleDrop}
                 />
               </div>
@@ -276,7 +274,6 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
                     coins={coins}
                     onToggleBought={handleToggleBought}
                     onDeleteItem={handleDeleteItem}
-                    onShowCoinToast={onShowCoinToast}
                     onDrop={handleDrop}
                   />
                 </div>
@@ -302,7 +299,6 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
                       coins={coins}
                       onToggleBought={handleToggleBought}
                       onDelete={handleDeleteItem}
-                      onShowCoinToast={onShowCoinToast}
                       revealDelay={index * 0.06}
                     />
                   ))}
