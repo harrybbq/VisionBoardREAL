@@ -16,7 +16,7 @@ function formatElapsed(ms) {
   return `${s}s`;
 }
 
-function HabitCard({ habit, update, onShowCoinToast }) {
+function HabitCard({ habit, update, onShowCoinToast, onOpenModal }) {
   const [now, setNow] = useState(Date.now());
   const pendingAwards = useRef(new Set());
 
@@ -72,21 +72,11 @@ function HabitCard({ habit, update, onShowCoinToast }) {
   const fillColor = allDone ? 'var(--gold)' : habit.color;
 
   function handleRelapse() {
-    if (!window.confirm(`Log a relapse for "${habit.name}"? This will reset your streak.`)) return;
-    update(prev => ({
-      ...prev,
-      habits: prev.habits.map(h => h.id !== habit.id ? h : {
-        ...h,
-        startTime: Date.now(),
-        relapseCount: (h.relapseCount || 0) + 1,
-        milestones: h.milestones.map(m => ({ ...m, awarded: false })),
-      }),
-    }));
+    onOpenModal('relapseModal:' + habit.id);
   }
 
-  function handleDelete() {
-    if (!window.confirm(`Delete "${habit.name}"?`)) return;
-    update(prev => ({ ...prev, habits: prev.habits.filter(h => h.id !== habit.id) }));
+  function handleEdit() {
+    onOpenModal('editHabitModal:' + habit.id);
   }
 
   return (
@@ -96,7 +86,7 @@ function HabitCard({ habit, update, onShowCoinToast }) {
           <div className="habit-name">{habit.name}</div>
           {habit.endless && <span className="habit-endless-badge">∞</span>}
         </div>
-        <button className="habit-del-btn" onClick={handleDelete} title="Delete habit">✕</button>
+        <button className="habit-edit-btn" onClick={handleEdit} title="Edit habit">✎</button>
       </div>
 
       <div className="habit-bar-area">
@@ -186,6 +176,7 @@ export default function HabitsSection({ S, update, active, onOpenModal, onShowCo
                 habit={habit}
                 update={update}
                 onShowCoinToast={onShowCoinToast}
+                onOpenModal={onOpenModal}
               />
             </motion.div>
           ))}
