@@ -627,6 +627,224 @@ function AddHabitModal({ openId, onClose, onAdd }) {
   );
 }
 
+// ── Edit Habit ──
+function EditHabitModal({ openId, onClose, habits, onEdit, onDelete }) {
+  // openId format: 'editHabitModal:${id}'
+  const isOpen = typeof openId === 'string' && openId.startsWith('editHabitModal:');
+  const habitId = isOpen ? openId.split(':')[1] : null;
+  const habit = habitId ? (habits || []).find(h => h.id === habitId) : null;
+
+  const emptyMs = () => ({ _id: 'ms' + Date.now() + Math.random(), _existingId: null, amount: '1', unit: 'weeks', coins: '' });
+  const [form, setForm] = useState({ name: '', color: '#1a7a4a', endless: false, milestones: [emptyMs()] });
+
+  // Convert a stored milestone back into form shape (best-effort unit detection)
+  function msFromStored(m) {
+    const ms = m.duration;
+    const units = [
+      { k: 'months', v: 2592000000 },
+      { k: 'weeks',  v: 604800000  },
+      { k: 'days',   v: 86400000   },
+      { k: 'hours',  v: 3600000    },
+    ];
+    for (const u of units) {
+      if (ms % u.v === 0) return { unit: u.k, amount: String(ms / u.v) };
+    }
+    return { unit: 'days', amount: String(Math.max(1, Math.round(ms / 86400000))) };
+  }
+
+  // Sync form when habit changes
+  useEffect(() => {
+    if (habit) {
+      setForm({
+        name: habit.name || '',
+        color: habit.color || '#1a7a4a',
+        endless: !!habit.endless,
+        milestones: (habit.milestones || []).length
+          ? habit.milestones.map(m => {
+              const parsed = msFromStored(m);
+              return { _id: m.id, _existingId: m.id, amount: parsed.amount, unit: parsed.unit, coins: String(m.coins) };
+            })
+          : [emptyMs()],
+      });
+    }
+  }, [habitId]);
+
+  function toDuration(amount, unit) {
+    const mul = { hours: 3600000, days: 86400000, weeks: 604800000, months: 2592000000 };
+    return parseInt(amount) * (mul[unit] || mul.days);
+  }
+  function msLabel(amount, unit) {
+    const n = parseInt(amount);
+    const s = { hours: 'hour', days: 'day', weeks: 'week', months: 'month' };
+    return `${n} ${n === 1 ? s[unit] : unit}`;
+  }
+  function updateMs(_id, key, val) {
+    setForm(f => ({ ...f, milestones: f.milestones.map(m => m._id === _id ? { ...m, [key]: val } : m) }));
+  }
+  function removeMs(_id) {
+    setForm(f => ({ ...f, milestones: f.milestones.filter(m => m._id !== _id) }));
+  }
+
+  function submit() {
+    if (!form.name.trim() || !habitId) return;
+    // Preserve awarded status for existing milestones (match by _existingId)
+    const existingAwarded = new Map((habit?.milestones || []).map(m => [m.id, m.awarded]));
+    const milestones = form.milestones
+      .filter(m => m.amount && m.coins && parseInt(m.coins) > 0)
+      .map((m, i) => ({
+        id: m._existingId || 'm' + Date.now() + i,
+        duration: toDuration(parseInt(m.amount), m.unit),
+        coins: parseInt(m.coins),
+        label: msLabel(parseInt(m.amount), m.unit),
+        awarded: existingAwarded.get(m._existingId) ?? false,
+      }))
+      .sort((a, b) => a.duration - b.duration);
+    onEdit(habitId, {
+      name: form.name.trim(),
+      color: form.color,
+      endless: form.endless,
+      milestones,
+    });
+    onClose(openId);
+  }
+
+  function handleDelete() {
+    if (!habitId) return;
+    if (!window.confirm('Delete this habit? This cannot be undone.')) return;
+    onDelete(habitId);
+    onClose(openId);
+  }
+
+  return (
+    <div
+      className={`modal-overlay${isOpen ? ' open' : ''}`}
+      onClick={e => { if (e.target === e.currentTarget) onClose(openId); }}
+    >
+      <div className="modal" style={{ maxWidth: '460px' }}>
+        <h3>Edit Habit</h3>
+        <div className="fg"><label>Habit Name</label><input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+        <div className="fg"><label>Colour</label><input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))} /></div>
+
+        <div style={{ borderTop: '1px solid var(--border-lt)', margin: '14px 0' }}></div>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--em-mid)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>⬡ Reward Milestones</div>
+
+        {form.milestones.map((m, i) => (
+          <div key={m._id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', marginBottom: '10px' }}>
+            <div className="fg" style={{ flex: '0 0 54px', marginBottom: 0 }}>
+              {i === 0 && <label style={{ fontSize: '9px' }}>After</label>}
+              <input type="number" min="1" value={m.amount} onChange={e => updateMs(m._id, 'amount', e.target.value)} style={{ textAlign: 'center' }} />
+            </div>
+            <div className="fg" style={{ flex: 1, marginBottom: 0 }}>
+              {i === 0 && <label style={{ fontSize: '9px' }}>Unit</label>}
+              <select value={m.unit} onChange={e => updateMs(m._id, 'unit', e.target.value)}>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+                <option value="weeks">Weeks</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+            <div className="fg" style={{ flex: '0 0 72px', marginBottom: 0 }}>
+              {i === 0 && <label style={{ fontSize: '9px' }}>⬡ Coins</label>}
+              <input type="number" min="1" value={m.coins} onChange={e => updateMs(m._id, 'coins', e.target.value)} />
+            </div>
+            <button
+              onClick={() => removeMs(m._id)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', padding: '8px 4px', flexShrink: 0, lineHeight: 1, marginBottom: '1px' }}
+            >✕</button>
+          </div>
+        ))}
+        <button className="btn btn-ghost btn-sm" onClick={() => setForm(f => ({ ...f, milestones: [...f.milestones, emptyMs()] }))} style={{ marginBottom: '14px', fontSize: '12px' }}>
+          + Add Milestone
+        </button>
+
+        <div style={{ borderTop: '1px solid var(--border-lt)', margin: '4px 0 14px' }}></div>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={form.endless} onChange={e => setForm(f => ({ ...f, endless: e.target.checked }))} style={{ marginTop: '3px', accentColor: 'var(--em)', flexShrink: 0 }} />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text)' }}>∞ Endless</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Track this habit forever — the counter never ends, even after all milestones are earned</div>
+          </div>
+        </label>
+
+        <div className="modal-actions" style={{ marginTop: '18px', justifyContent: 'space-between' }}>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={handleDelete}
+            style={{ marginRight: 'auto' }}
+          >Delete Habit</button>
+          <button className="btn btn-ghost" onClick={() => onClose(openId)}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Relapse (back-date support) ──
+function RelapseModal({ openId, onClose, habits, onRelapse }) {
+  // openId format: 'relapseModal:${id}'
+  const isOpen = typeof openId === 'string' && openId.startsWith('relapseModal:');
+  const habitId = isOpen ? openId.split(':')[1] : null;
+  const habit = habitId ? (habits || []).find(h => h.id === habitId) : null;
+
+  // Local datetime input needs 'YYYY-MM-DDTHH:MM' in local tz
+  function toLocalInput(d) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  const [when, setWhen] = useState(() => toLocalInput(new Date()));
+  const [error, setError] = useState('');
+
+  // Reset input to "now" each time the modal opens for a different habit
+  useEffect(() => {
+    if (isOpen) {
+      setWhen(toLocalInput(new Date()));
+      setError('');
+    }
+  }, [habitId, isOpen]);
+
+  function submit() {
+    if (!habitId) return;
+    const ts = new Date(when).getTime();
+    if (isNaN(ts)) { setError('Please pick a valid time.'); return; }
+    const now = Date.now();
+    if (ts > now) { setError('Relapse time can’t be in the future.'); return; }
+    onRelapse(habitId, ts);
+    onClose(openId);
+  }
+
+  const maxInput = toLocalInput(new Date()); // disables future in supporting browsers
+
+  return (
+    <div
+      className={`modal-overlay${isOpen ? ' open' : ''}`}
+      onClick={e => { if (e.target === e.currentTarget) onClose(openId); }}
+    >
+      <div className="modal" style={{ maxWidth: '420px' }}>
+        <h3>Log Relapse{habit ? ` — ${habit.name}` : ''}</h3>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.5 }}>
+          Pick when the relapse actually happened. Your streak restarts from that moment, so if you already spent time clean since then, it counts.
+        </p>
+        <div className="fg">
+          <label>When did it happen?</label>
+          <input
+            type="datetime-local"
+            value={when}
+            max={maxInput}
+            onChange={e => { setWhen(e.target.value); setError(''); }}
+          />
+        </div>
+        {error && <div style={{ fontSize: '12px', color: '#b92020', marginTop: '-6px', marginBottom: '8px' }}>{error}</div>}
+        <div className="modal-actions" style={{ marginTop: '18px' }}>
+          <button className="btn btn-ghost" onClick={() => onClose(openId)}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Log Relapse</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Waitlist ──
 function WaitlistModal({ openId, onClose, userId, userEmail }) {
   const [email, setEmail] = useState(userEmail || '');
@@ -785,6 +1003,26 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
   function handleAddHabit(habit) {
     update(prev => ({ ...prev, habits: [...(prev.habits || []), habit] }));
   }
+  function handleEditHabit(id, data) {
+    update(prev => ({
+      ...prev,
+      habits: (prev.habits || []).map(h => h.id === id ? { ...h, ...data } : h),
+    }));
+  }
+  function handleDeleteHabit(id) {
+    update(prev => ({ ...prev, habits: (prev.habits || []).filter(h => h.id !== id) }));
+  }
+  function handleRelapseHabit(id, whenTs) {
+    update(prev => ({
+      ...prev,
+      habits: (prev.habits || []).map(h => h.id !== id ? h : {
+        ...h,
+        startTime: whenTs,
+        relapseCount: (h.relapseCount || 0) + 1,
+        milestones: (h.milestones || []).map(m => ({ ...m, awarded: false })),
+      }),
+    }));
+  }
 
   // Determine effective openId — _multiLogOpen overrides
   // editHolidayModal uses a compound id (editHolidayModal:id) so check for prefix
@@ -815,6 +1053,8 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       <AddHolidayModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddHoliday} />
       <EditHolidayModal openId={effectiveOpen} onClose={onClose} holidays={S.holidays} onEdit={handleEditHoliday} onDelete={handleDeleteHoliday} />
       <AddHabitModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddHabit} />
+      <EditHabitModal openId={effectiveOpen} onClose={onClose} habits={S.habits} onEdit={handleEditHabit} onDelete={handleDeleteHabit} />
+      <RelapseModal openId={effectiveOpen} onClose={onClose} habits={S.habits} onRelapse={handleRelapseHabit} />
       <WaitlistModal openId={effectiveOpen} onClose={onClose} userId={userId} userEmail={userEmail} />
     </>
   );

@@ -598,6 +598,8 @@ nav:hover .nav-tab-label{opacity:1;}
 .habit-name{font-family:var(--display);font-size:15px;font-weight:700;color:var(--text);line-height:1.2;}
 .habit-del-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;line-height:1;transition:color .15s;flex-shrink:0;}
 .habit-del-btn:hover{color:#c84040;}
+.habit-edit-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;line-height:1;transition:color .15s;flex-shrink:0;}
+.habit-edit-btn:hover{color:var(--em);}
 .habit-endless-badge{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--em);background:var(--em-ghost);border:1px solid var(--em-pale);padding:1px 6px;border-radius:100px;flex-shrink:0;line-height:1.4;}
 /* Bar area: track on left, milestone labels on right */
 .habit-bar-area{position:relative;height:200px;}
