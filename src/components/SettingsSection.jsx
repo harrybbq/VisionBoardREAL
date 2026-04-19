@@ -66,11 +66,24 @@ export function applyScheme(scheme) {
   r.style.setProperty('--grad', scheme.grad);
 }
 
+// Optional Dark OS panels users can toggle on/off from settings.
+// This list is the source of truth — adding a panel here and gating
+// its render in HubOsLayout on S.hubPanels[id] is all that's needed.
+export const OPTIONAL_PANELS = [
+  {
+    id: 'cardio',
+    name: 'Cardio calculator',
+    tagline: 'MET-based kcal burn · logs to cardioLogs',
+  },
+];
+
 export default function SettingsSection({ S, update, active, userId, onOpenLegal }) {
   const [deleting, setDeleting] = useState(false);
   const currentScheme = S.colorScheme || 'green';
   const currentTheme = S.theme || 'cream';
   const { isPro } = useSubscriptionContext();
+  const hubPanels = S.hubPanels || {};
+  const darkOsActive = currentTheme === 'dark-os' && isPro;
 
   function handleThemeChange(themeId) {
     const t = THEMES.find(x => x.id === themeId);
@@ -79,6 +92,13 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
     if (t.pro && !isPro) return;
     applyTheme(themeId, { isPro });
     update(prev => ({ ...prev, theme: themeId }));
+  }
+
+  function handleTogglePanel(panelId) {
+    update(prev => ({
+      ...prev,
+      hubPanels: { ...(prev.hubPanels || {}), [panelId]: !prev.hubPanels?.[panelId] },
+    }));
   }
 
   function handleExportData() {
@@ -250,6 +270,54 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             </p>
           )}
         </div>
+
+        {/* Dark OS optional panels (visible only when Dark OS is active) */}
+        {darkOsActive && (
+          <div className="card" style={{ padding: '22px' }}>
+            <h3 style={{ margin: '0 0 4px' }}>Dark OS panels</h3>
+            <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 18px', letterSpacing: '0.5px' }}>
+              Optional add-ons for your control panel. Toggle on what you want to see in the hub.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {OPTIONAL_PANELS.map(p => {
+                const on = !!hubPanels[p.id];
+                return (
+                  <label
+                    key={p.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '14px',
+                      padding: '12px 14px', borderRadius: '10px',
+                      border: on ? '2px solid var(--em)' : '2px solid var(--border)',
+                      background: on ? 'rgba(var(--em-rgb),0.08)' : 'var(--card, rgba(255,255,255,0.04))',
+                      cursor: 'pointer', transition: 'all .18s',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => handleTogglePanel(p.id)}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--em)', cursor: 'pointer' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: 'var(--sans)', fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
+                        {p.name}
+                      </div>
+                      <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.5px', marginTop: '2px' }}>
+                        {p.tagline}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '1.4px',
+                      textTransform: 'uppercase', color: on ? 'var(--em)' : 'var(--text-muted)',
+                    }}>
+                      {on ? 'On' : 'Off'}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Data & Privacy */}
         <div className="card" style={{ padding: '22px' }}>

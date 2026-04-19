@@ -288,6 +288,149 @@ export function OsCoachPanel({ S, update, onOpenWaitlist, onCoachAct }) {
   );
 }
 
+// ── Panel: Cardio (kcal burned, MET-based) ────────────────────────────────
+// Optional Pro add-on. Wire via S.hubPanels.cardio === true.
+// Formula:  kcal = MET × weight_kg × hours
+// MET values from the 2011 Compendium of Physical Activities (Ainsworth).
+// These are good enough for a self-tracker — not a medical calc.
+const CARDIO_ACTIVITIES = [
+  { id: 'walk-slow',   name: 'Walking · 2.5 mph',          met: 3.0  },
+  { id: 'walk-brisk',  name: 'Walking · 4 mph (brisk)',    met: 5.0  },
+  { id: 'run-jog',     name: 'Jogging · 5 mph',            met: 8.3  },
+  { id: 'run-6',       name: 'Running · 6 mph',            met: 9.8  },
+  { id: 'run-7',       name: 'Running · 7 mph',            met: 11.0 },
+  { id: 'run-8',       name: 'Running · 8 mph',            met: 11.8 },
+  { id: 'cycle-light', name: 'Cycling · leisure',          met: 4.0  },
+  { id: 'cycle-mod',   name: 'Cycling · moderate',         met: 8.0  },
+  { id: 'cycle-vig',   name: 'Cycling · vigorous',         met: 10.0 },
+  { id: 'swim',        name: 'Swimming · moderate',        met: 8.3  },
+  { id: 'row',         name: 'Rowing · moderate',          met: 7.0  },
+  { id: 'elliptical',  name: 'Elliptical · moderate',      met: 5.0  },
+  { id: 'hiit',        name: 'HIIT',                        met: 10.0 },
+  { id: 'weights',     name: 'Weight training · vigorous', met: 6.0  },
+  { id: 'yoga',        name: 'Yoga · hatha',                met: 2.5  },
+  { id: 'jump-rope',   name: 'Jump rope · moderate',        met: 11.8 },
+];
+
+function calcKcal(metOrCustom, weightKg, minutes) {
+  if (!weightKg || !minutes) return 0;
+  const hours = minutes / 60;
+  return Math.round(metOrCustom * weightKg * hours);
+}
+
+export function OsCardioPanel({ profile = {}, onSaveWeight, onLogBurn }) {
+  const [activityId, setActivityId] = useState('run-6');
+  const [minutes, setMinutes] = useState(30);
+  const [justLogged, setJustLogged] = useState(false);
+  const [weightDraft, setWeightDraft] = useState(profile.weightKg || '');
+
+  const activity = CARDIO_ACTIVITIES.find(a => a.id === activityId) || CARDIO_ACTIVITIES[0];
+  const weightKg = Number(profile.weightKg) || 0;
+  const kcal = calcKcal(activity.met, weightKg, Number(minutes) || 0);
+
+  function handleWeightBlur() {
+    const w = Number(weightDraft);
+    if (!Number.isFinite(w) || w <= 0) return;
+    onSaveWeight(w);
+  }
+
+  function handleLog() {
+    if (!kcal) return;
+    onLogBurn({
+      id: `burn-${Date.now()}`,
+      activityId: activity.id,
+      activityName: activity.name,
+      met: activity.met,
+      minutes: Number(minutes),
+      weightKg,
+      kcal,
+      ts: Date.now(),
+    });
+    setJustLogged(true);
+    setTimeout(() => setJustLogged(false), 1800);
+  }
+
+  const needsWeight = !weightKg;
+
+  return (
+    <OsPanel label="Cardio" right={kcal ? `${kcal} kcal` : 'Calc'} innerPadding={false}>
+      <div className="os-cardio">
+        {/* Weight row */}
+        <div className="os-cardio-row">
+          <label className="os-cardio-label">Weight</label>
+          <div className="os-cardio-weight">
+            <input
+              type="number"
+              className="os-cardio-input"
+              inputMode="decimal"
+              min="20"
+              max="300"
+              step="0.1"
+              placeholder="e.g. 78"
+              value={weightDraft}
+              onChange={e => setWeightDraft(e.target.value)}
+              onBlur={handleWeightBlur}
+            />
+            <span className="os-cardio-unit">kg</span>
+          </div>
+        </div>
+
+        {/* Activity row */}
+        <div className="os-cardio-row">
+          <label className="os-cardio-label">Activity</label>
+          <select
+            className="os-cardio-select"
+            value={activityId}
+            onChange={e => setActivityId(e.target.value)}
+          >
+            {CARDIO_ACTIVITIES.map(a => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Duration row */}
+        <div className="os-cardio-row">
+          <label className="os-cardio-label">Duration</label>
+          <div className="os-cardio-weight">
+            <input
+              type="number"
+              className="os-cardio-input"
+              inputMode="numeric"
+              min="1"
+              max="600"
+              step="1"
+              value={minutes}
+              onChange={e => setMinutes(e.target.value)}
+            />
+            <span className="os-cardio-unit">min</span>
+          </div>
+        </div>
+
+        {/* Result + Log button */}
+        <div className="os-cardio-result">
+          <div className="os-cardio-kcal">
+            <span className="os-cardio-kcal-val">{kcal.toLocaleString()}</span>
+            <span className="os-cardio-kcal-unit">kcal</span>
+          </div>
+          <div className="os-cardio-sub">
+            {needsWeight
+              ? 'Enter weight to calculate'
+              : `MET ${activity.met} · ${minutes || 0} min · ${weightKg} kg`}
+          </div>
+          <button
+            className="os-cardio-log-btn"
+            onClick={handleLog}
+            disabled={!kcal || justLogged}
+          >
+            {justLogged ? '✓ Logged' : '＋ Log burn'}
+          </button>
+        </div>
+      </div>
+    </OsPanel>
+  );
+}
+
 // ── Panel: Activity strip ─────────────────────────────────────────────────
 export function OsActivityPanel({ S }) {
   const latestCoins = (S.coinHistory || []).slice(-3).reverse();
@@ -372,12 +515,22 @@ export default function HubOsLayout({
         {/* Middle: imperative widgets canvas */}
         <OsWidgetsPanel canvasRef={canvasRef} />
 
-        {/* Right col: habits mini, quicklog, ai coach */}
+        {/* Right col: habits mini, quicklog, ai coach, optional cardio */}
         <div className="os-col">
           <OsHabitsPanel habits={S.habits} />
           <OsQuickLogPanel S={S} update={update}
             onNavigateTrack={onNavigateTrack}
             onShowCoinToast={onShowCoinToast} />
+          {S.hubPanels?.cardio && (
+            <OsCardioPanel
+              profile={S.profile || {}}
+              onSaveWeight={w => update(prev => ({ ...prev, profile: { ...prev.profile, weightKg: w } }))}
+              onLogBurn={entry => update(prev => ({
+                ...prev,
+                cardioLogs: [...(prev.cardioLogs || []), entry].slice(-200),
+              }))}
+            />
+          )}
           <OsCoachPanel S={S} update={update}
             onOpenWaitlist={onOpenWaitlist}
             onCoachAct={onCoachAct} />
