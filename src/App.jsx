@@ -15,7 +15,8 @@ import ShopSection from './components/ShopSection';
 import HolidaySection from './components/HolidaySection';
 import HabitsSection from './components/HabitsSection';
 import SettingsSection from './components/SettingsSection';
-import { SCHEMES, applyScheme } from './components/SettingsSection';
+import { SCHEMES, applyScheme, applyTheme } from './components/SettingsSection';
+import { useSubscriptionContext } from './context/SubscriptionContext';
 import Modals from './components/Modals';
 import PaywallModal from './components/PaywallModal';
 import HubFooter from './components/HubFooter';
@@ -57,6 +58,7 @@ const MODAL_CAPS = {
 function Board({ userId, userEmail, onSignOut }) {
   const { S, update, loading, justMigrated, dismissMigrationBanner } = useVisionBoardState(userId);
   const { atLimit } = useTierLimits();
+  const { isPro } = useSubscriptionContext();
   const [activeSection, setActiveSection] = useState('hub');
   const [openModal, setOpenModal] = useState(null);
   const [coinToast, setCoinToast] = useState({ message: '', type: '', visible: false });
@@ -83,6 +85,13 @@ function Board({ userId, userEmail, onSignOut }) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.colorScheme]);
+
+  // Apply stored theme — Pro-gated. If isPro flips false we auto-revert
+  // to cream via applyTheme's internal guard, so a lapsed subscriber
+  // never gets stranded on the Pro-only surface.
+  useEffect(() => {
+    applyTheme(S.theme || 'cream', { isPro });
+  }, [S.theme, isPro]);
 
   function showCoinToast(msg, isEarn, duration) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');

@@ -4,6 +4,8 @@ import { adjustColour, timeAgo } from '../utils/helpers';
 import AiCoachWidget from './AiCoachWidget';
 import CoachBriefPanel from './CoachBriefPanel';
 import QuickLog from './QuickLog';
+import HubOsLayout from './HubOsLayout';
+import { useSubscriptionContext } from '../context/SubscriptionContext';
 
 // ── GitHub helpers ──
 async function fetchGitHub(username, cache) {
@@ -140,6 +142,10 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
 export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast, onCoachAct }) {
   const canvasRef = useRef(null);
   const makeDraggable = useWidgetDrag(canvasRef, S, update);
+  const { isPro } = useSubscriptionContext();
+  // Pro-gated: dark-os theme requires Pro. Free users fall back to cream
+  // even if S.theme somehow = 'dark-os' (e.g. after a tier downgrade).
+  const isDarkOs = isPro && S.theme === 'dark-os';
 
   function handleUploadPhoto(e) {
     const file = e.target.files[0];
@@ -281,8 +287,30 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
 
   useEffect(() => {
     if (active) renderCanvas();
-  }, [active, renderCanvas]);
+  }, [active, renderCanvas, isDarkOs]);
 
+  // ── Dark OS layout (Pro only) ─────────────────────────────────────────
+  if (isDarkOs) {
+    return (
+      <section id="hub" className={`section${active ? ' active' : ''}`}>
+        <HubOsLayout
+          S={S}
+          update={update}
+          canvasRef={canvasRef}
+          onAddWidget={() => onOpenModal('addLinkModal')}
+          onSort={handleSortWidgets}
+          onNavigateSettings={onNavigateSettings}
+          onNavigateTrack={onNavigateTrack}
+          onShowCoinToast={onShowCoinToast}
+          onOpenWaitlist={onOpenWaitlist}
+          onCoachAct={onCoachAct}
+          onUploadPhoto={handleUploadPhoto}
+        />
+      </section>
+    );
+  }
+
+  // ── Cream (default) layout ────────────────────────────────────────────
   return (
     <section id="hub" className={`section${active ? ' active' : ''}`}>
       <div className="hub-layout">

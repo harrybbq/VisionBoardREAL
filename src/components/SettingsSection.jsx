@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import MacroGoalsPanel from './MacroGoalsPanel';
+import { useSubscriptionContext } from '../context/SubscriptionContext';
 
 export const SCHEMES = [
   { id: 'green',  name: 'Forest Green', em: '#1a7a4a', mid: '#2a9e62', light: '#4dc485', grad: 'linear-gradient(145deg,#f0f7f3 0%,#d8eee5 40%,#b0d9c5 70%,#7ec8a8 100%)' },
@@ -17,6 +18,33 @@ function hexToRgb(hex) {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `${r},${g},${b}`;
+}
+
+// ── Theme modes (Dark OS is Pro-only) ────────────────────────────────────
+export const THEMES = [
+  {
+    id: 'cream', name: 'Cream', tagline: 'Warm parchment · default',
+    swatch: 'linear-gradient(145deg,#f7f4ef 0%,#ede8e0 45%,#e0d8cc 100%)',
+    pro: false,
+  },
+  {
+    id: 'dark-os', name: 'Dark OS', tagline: 'Control-panel grid · Pro',
+    swatch: 'linear-gradient(145deg,#1f1f1c 0%,#131311 55%,#0a0a09 100%)',
+    pro: true,
+  },
+];
+
+/**
+ * Apply (or clear) the dark-os theme attribute on <html>.
+ * Called on boot from main.jsx and whenever the user toggles the theme.
+ * If the user is not Pro we force cream regardless of saved value.
+ */
+export function applyTheme(theme, { isPro = false } = {}) {
+  const effective = theme === 'dark-os' && isPro ? 'dark-os' : 'cream';
+  const r = document.documentElement;
+  if (effective === 'dark-os') r.setAttribute('data-theme', 'dark-os');
+  else r.removeAttribute('data-theme');
+  return effective;
 }
 
 export function applyScheme(scheme) {
@@ -41,6 +69,17 @@ export function applyScheme(scheme) {
 export default function SettingsSection({ S, update, active, userId, onOpenLegal }) {
   const [deleting, setDeleting] = useState(false);
   const currentScheme = S.colorScheme || 'green';
+  const currentTheme = S.theme || 'cream';
+  const { isPro } = useSubscriptionContext();
+
+  function handleThemeChange(themeId) {
+    const t = THEMES.find(x => x.id === themeId);
+    if (!t) return;
+    // Free users can't select the Pro theme — show a nudge instead.
+    if (t.pro && !isPro) return;
+    applyTheme(themeId, { isPro });
+    update(prev => ({ ...prev, theme: themeId }));
+  }
 
   function handleExportData() {
     const exportData = {
@@ -133,6 +172,83 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
               );
             })}
           </div>
+        </div>
+
+        {/* Theme mode (Dark OS is Pro-only) */}
+        <div className="card" style={{ padding: '22px' }}>
+          <h3 style={{ margin: '0 0 4px' }}>Theme mode</h3>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 18px', letterSpacing: '0.5px' }}>
+            Pick the overall surface treatment. Dark OS turns the hub into a customisable control-panel grid.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+            {THEMES.map(t => {
+              const isActive = currentTheme === t.id;
+              const locked = t.pro && !isPro;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => handleThemeChange(t.id)}
+                  disabled={locked}
+                  style={{
+                    position: 'relative', textAlign: 'left',
+                    padding: '14px 14px 16px', borderRadius: '12px',
+                    cursor: locked ? 'not-allowed' : 'pointer',
+                    border: isActive ? '2px solid var(--em)' : '2px solid var(--border)',
+                    background: isActive ? 'rgba(var(--em-rgb),0.08)' : 'var(--card, rgba(255,255,255,0.04))',
+                    opacity: locked ? 0.6 : 1,
+                    transition: 'all .18s',
+                    display: 'flex', flexDirection: 'column', gap: '10px',
+                  }}
+                  title={locked ? 'Upgrade to Pro to unlock Dark OS' : ''}
+                >
+                  <div style={{
+                    height: '48px', borderRadius: '8px',
+                    background: t.swatch,
+                    border: '1px solid var(--border)',
+                  }} />
+                  <div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      fontFamily: 'var(--sans)', fontSize: '14px', fontWeight: 600,
+                      color: 'var(--text)',
+                    }}>
+                      {t.name}
+                      {t.pro && (
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: '8px', letterSpacing: '1.4px',
+                          textTransform: 'uppercase', padding: '2px 6px', borderRadius: '3px',
+                          background: locked ? 'rgba(200,151,10,0.12)' : 'rgba(var(--em-rgb),0.14)',
+                          color: locked ? 'var(--gold)' : 'var(--em)',
+                          border: `1px solid ${locked ? 'rgba(200,151,10,0.28)' : 'rgba(var(--em-rgb),0.28)'}`,
+                        }}>
+                          {locked ? '🔒 Pro' : 'Pro'}
+                        </span>
+                      )}
+                      {isActive && (
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: '8px', letterSpacing: '1.4px',
+                          textTransform: 'uppercase', color: 'var(--em)', marginLeft: 'auto',
+                        }}>
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div style={{
+                      fontFamily: 'var(--mono)', fontSize: '10px',
+                      color: 'var(--text-muted)', letterSpacing: '0.5px', marginTop: '4px',
+                    }}>
+                      {t.tagline}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {!isPro && (
+            <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', margin: '14px 0 0', letterSpacing: '0.5px' }}>
+              Dark OS is part of Pro. Upgrade to unlock the control-panel hub and colour-scheme customisation.
+            </p>
+          )}
         </div>
 
         {/* Data & Privacy */}
