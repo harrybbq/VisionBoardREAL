@@ -323,7 +323,18 @@ html[data-theme="dark-os"] .hub-os-main > .os-col {
   flex-direction: column;
   gap: 10px;
   min-height: 0;
-  overflow: hidden;
+  /* Columns scroll internally when they hold more panels than fit.
+     Without this, extra panels (e.g. an opt-in Cardio card on top of
+     the standard Habits + QuickLog + Coach stack) get silently clipped
+     at the column bottom. */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* Thin scrollbars to match panel bodies */
+html[data-theme="dark-os"] .hub-os-main > .os-col::-webkit-scrollbar { width: 4px; }
+html[data-theme="dark-os"] .hub-os-main > .os-col::-webkit-scrollbar-thumb {
+  background: var(--os-border-md);
+  border-radius: 2px;
 }
 
 html[data-theme="dark-os"] .hub-os-bottom {
@@ -784,6 +795,23 @@ html[data-theme="dark-os"] .sec-title { color: var(--text); }
 /* ── 7. Mobile breakpoints ──────────────────────────────────────────────── */
 
 /* Medium — tablet portrait / narrow laptop */
+/* ── Short-viewport fallback ─────────────────────────────────────────────
+ * On windows shorter than ~820px (common in preview panes, laptops with
+ * the dev tools docked, older laptops) the fixed-100vh frame crams every
+ * panel. Drop the viewport lock and let the page scroll normally — we
+ * keep the OS aesthetic on real desktops, degrade gracefully elsewhere.
+ * ───────────────────────────────────────────────────────────────────── */
+@media (max-height: 820px) {
+  html[data-theme="dark-os"] .hub-os {
+    height: auto;
+    min-height: calc(100vh - 32px);
+    overflow: visible;
+  }
+  html[data-theme="dark-os"] .hub-os-main > .os-col {
+    overflow: visible;
+  }
+}
+
 @media (max-width: 1099px) {
   html[data-theme="dark-os"] .hub-os {
     padding: 12px;
