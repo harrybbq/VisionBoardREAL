@@ -132,9 +132,12 @@ html[data-theme="dark-os"] #pageHeader-section {
   opacity: 1 !important;
 }
 
-/* Hide the greeting blob on hub (we show it in the dedicated SessionPanel) */
-html[data-theme="dark-os"] #pageHeader-section::after {
-  content: '';
+/* Hide the greeting blob on hub — the SessionPanel already shows a
+   bigger "Night, Harry." so the chrome-bar version is redundant.
+   Scoped via :has(#hub.active) so other sections keep their label
+   (Achievements, Track, etc.) visible in the chrome bar. */
+html[data-theme="dark-os"]:has(#hub.section.active) #pageHeader-section {
+  display: none;
 }
 
 /* Coin wallet compacted + repositioned in chrome */
