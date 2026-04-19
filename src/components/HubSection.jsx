@@ -199,13 +199,13 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
       island.innerHTML = `
         <div class="widget-drag-handle" data-drag="${link.id}"><span></span></div>
         <div class="link-island-header">
-          <div class="link-island-icon" style="background:rgba(255,255,255,.2);color:#fff;font-size:${isGH ? '16px' : '22px'};font-weight:700;">${link.icon}</div>
+          <div class="link-island-icon" style="background:rgba(var(--em-rgb),.10);color:var(--em);font-size:${isGH ? '16px' : '22px'};font-weight:700;border:1px solid var(--accent-line-soft);">${link.icon}</div>
           <div class="link-island-info">
             <div class="link-island-name">${link.name}</div>
             <div class="link-island-url">${link.url.replace(/^https?:\/\//, '').split('/')[0]}</div>
           </div>
           <div class="link-island-actions">
-            <a class="link-open-btn" href="${link.url}" target="_blank" style="background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.35);">Open ↗</a>
+            <a class="link-open-btn" href="${link.url}" target="_blank">Open ↗</a>
             <button class="link-del-btn" data-del-link="${link.id}">✕</button>
           </div>
         </div>

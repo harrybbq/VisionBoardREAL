@@ -12,19 +12,30 @@ export const SCHEMES = [
   { id: 'slate',  name: 'Slate',        em: '#1a3a5a', mid: '#2a5a8e', light: '#4d8ab0', grad: 'linear-gradient(145deg,#f0f2f7 0%,#d8dfe8 40%,#b0bece 70%,#7ea0be 100%)' },
 ];
 
-export function applyScheme(scheme) {
-  const r = document.documentElement;
-  r.style.setProperty('--em', scheme.em);
-  r.style.setProperty('--em-mid', scheme.mid);
-  r.style.setProperty('--em-light', scheme.light);
-  r.style.setProperty('--grad', scheme.grad);
-}
-
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `${r},${g},${b}`;
+}
+
+export function applyScheme(scheme) {
+  const r = document.documentElement;
+  const rgb = hexToRgb(scheme.em);
+  r.style.setProperty('--em', scheme.em);
+  r.style.setProperty('--em-mid', scheme.mid);
+  r.style.setProperty('--em-light', scheme.light);
+  r.style.setProperty('--em-rgb', rgb);
+  r.style.setProperty('--em-pale', `rgba(${rgb}, 0.16)`);
+  r.style.setProperty('--em-ghost', `rgba(${rgb}, 0.06)`);
+  r.style.setProperty('--accent-line', `rgba(${rgb}, 0.32)`);
+  r.style.setProperty('--accent-line-soft', `rgba(${rgb}, 0.16)`);
+  r.style.setProperty('--accent-line-mid', `rgba(${rgb}, 0.48)`);
+  r.style.setProperty('--accent-glow',
+    `0 1px 0 rgba(255,255,255,.55) inset, 0 1px 0 rgba(${rgb},.04), 0 6px 22px rgba(${rgb},.07)`);
+  r.style.setProperty('--accent-glow-hi',
+    `0 1px 0 rgba(255,255,255,.6) inset, 0 14px 36px rgba(${rgb},.13)`);
+  r.style.setProperty('--grad', scheme.grad);
 }
 
 export default function SettingsSection({ S, update, active, userId, onOpenLegal }) {
