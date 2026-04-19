@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { adjustColour, timeAgo } from '../utils/helpers';
 import AiCoachWidget from './AiCoachWidget';
+import CoachBriefPanel from './CoachBriefPanel';
 import QuickLog from './QuickLog';
 
 // ── GitHub helpers ──
@@ -136,7 +137,7 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
 }
 
 // ── Widget Canvas (imperative DOM approach) ──
-export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast }) {
+export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast, onCoachAct }) {
   const canvasRef = useRef(null);
   const makeDraggable = useWidgetDrag(canvasRef, S, update);
 
@@ -303,7 +304,8 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
         <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
       </div>
       <QuickLog S={S} update={update} onNavigateTrack={onNavigateTrack} onShowCoinToast={onShowCoinToast} />
-      <AiCoachWidget S={S} onOpenWaitlist={onOpenWaitlist} />
+      <AiCoachWidget S={S} update={update} onOpenWaitlist={onOpenWaitlist} onCoachAct={onCoachAct} />
+      <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} />
     </section>
   );
 }

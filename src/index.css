@@ -1303,6 +1303,186 @@ input,select,textarea,button{touch-action:manipulation;}
   flex-shrink:0;
 }
 
+/* ── AI Coach Pro: verb button + dismiss ────────────────────────────────── */
+.ai-coach-verb-btn{
+  align-self:flex-start;
+  margin-top:6px;
+  font-size:11px !important;
+  padding:5px 12px !important;
+}
+.ai-coach-dismiss{
+  background:transparent;border:none;color:var(--text-muted);
+  font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;
+  border-radius:6px;flex-shrink:0;align-self:flex-start;
+  transition:all .18s var(--ease-out);
+}
+.ai-coach-dismiss:hover{background:rgba(var(--em-rgb),.08);color:var(--text);}
+
+/* ── Coach Daily Brief panel ────────────────────────────────────────────── */
+.coach-brief-panel{
+  margin-top:14px;
+  padding:18px 20px 16px;
+  background:var(--surface);
+  border:var(--border-card);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--accent-glow);
+  display:flex;flex-direction:column;gap:12px;
+  position:relative;
+}
+.coach-brief-header{
+  display:flex;align-items:center;gap:8px;
+}
+.coach-brief-icon{
+  font-size:14px;color:var(--em);opacity:.85;
+}
+.coach-brief-title{
+  font-family:var(--mono);font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--em-mid);font-weight:600;
+}
+.coach-brief-pro{
+  font-family:var(--mono);font-size:8px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--em);
+  background:rgba(var(--em-rgb),.14);
+  border:1px solid rgba(var(--em-rgb),.30);
+  border-radius:3px;padding:1px 5px;
+}
+.coach-brief-refresh{
+  margin-left:auto;background:transparent;border:none;
+  color:var(--text-muted);font-size:14px;cursor:pointer;
+  width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .18s var(--ease-out);
+}
+.coach-brief-refresh:hover{
+  background:rgba(var(--em-rgb),.08);color:var(--em);
+  transform:rotate(60deg);
+}
+.coach-brief-rows{
+  display:flex;flex-direction:column;gap:10px;
+}
+.coach-brief-row{
+  display:flex;flex-direction:column;gap:3px;
+  padding:10px 12px;border-radius:10px;
+  border-left:3px solid var(--accent-line);
+  background:rgba(var(--em-rgb),.04);
+}
+.coach-brief-row p{
+  margin:0;font-family:var(--sans);font-size:13px;line-height:1.5;
+  color:var(--text);
+}
+.coach-brief-row-label{
+  font-family:var(--mono);font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--text-muted);font-weight:600;
+}
+.coach-brief-focus{border-left-color:var(--em);}
+.coach-brief-watch{border-left-color:#c87a1a;background:rgba(200,122,26,.06);}
+.coach-brief-micro{border-left-color:var(--em-light);}
+.coach-brief-verbs{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;
+}
+.coach-brief-verb-btn{
+  font-size:11px !important;padding:6px 14px !important;
+}
+.coach-brief-weekly{
+  margin-top:6px;padding:14px 16px;
+  background:linear-gradient(135deg,rgba(var(--em-rgb),.06),rgba(var(--em-rgb),.02));
+  border:1px solid var(--accent-line-soft);border-radius:12px;
+}
+.coach-brief-weekly-header{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--em-mid);font-weight:600;
+  margin-bottom:8px;
+}
+.coach-brief-weekly p{
+  margin:0;font-family:var(--sans);font-size:12.5px;line-height:1.65;
+  color:var(--text-mid);
+}
+.coach-brief-skeleton{display:flex;flex-direction:column;gap:8px;}
+.coach-brief-skeleton-line{
+  height:14px;width:100%;border-radius:4px;
+  background:linear-gradient(90deg,rgba(var(--em-rgb),.06) 0%,rgba(var(--em-rgb),.14) 50%,rgba(var(--em-rgb),.06) 100%);
+  background-size:200% 100%;animation:coach-shimmer 1.4s infinite;
+}
+@keyframes coach-shimmer{
+  0%{background-position:200% 0;}
+  100%{background-position:-200% 0;}
+}
+.coach-brief-error-text{
+  margin:0;font-family:var(--sans);font-size:12px;color:var(--text-muted);
+}
+.coach-brief-retry{
+  align-self:flex-start;margin-top:4px;font-size:11px !important;padding:5px 12px !important;
+}
+
+/* ── Paywall Modal ──────────────────────────────────────────────────────── */
+.paywall-modal{
+  max-width:480px;width:92vw;
+  padding:0;overflow:hidden;
+}
+.paywall-hero{
+  padding:32px 28px 24px;
+  text-align:center;
+  background:linear-gradient(160deg,
+    rgba(var(--em-rgb),.10) 0%,
+    rgba(var(--em-rgb),.04) 60%,
+    transparent 100%);
+  border-bottom:1px solid var(--accent-line-soft);
+}
+.paywall-hero-icon{
+  width:54px;height:54px;margin:0 auto 14px;
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;color:#fff;
+  background:linear-gradient(135deg,var(--em-mid),var(--em-light));
+  box-shadow:0 8px 22px rgba(var(--em-rgb),.30);
+}
+.paywall-hero-eyebrow{
+  font-family:var(--mono);font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--em-mid);font-weight:600;
+  margin-bottom:6px;
+}
+.paywall-hero-title{
+  margin:0 0 8px;font-family:var(--display);font-size:20px;font-weight:700;
+  color:var(--text);line-height:1.3;
+}
+.paywall-hero-sub{
+  margin:0;font-family:var(--sans);font-size:13px;line-height:1.5;
+  color:var(--text-mid);
+}
+.paywall-features{
+  padding:18px 28px 8px;display:flex;flex-direction:column;gap:14px;
+}
+.paywall-feature{
+  display:flex;align-items:flex-start;gap:14px;
+}
+.paywall-feature-icon{
+  width:34px;height:34px;flex-shrink:0;
+  border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--em);
+  background:rgba(var(--em-rgb),.10);
+  border:1px solid var(--accent-line-soft);
+}
+.paywall-feature-body{flex:1;min-width:0;}
+.paywall-feature-title{
+  font-family:var(--sans);font-size:13px;font-weight:600;color:var(--text);
+  margin-bottom:2px;
+}
+.paywall-feature-sub{
+  font-family:var(--sans);font-size:12px;color:var(--text-mid);line-height:1.4;
+}
+.paywall-actions{
+  padding:18px 28px 8px;display:flex;gap:10px;justify-content:flex-end;
+  border-top:1px solid var(--accent-line-soft);margin-top:14px;
+}
+.paywall-cta{
+  font-size:13px !important;padding:10px 20px !important;
+}
+.paywall-fineprint{
+  margin:0;padding:0 28px 24px;
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text-muted);text-align:center;
+}
+
 /* ── Section help button ─────────────────────────────────────────────────── */
 .section-help-wrap{
   position:relative;

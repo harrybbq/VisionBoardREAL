@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from './lib/supabase';
 import { useVisionBoardState, hasLocalStorageData, clearLocalStorageData } from './hooks/useVisionBoardState';
 import { SubscriptionProvider } from './context/SubscriptionContext';
+import { useTierLimits } from './hooks/useTierLimits';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import AuthScreen from './components/AuthScreen';
 import Nav from './components/Nav';
@@ -16,6 +17,7 @@ import HabitsSection from './components/HabitsSection';
 import SettingsSection from './components/SettingsSection';
 import { SCHEMES, applyScheme } from './components/SettingsSection';
 import Modals from './components/Modals';
+import PaywallModal from './components/PaywallModal';
 import HubFooter from './components/HubFooter';
 import CoinToast from './components/CoinToast';
 import ConnectToast from './components/ConnectToast';
@@ -41,8 +43,20 @@ function saveBgs(bgs) {
   localStorage.setItem('vb4_bg', JSON.stringify(bgs));
 }
 
+// Maps add-modal IDs to the free-tier cap key + a fn that counts current items
+// for that key. Anything not listed here is unmetered.
+const MODAL_CAPS = {
+  addLinkModal:        { key: 'links',        count: S => (S.links || []).length },
+  addAchievementModal: { key: 'achievements', count: S => (S.achievements || []).length },
+  addTrackerModal:     { key: 'trackers',     count: S => (S.trackers || []).length },
+  addShopModal:        { key: 'shopItems',    count: S => (S.shopItems || []).length },
+  addHolidayModal:     { key: 'holidays',     count: S => (S.holidays || []).length },
+  addHabitModal:       { key: 'habits',       count: S => (S.habits || []).length },
+};
+
 function Board({ userId, userEmail, onSignOut }) {
   const { S, update, loading, justMigrated, dismissMigrationBanner } = useVisionBoardState(userId);
+  const { atLimit } = useTierLimits();
   const [activeSection, setActiveSection] = useState('hub');
   const [openModal, setOpenModal] = useState(null);
   const [coinToast, setCoinToast] = useState({ message: '', type: '', visible: false });
@@ -81,8 +95,74 @@ function Board({ userId, userEmail, onSignOut }) {
   }
 
   function navigate(id) { setActiveSection(id); }
-  function handleOpenModal(id) { setOpenModal(id); }
+  function handleOpenModal(id) {
+    // Intercept add-flows that have a free-tier cap. If the user is over,
+    // open the paywall modal instead of the add modal.
+    const baseId = typeof id === 'string' ? id.split(':')[0] : id;
+    const cap = MODAL_CAPS[baseId];
+    if (cap && atLimit(cap.key, cap.count(S))) {
+      setOpenModal(`paywall:${cap.key}`);
+      return;
+    }
+    setOpenModal(id);
+  }
   function handleCloseModal() { setOpenModal(null); }
+
+  // ── AI Coach verb dispatch ──
+  // Called when a Pro user taps an action button inside a coach insight.
+  function handleCoachAct(verb) {
+    if (!verb) return;
+    switch (verb.action) {
+      case 'open-modal':
+        if (verb.args?.modalId) handleOpenModal(verb.args.modalId);
+        break;
+      case 'navigate':
+        if (verb.args?.section) navigate(verb.args.section);
+        break;
+      case 'split-achievement': {
+        // Auto-creates 3 stepping-stone milestones and connects them
+        // to the parent. Shown to the user via a toast so they know
+        // something happened and can find them on the board.
+        const id = verb.args?.id;
+        if (!id) break;
+        update(prev => {
+          const parent = (prev.achievements || []).find(a => a.id === id);
+          if (!parent) return prev;
+          const baseCoins = Math.max(10, Math.floor((parent.coins || 60) / 4));
+          const baseX = parent.x ?? 60;
+          const baseY = parent.y ?? 60;
+          const now = Date.now();
+          const stones = [1, 2, 3].map(i => ({
+            id: `a${now}-${i}`,
+            name: `${parent.name} — Step ${i}`,
+            desc: `Stepping stone ${i} of 3`,
+            icon: '◆',
+            x: baseX + i * 40,
+            y: baseY + 180,
+            completed: false,
+            coins: baseCoins,
+          }));
+          const newConnections = stones.map(s => [s.id, parent.id]);
+          return {
+            ...prev,
+            achievements: [...(prev.achievements || []), ...stones],
+            connections: [...(prev.connections || []), ...newConnections],
+          };
+        });
+        showCoinToast('Created 3 stepping-stone milestones', 'earn');
+        navigate('achievements');
+        break;
+      }
+      case 'add-habit':
+        // For v1, just open the habit modal. Future enhancement: pre-fill
+        // the suggested name via a `suggest` URL param read in Modals.jsx.
+        handleOpenModal('addHabitModal');
+        break;
+      default:
+        // Unknown verb — silently ignore so future LLM-suggested verbs don't crash
+        console.warn('Unknown coach verb:', verb.action);
+    }
+  }
 
   function handleCancelConnect() {
     update(prev => ({ ...prev, connectingFrom: null }));
@@ -217,7 +297,7 @@ function Board({ userId, userEmail, onSignOut }) {
       <AnimatePresence mode="wait">
         {activeSection === 'hub' && (
           <motion.div key="hub" {...pageMotion}>
-            <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} />
+            <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} onCoachAct={handleCoachAct} />
           </motion.div>
         )}
         {activeSection === 'achievements' && (
@@ -262,6 +342,12 @@ function Board({ userId, userEmail, onSignOut }) {
         onShowCoinToast={showCoinToast}
         userId={userId}
         userEmail={userEmail}
+      />
+
+      <PaywallModal
+        openId={openModal}
+        onClose={handleCloseModal}
+        onUpgrade={() => { handleCloseModal(); handleOpenModal('waitlistModal'); }}
       />
 
       <ConnectToast onCancel={handleCancelConnect} />
