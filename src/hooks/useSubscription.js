@@ -48,11 +48,18 @@ export function useSubscription(userId) {
     load();
   }, [userId]);
 
+  const isPro = tier === 'pro';
+  const isLifetime = tier === 'lifetime';
+
   return {
     tier,
-    isPro: tier === 'pro',
-    isLifetime: tier === 'lifetime',
+    isPro,
+    isLifetime,
     isFree: tier === 'free',
+    // hasPro = "has Pro-level entitlements regardless of how they got
+    // them (active sub OR lifetime purchase)". Prefer this for any new
+    // gate so lifetime users never get silently locked out.
+    hasPro: isPro || isLifetime,
     proIsLive,
     loading,
   };

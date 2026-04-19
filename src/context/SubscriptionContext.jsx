@@ -6,6 +6,7 @@ const SubscriptionContext = createContext({
   isPro: false,
   isLifetime: false,
   isFree: true,
+  hasPro: false,
   proIsLive: false,
   loading: true,
 });

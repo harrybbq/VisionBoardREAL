@@ -37,10 +37,11 @@ export const THEMES = [
 /**
  * Apply (or clear) the dark-os theme attribute on <html>.
  * Called on boot from main.jsx and whenever the user toggles the theme.
- * If the user is not Pro we force cream regardless of saved value.
+ * If the user has no Pro entitlement (Pro sub OR Lifetime) we force cream
+ * regardless of saved value.
  */
-export function applyTheme(theme, { isPro = false } = {}) {
-  const effective = theme === 'dark-os' && isPro ? 'dark-os' : 'cream';
+export function applyTheme(theme, { hasPro = false } = {}) {
+  const effective = theme === 'dark-os' && hasPro ? 'dark-os' : 'cream';
   const r = document.documentElement;
   if (effective === 'dark-os') r.setAttribute('data-theme', 'dark-os');
   else r.removeAttribute('data-theme');
@@ -81,16 +82,17 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
   const [deleting, setDeleting] = useState(false);
   const currentScheme = S.colorScheme || 'green';
   const currentTheme = S.theme || 'cream';
-  const { isPro } = useSubscriptionContext();
+  const { hasPro } = useSubscriptionContext();
   const hubPanels = S.hubPanels || {};
-  const darkOsActive = currentTheme === 'dark-os' && isPro;
+  const darkOsActive = currentTheme === 'dark-os' && hasPro;
 
   function handleThemeChange(themeId) {
     const t = THEMES.find(x => x.id === themeId);
     if (!t) return;
     // Free users can't select the Pro theme — show a nudge instead.
-    if (t.pro && !isPro) return;
-    applyTheme(themeId, { isPro });
+    // Lifetime users count as Pro via hasPro.
+    if (t.pro && !hasPro) return;
+    applyTheme(themeId, { hasPro });
     update(prev => ({ ...prev, theme: themeId }));
   }
 
@@ -203,7 +205,7 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
             {THEMES.map(t => {
               const isActive = currentTheme === t.id;
-              const locked = t.pro && !isPro;
+              const locked = t.pro && !hasPro;
               return (
                 <button
                   key={t.id}
@@ -264,9 +266,9 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
               );
             })}
           </div>
-          {!isPro && (
+          {!hasPro && (
             <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', margin: '14px 0 0', letterSpacing: '0.5px' }}>
-              Dark OS is part of Pro. Upgrade to unlock the control-panel hub and colour-scheme customisation.
+              Dark OS is part of Pro. Upgrade (or buy Lifetime) to unlock the control-panel hub and colour-scheme customisation.
             </p>
           )}
         </div>

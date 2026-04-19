@@ -58,7 +58,7 @@ const MODAL_CAPS = {
 function Board({ userId, userEmail, onSignOut }) {
   const { S, update, loading, justMigrated, dismissMigrationBanner } = useVisionBoardState(userId);
   const { atLimit } = useTierLimits();
-  const { isPro } = useSubscriptionContext();
+  const { hasPro } = useSubscriptionContext();
   const [activeSection, setActiveSection] = useState('hub');
   const [openModal, setOpenModal] = useState(null);
   const [coinToast, setCoinToast] = useState({ message: '', type: '', visible: false });
@@ -86,12 +86,12 @@ function Board({ userId, userEmail, onSignOut }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.colorScheme]);
 
-  // Apply stored theme — Pro-gated. If isPro flips false we auto-revert
-  // to cream via applyTheme's internal guard, so a lapsed subscriber
-  // never gets stranded on the Pro-only surface.
+  // Apply stored theme — Pro-gated (lifetime counts as Pro). If entitlement
+  // flips false we auto-revert to cream via applyTheme's internal guard,
+  // so a lapsed subscriber never gets stranded on the Pro-only surface.
   useEffect(() => {
-    applyTheme(S.theme || 'cream', { isPro });
-  }, [S.theme, isPro]);
+    applyTheme(S.theme || 'cream', { hasPro });
+  }, [S.theme, hasPro]);
 
   function showCoinToast(msg, isEarn, duration) {
     const type = isEarn ? 'earn' : (msg.includes('Need') ? 'error' : 'spend');
