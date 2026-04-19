@@ -268,7 +268,7 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
           </div>
           {!hasPro && (
             <p style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', margin: '14px 0 0', letterSpacing: '0.5px' }}>
-              Dark OS is part of Pro. Upgrade (or buy Lifetime) to unlock the control-panel hub and colour-scheme customisation.
+              Dark OS is part of Pro. Upgrade to unlock the control-panel hub and colour-scheme customisation.
             </p>
           )}
         </div>
