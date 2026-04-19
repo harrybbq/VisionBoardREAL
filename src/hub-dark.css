@@ -84,10 +84,12 @@ html[data-theme="dark-os"] body::before {
   );
 }
 
-/* Ensure sections sit above the scan-line layer */
-html[data-theme="dark-os"] .section,
-html[data-theme="dark-os"] nav,
-html[data-theme="dark-os"] #pageHeader {
+/* Ensure sections sit above the scan-line layer.
+   Do NOT include `nav` or `#pageHeader` here — they both rely on
+   base position:fixed to stay pinned (sidebar + chrome bar).
+   Both already have high z-index in base CSS (200 / 195), which
+   clears the scan-line overlay without help from this rule. */
+html[data-theme="dark-os"] .section {
   position: relative;
   z-index: 2;
 }
