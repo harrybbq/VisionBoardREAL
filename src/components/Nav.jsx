@@ -10,7 +10,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
   ];
 
   return (
-    <nav>
+    <nav id="mainNav">
       <div className="nav-logo">
         <div className="nav-logo-icon">V</div>
         <div className="nav-logo-text">
@@ -21,6 +21,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
         {tabs.map(tab => (
           <button
             key={tab.id}
+            id={`nav-tab-${tab.id}`}
             className={`nav-tab${activeSection === tab.id ? ' active' : ''}${tab.mobileHide ? ' nav-tab-mobile-hide' : ''}`}
             onClick={() => onNavigate(tab.id)}
           >

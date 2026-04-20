@@ -353,6 +353,21 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
         {/* Nutrition Goals */}
         {userId && <MacroGoalsPanel userId={userId} />}
 
+        {/* Walkthrough / tour */}
+        <div className="card" style={{ padding: '22px' }}>
+          <h3 style={{ margin: '0 0 4px' }}>Walkthrough</h3>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
+            Replay the 30-second intro tour — useful if you want a refresher or you skipped it the first time.
+          </p>
+          <button
+            type="button"
+            className="tut-replay-btn"
+            onClick={() => update(prev => ({ ...prev, tutorialCompleted: false }))}
+          >
+            <span aria-hidden="true">↺</span> Replay tutorial
+          </button>
+        </div>
+
         {/* Danger Zone */}
         <div className="card" style={{ padding: '22px', borderColor: 'rgba(220,38,38,0.3)' }}>
           <h3 style={{ margin: '0 0 4px', color: '#f87171' }}>Danger Zone</h3>

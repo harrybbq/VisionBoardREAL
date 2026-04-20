@@ -27,6 +27,7 @@ import ShortcutsModal from './components/ShortcutsModal';
 import LegalPage from './components/LegalPage';
 import CookieBanner from './components/CookieBanner';
 import InstallPrompt from './components/InstallPrompt';
+import TutorialOverlay from './components/TutorialOverlay';
 import { useCapacitor, haptic } from './hooks/useCapacitor';
 
 const pageMotion = {
@@ -373,6 +374,15 @@ function Board({ userId, userEmail, onSignOut }) {
       <CookieBanner onOpenLegal={setLegalPage} />
       <InstallPrompt />
       {legalPage && <LegalPage page={legalPage} onClose={() => setLegalPage(null)} />}
+
+      {/* Onboarding tutorial — shows once for new users, replayable
+          from Settings. Dark OS users get the terser voice variant. */}
+      <TutorialOverlay
+        visible={!S.tutorialCompleted}
+        theme={hasPro && S.theme === 'dark-os' ? 'dark' : 'cream'}
+        onNavigate={navigate}
+        onClose={() => update(prev => ({ ...prev, tutorialCompleted: true }))}
+      />
     </>
   );
 }
