@@ -92,9 +92,13 @@ function useWidgetDrag(canvasRef, S, update) {
 }
 
 // ── Profile Card ──
-function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings }) {
+// `children` (when provided) renders inside the same .profile-col rail
+// after the action buttons — used by the cream layout to slot the
+// QuickLog trackers under "Sort". The `--with-rail` modifier widens
+// the column so the trackers stack vertically without being clipped.
+function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings, children }) {
   return (
-    <div className="profile-col">
+    <div className={`profile-col${children ? ' profile-col--with-rail' : ''}`}>
       <div className="card profile-card">
         <div className="profile-photo-wrap" onClick={() => document.getElementById('photoFileInput').click()}>
           {profile.photo
@@ -134,6 +138,7 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
       <motion.button className="hub-action-btn settings-mobile-btn" onClick={onNavigateSettings}
         whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}>⚙ Settings</motion.button>
+      {children}
     </div>
   );
 }
@@ -328,11 +333,15 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
           onAddWidget={() => onOpenModal('addLinkModal')}
           onSortWidgets={handleSortWidgets}
           onNavigateSettings={onNavigateSettings}
-        />
+        >
+          {/* Trackers sit in the left rail, directly under the Sort button.
+              On mobile the .profile-col flips to a row and the rail wraps to
+              its own line via CSS — see .profile-col--with-rail in index.css. */}
+          <QuickLog S={S} update={update} onNavigateTrack={onNavigateTrack} onShowCoinToast={onShowCoinToast} />
+        </ProfileCard>
         </motion.div>
         <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
       </div>
-      <QuickLog S={S} update={update} onNavigateTrack={onNavigateTrack} onShowCoinToast={onShowCoinToast} />
       <AiCoachWidget S={S} update={update} onOpenWaitlist={onOpenWaitlist} onCoachAct={onCoachAct} />
       <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} />
     </section>
