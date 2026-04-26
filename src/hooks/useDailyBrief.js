@@ -44,8 +44,36 @@ export function useDailyBrief({ S, update, isPro }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ snapshot }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Coach request failed');
+
+      // Read once as text, then parse. Doing res.json() blind throws an
+      // unhelpful "Unexpected end of JSON input" when the response body
+      // is empty (502 with no payload) or HTML (vite dev server falling
+      // back to index.html because Netlify Functions aren't running).
+      const raw = await res.text();
+      const looksHtml = /^\s*<(?:!doctype|html)/i.test(raw);
+
+      if (looksHtml || (!raw && !res.ok)) {
+        // The endpoint isn't actually serving the function. Most common
+        // cause is `npm run dev` (Vite-only) — it doesn't proxy to
+        // Netlify. Use `netlify dev` locally, or rely on the deployed
+        // site for AI Coach features.
+        throw new Error(
+          'AI Coach is offline locally — Netlify Functions only run on the deployed site or under `netlify dev`.'
+        );
+      }
+
+      let data = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Coach returned an unreadable response. Try again in a moment.');
+        }
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || `Coach request failed (HTTP ${res.status}).`);
+      }
       const payload = { ...data, date: today };
       update(prev => {
         // Append to history, trim to the last N. If we already have an
