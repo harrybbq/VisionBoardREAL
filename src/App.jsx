@@ -401,7 +401,14 @@ export default function App() {
         setSession(session);
       }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      // When the session goes away (sign-out, expiry, other tab) drop the
+      // dark-os attribute on <html> so the AuthScreen always renders against
+      // the cream surface it was designed for. The next authenticated boot
+      // will re-apply the user's saved theme via Board's applyTheme effect.
+      if (!session) document.documentElement.removeAttribute('data-theme');
+    });
     return () => subscription.unsubscribe();
   }, []);
 
