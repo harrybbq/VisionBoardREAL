@@ -119,10 +119,31 @@ body{
   min-height:100vh;
   overflow-x:hidden;
 }
-/* Login page gets the gear/nebula image; app body keeps background.jpg on all sizes */
-#authOverlay{background-image:url('/login-bg-desktop.jpg.jpg');background-size:cover;background-position:center;}
-@media(max-width:768px){
-  #authOverlay{background-image:url('/login-bg-mobile.jpg.jpg');background-position:top center;}
+/* ── Auth screen — pseudo-class behaviour. Inline styles in
+   AuthScreen.jsx cover the static look; these rules give us native
+   :focus / :hover with no React re-render churn. ── */
+.auth-input:focus{
+  border-color:var(--em);
+  box-shadow:0 0 0 3px rgba(var(--em-rgb,26,122,74),0.15);
+}
+.auth-mode-link,
+.auth-legal-link{
+  background:none; border:none; cursor:pointer; padding:2px 0;
+  font-family:var(--mono); font-size:11px;
+  letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-muted);
+  transition:color 0.14s ease;
+}
+.auth-mode-link:hover,
+.auth-legal-link:hover{
+  color:var(--em);
+  text-decoration:underline;
+}
+.auth-legal-link{ padding:0; }
+@media (max-width:380px){
+  /* Card padding feels tight at very small widths — pull the side
+     padding in so form fields don't crowd the border. */
+  .auth-card{ padding:36px 20px 28px !important; }
 }
 body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:0.5;}
 
