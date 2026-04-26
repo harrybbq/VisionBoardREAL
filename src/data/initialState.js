@@ -35,4 +35,13 @@ export const DEFAULT_STATE = {
   ghCache: {},
   habits: [],
   streaks: {},
+  // ── AI Coach state ────────────────────────────────────────────────
+  // coachMemory: { [stableInsightId]: { lastShownYmd, lastDismissedYmd,
+  //   lastActedYmd, showCount, dismissCount, actCount } }
+  //   — drives heuristic cooldowns so the same insight doesn't loop.
+  // coachBriefHistory: rolling array (max 7) of past LLM briefs sent
+  //   back to the model on each fetch so it can avoid repeating
+  //   yesterday's focus/watch/micro lines.
+  coachMemory: {},
+  coachBriefHistory: [],
 };

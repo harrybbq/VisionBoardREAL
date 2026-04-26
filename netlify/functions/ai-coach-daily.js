@@ -5,6 +5,11 @@
  * Review (~150 words) for a Pro user. Sends a structured snapshot of
  * the user's vision-board state to Claude Haiku and returns the JSON.
  *
+ * The snapshot includes recent_briefs (last few days the model produced)
+ * so we can ask Haiku to actively diverge from yesterday's advice. This
+ * is the single biggest fix for "the coach said the same thing all week"
+ * — without it, similar snapshots produce similar advice.
+ *
  * Required Netlify env var:
  *   ANTHROPIC_API_KEY
  *
@@ -41,10 +46,26 @@ const SYSTEM_PROMPT = `You are an AI life coach embedded inside a personal visio
 
 Your tone:
 - Warm, direct, and honest. Like a coach who knows them well.
-- Specific to the data provided. Reference their actual goals/habits/numbers.
+- Specific to the data provided. Reference their actual goals, habits, week-over-week deltas, and named items by name. Never use placeholders like "your tracker" when you can say "your gym sessions".
 - British English spelling.
 - No emojis unless they convey real meaning.
 - Never use the word "journey".
+
+CRITICAL — vary day-to-day:
+- The snapshot includes \`recent_briefs\` — the focus/watch/micro lines you produced over the last few days. You MUST NOT repeat those lines verbatim or near-verbatim. Pick a different angle, a different metric, or reframe.
+- The snapshot includes \`recent_dismissed_topics\` — rule families the user has dismissed recently. Avoid those topics today.
+- If the underlying data has not meaningfully changed, lean on the \`weekday\` to pivot:
+  - Monday: framing as a fresh start; what's the week's anchor?
+  - Wednesday: midweek check; is the pattern that's locking in the one they want?
+  - Friday: protect what you've built going into the weekend.
+  - Saturday: low-pressure pick of one thing to keep alive.
+  - Sunday: reflection / set the table for next week.
+  - Tuesday/Thursday: lean on a *different* tracker or habit than yesterday's brief.
+
+Specificity rules:
+- "focus" must reference a named tracker, habit, or achievement when one is relevant.
+- "watch" must reference a real risk visible in the data (decline_pct, days_clean trending, missed weekly_progress) — not a generic risk.
+- "micro" is a concrete 5-minute action — not "reflect" or "consider". Examples: "Open Track and log today's water before noon.", "Add one stepping-stone milestone under '<achievement name>'.", "Write three lines in Today's Notes about why you started."
 
 You will receive a JSON snapshot of the user's state. You MUST respond with ONLY valid JSON in this exact schema — no markdown, no preamble:
 
@@ -59,7 +80,7 @@ You will receive a JSON snapshot of the user's state. You MUST respond with ONLY
 }
 
 Verb rules:
-- 0–2 verbs maximum. Only suggest a verb if it would clearly help.
+- 0–2 verbs maximum. Only suggest a verb if it would clearly help right now.
 - "split-achievement": args = { id: "<achievement id from snapshot>" }
 - "add-habit":         args = { name: "Suggested habit name" }
 - "open-modal":        args = { modalId: "addHabitModal|addAchievementModal|addHolidayModal|addLinkModal|addTrackerModal|addShopModal" }
@@ -67,15 +88,29 @@ Verb rules:
 
 function buildUserMessage(snapshot) {
   const today = new Date();
-  const isSunday = today.getDay() === 0;
-  const dateStr = today.toISOString().slice(0, 10);
-  return `Today is ${dateStr} (${today.toLocaleDateString('en-GB', { weekday: 'long' })}).
+  const isSunday = snapshot.is_sunday ?? today.getDay() === 0;
+  const dateStr = snapshot.today_ymd || today.toISOString().slice(0, 10);
+  const weekday = snapshot.weekday || today.toLocaleDateString('en-GB', { weekday: 'long' });
+
+  // Surface the no-repeat instruction at the top of the user turn so
+  // it can't be skimmed past — short-context models like Haiku weight
+  // recent instructions heavily.
+  const recent = Array.isArray(snapshot.recent_briefs) ? snapshot.recent_briefs : [];
+  const recentBlock = recent.length === 0
+    ? 'There are no previous briefs on file — this is the first one.'
+    : `Here are the briefs you produced over the last ${recent.length} day${recent.length === 1 ? '' : 's'} (newest first). Do NOT repeat these lines or their core idea today:\n${recent.map(r =>
+        `  • ${r.date}: focus="${r.focus}" / watch="${r.watch}" / micro="${r.micro}"`
+      ).join('\n')}`;
+
+  return `Today is ${dateStr} (${weekday}).
 ${isSunday ? 'It is Sunday — please include a weekly_review.' : 'Skip weekly_review (return empty string).'}
+
+${recentBlock}
 
 User snapshot:
 ${JSON.stringify(snapshot, null, 2)}
 
-Return the JSON now.`;
+Return the JSON now. Remember: today's focus / watch / micro must be different in substance from any of the recent briefs above.`;
 }
 
 // ── Snapshot validation ───────────────────────────────────────────────────
@@ -129,8 +164,12 @@ exports.handler = async (event) => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 768,
+        model: 'claude-3-5-haiku-latest',
+        max_tokens: 900,
+        // Slightly raised temperature so similar snapshots two days in
+        // a row don't produce identical wording. Coach voice should
+        // still be coherent — 0.7 is the sweet spot.
+        temperature: 0.7,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: buildUserMessage(snapshot) }],
       }),
@@ -157,7 +196,7 @@ exports.handler = async (event) => {
       weekly_review: typeof brief.weekly_review === 'string' ? brief.weekly_review : '',
       verbs: Array.isArray(brief.verbs) ? brief.verbs.slice(0, 2) : [],
       generated_at: new Date().toISOString(),
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-3-5-haiku-latest',
     };
 
     return { statusCode: 200, headers: CORS, body: JSON.stringify(safe) };

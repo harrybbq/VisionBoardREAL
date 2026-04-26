@@ -1,14 +1,25 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import ProGate from './ProGate';
-import { pickInsight, allInsights } from '../lib/coach/heuristics';
+import {
+  pickInsight,
+  allInsights,
+  migrateCoachMemory,
+  recordShown,
+  recordDismissed,
+  recordActed,
+} from '../lib/coach/heuristics';
 
 // ── Insight wrapper ───────────────────────────────────────────────────────
-// Returns { title, body, verb? } so all UI variants render the same shape.
 function useCurrentInsight(S) {
   return useMemo(() => {
-    const seen = (S.coachSeen || []).slice(-30); // last 30 insight IDs
-    return pickInsight(S, seen);
-  }, [S]);
+    const memory = migrateCoachMemory(S);
+    return pickInsight(S, memory);
+  // Re-pick when the things heuristics actually read change. Includes
+  // coachMemory so a dismiss immediately rotates to the next insight
+  // without re-rendering the whole tree.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [S?.trackers, S?.habits, S?.achievements, S?.shopItems, S?.holidays,
+      S?.logs, S?.coins, S?.profile?.name, S?.coachMemory]);
 }
 
 function flattenForLegacy(insight) {
@@ -103,17 +114,39 @@ function AiCoachFull({ insight, onAct, onDismiss }) {
 // ── Main export ───────────────────────────────────────────────────────────
 export default function AiCoachWidget({ S, update, onOpenWaitlist, onCoachAct }) {
   const insight = useCurrentInsight(S);
+  // Track which id we've already auto-stamped as "shown" today so we
+  // don't write to coachMemory on every render. Resets per insight id.
+  const shownStamped = useRef(null);
 
-  function recordSeen(id) {
+  // Stamp `lastShownYmd` the first time a given insight is rendered to
+  // a Pro user. This lets the cooldown logic count "saw it once" even
+  // if the user never dismisses or acts. Without this, an evergreen
+  // rule that the user never interacts with would show forever.
+  useEffect(() => {
+    if (!insight || !update) return;
+    if (shownStamped.current === insight.id) return;
+    shownStamped.current = insight.id;
+    update(prev => ({
+      ...prev,
+      coachMemory: recordShown(prev.coachMemory, insight.id),
+    }));
+  }, [insight, update]);
+
+  function handleDismiss(id) {
     if (!update || !id) return;
     update(prev => ({
       ...prev,
-      coachSeen: [...(prev.coachSeen || []).slice(-29), id],
+      coachMemory: recordDismissed(prev.coachMemory, id),
     }));
   }
 
   function handleAct(verb, id) {
-    recordSeen(id);
+    if (update && id) {
+      update(prev => ({
+        ...prev,
+        coachMemory: recordActed(prev.coachMemory, id),
+      }));
+    }
     if (onCoachAct) onCoachAct(verb);
   }
 
@@ -122,7 +155,7 @@ export default function AiCoachWidget({ S, update, onOpenWaitlist, onCoachAct })
       teaser={<AiCoachBanner insight={insight} onJoinWaitlist={onOpenWaitlist} />}
       upgradeCta={<AiCoachUpgradeBanner insight={insight} />}
     >
-      <AiCoachFull insight={insight} onAct={handleAct} onDismiss={recordSeen} />
+      <AiCoachFull insight={insight} onAct={handleAct} onDismiss={handleDismiss} />
     </ProGate>
   );
 }
