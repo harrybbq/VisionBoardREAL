@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import AiCoachWidget from './AiCoachWidget';
 import CoachBriefPanel from './CoachBriefPanel';
 import QuickLog from './QuickLog';
+import FriendsRail from './friends/FriendsRail';
 
 // ── Panel primitive ──────────────────────────────────────────────────────
 function OsPanel({ label, right, children, bodyClass = '', innerPadding = true }) {
@@ -480,6 +481,7 @@ export default function HubOsLayout({
   onAddWidget, onSort, onNavigateSettings, onNavigateTrack,
   onShowCoinToast, onOpenWaitlist, onCoachAct,
   onUploadPhoto,
+  userId, onUpgrade,
 }) {
   const profile = S.profile || {};
   const coins = S.coins || 0;
@@ -502,7 +504,7 @@ export default function HubOsLayout({
 
       {/* ── MAIN ROW ── */}
       <div className="hub-os-main">
-        {/* Left col: actions + trackers mini */}
+        {/* Left col: actions + trackers mini + friends rail */}
         <div className="os-col">
           <OsActionsPanel
             onAddWidget={onAddWidget}
@@ -510,6 +512,9 @@ export default function HubOsLayout({
             onNavigateSettings={onNavigateSettings}
           />
           <OsTrackersPanel trackers={S.trackers} logs={S.logs} />
+          {/* Friends rail — same component as cream hub, retinted via
+              dark-os overrides on the .fc-* classes in hub-dark.css. */}
+          <FriendsRail userId={userId} onUpgrade={onUpgrade} />
         </div>
 
         {/* Middle: imperative widgets canvas */}

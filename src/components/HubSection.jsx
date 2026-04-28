@@ -5,6 +5,7 @@ import AiCoachWidget from './AiCoachWidget';
 import CoachBriefPanel from './CoachBriefPanel';
 import QuickLog from './QuickLog';
 import HubOsLayout from './HubOsLayout';
+import FriendsRail from './friends/FriendsRail';
 import { useSubscriptionContext } from '../context/SubscriptionContext';
 
 // ── GitHub helpers ──
@@ -96,7 +97,11 @@ function useWidgetDrag(canvasRef, S, update) {
 // after the action buttons — used by the cream layout to slot the
 // QuickLog trackers under "Sort". The `--with-rail` modifier widens
 // the column so the trackers stack vertically without being clipped.
-function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings, children }) {
+function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings, visionState, children }) {
+  // visionState is optional — older callers (e.g. tests) won't pass it.
+  // Render the badge only when we actually have a level to show; that
+  // also future-proofs against the hook returning a fallback shape.
+  const showLevelBadge = visionState && typeof visionState.level === 'number';
   return (
     <div className={`profile-col${children ? ' profile-col--with-rail' : ''}`}>
       <div className="card profile-card">
@@ -113,13 +118,27 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
         </div>
         <input type="file" id="photoFileInput" accept="image/*" style={{ display: 'none' }} onChange={onUploadPhoto} />
         <div className="profile-info-area">
-          <input
-            className="profile-name-input"
-            type="text"
-            placeholder="Your Name"
-            defaultValue={profile.name}
-            onChange={e => onSaveName(e.target.value)}
-          />
+          {/* Name + Lvl badge share a row so the badge sits visually
+              "next to" the name. The input flexes; the badge is a
+              fixed-width chip that doesn't shrink. Tooltip surfaces
+              the full XP / progress detail without bloating the rail. */}
+          <div className="profile-name-row">
+            <input
+              className="profile-name-input"
+              type="text"
+              placeholder="Your Name"
+              defaultValue={profile.name}
+              onChange={e => onSaveName(e.target.value)}
+            />
+            {showLevelBadge && (
+              <span
+                className="profile-level-badge"
+                title={`Level ${visionState.level} · ${visionState.xp} XP · ${visionState.unlockedCount}/${visionState.totalCount} visions unlocked`}
+              >
+                Lvl {visionState.level}
+              </span>
+            )}
+          </div>
           <input
             className="profile-tagline-input"
             type="text"
@@ -144,7 +163,7 @@ function ProfileCard({ profile, onSaveName, onSaveTagline, onUploadPhoto, onAddW
 }
 
 // ── Widget Canvas (imperative DOM approach) ──
-export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast, onCoachAct }) {
+export default function HubSection({ S, update, active, onOpenModal, onOpenWaitlist, onNavigateSettings, onNavigateTrack, onShowCoinToast, onCoachAct, visionState, userId, onUpgrade }) {
   const canvasRef = useRef(null);
   const makeDraggable = useWidgetDrag(canvasRef, S, update);
   const { hasPro } = useSubscriptionContext();
@@ -311,6 +330,8 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
           onOpenWaitlist={onOpenWaitlist}
           onCoachAct={onCoachAct}
           onUploadPhoto={handleUploadPhoto}
+          userId={userId}
+          onUpgrade={onUpgrade}
         />
       </section>
     );
@@ -333,6 +354,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
           onAddWidget={() => onOpenModal('addLinkModal')}
           onSortWidgets={handleSortWidgets}
           onNavigateSettings={onNavigateSettings}
+          visionState={visionState}
         >
           {/* Trackers sit in the left rail, directly under the Sort button.
               On mobile the .profile-col flips to a row and the rail wraps to
@@ -340,7 +362,26 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
           <QuickLog S={S} update={update} onNavigateTrack={onNavigateTrack} onShowCoinToast={onShowCoinToast} />
         </ProfileCard>
         </motion.div>
-        <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
+        {/* Widget canvas wrapped in a panel shell so the cream hub
+            reads as one consistent panel system (Trackers · Widgets ·
+            Friends all share the same border/header treatment).
+            The inner #widgetCanvas keeps its imperative drag math —
+            position:relative is set inline by renderCanvas so the
+            wrapper doesn't change the coordinate system. */}
+        <div className="hub-canvas-panel">
+          <div className="hub-canvas-panel-head">
+            <span className="hub-canvas-panel-label">Widgets</span>
+            <span className="hub-canvas-panel-meta">Canvas</span>
+          </div>
+          <div id="widgetCanvas" className="hub-links-col" ref={canvasRef}></div>
+        </div>
+        {/* Right rail — Sprint 2: friends list + expanded card. Mock
+            data for now; Sprint 3 swaps in a real Supabase query.
+            Animation + width handled in CSS so widgetCanvas keeps its
+            existing flex behaviour and isn't pushed around. */}
+        <aside className="hub-right-col">
+          <FriendsRail userId={userId} onUpgrade={onUpgrade} />
+        </aside>
       </div>
       <AiCoachWidget S={S} update={update} onOpenWaitlist={onOpenWaitlist} onCoachAct={onCoachAct} />
       <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} />

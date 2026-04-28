@@ -29,6 +29,8 @@ import CookieBanner from './components/CookieBanner';
 import InstallPrompt from './components/InstallPrompt';
 import TutorialOverlay from './components/TutorialOverlay';
 import { useCapacitor, haptic } from './hooks/useCapacitor';
+import { useVisions } from './lib/visions/useVisions';
+import { usePublishProfile } from './lib/friends/usePublishProfile';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -103,6 +105,18 @@ function Board({ userId, userEmail, onSignOut }) {
     clearTimeout(coinToastTimer.current);
     coinToastTimer.current = setTimeout(() => setCoinToast(t => ({ ...t, visible: false })), ms);
   }
+
+  // Visions runtime — derives the user's level/xp from their state
+  // and stamps newly-met visions (with a toast). See src/lib/visions.
+  // The hook is safe to call before state has loaded; it just won't
+  // stamp anything until S has the shape it expects.
+  const visionState = useVisions(S, update, showCoinToast);
+
+  // Publish the user's friend-facing slice (display_name, level,
+  // public_stats heatmap + wins) to Supabase so friends can see it.
+  // Debounced inside the hook; safely no-ops if the social schema
+  // hasn't been applied yet.
+  usePublishProfile(userId, S, hasPro, visionState);
 
   function navigate(id) { setActiveSection(id); }
   function handleOpenModal(id) {
@@ -307,7 +321,7 @@ function Board({ userId, userEmail, onSignOut }) {
       <AnimatePresence mode="wait">
         {activeSection === 'hub' && (
           <motion.div key="hub" {...pageMotion}>
-            <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} onCoachAct={handleCoachAct} />
+            <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} onCoachAct={handleCoachAct} visionState={visionState} userId={userId} onUpgrade={() => handleOpenModal('paywall:friends')} />
           </motion.div>
         )}
         {activeSection === 'achievements' && (

@@ -44,4 +44,15 @@ export const DEFAULT_STATE = {
   //   yesterday's focus/watch/micro lines.
   coachMemory: {},
   coachBriefHistory: [],
+  // ── Visions / Level system ────────────────────────────────────────
+  // visions: { [visionId]: { unlockedAt: ISO } }
+  //   System-tracked milestones (habit streaks, logging consistency,
+  //   completed-achievement counts). Stamped once when their `check(S)`
+  //   first passes. XP from these + a small drip from completed user
+  //   achievements drives the displayed Level. See src/lib/visions.
+  // visionsBackfilled: marks the first-load silent backfill as done so
+  //   we don't fire a burst of toasts when the feature lands for users
+  //   whose state already meets several visions.
+  visions: {},
+  visionsBackfilled: false,
 };

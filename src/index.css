@@ -384,13 +384,89 @@ nav:hover .nav-tab-label{opacity:1;}
 .profile-edit-overlay{position:absolute;inset:0;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center;color:#fff;font-size:8px;font-family:var(--mono);letter-spacing:.5px;text-align:center;line-height:1.4;border-radius:12px 12px 0 0;}
 .profile-photo-wrap:hover .profile-edit-overlay{display:flex;}
 .profile-info-area{padding:5px 7px 7px;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--accent-line-soft);}
-.profile-name-input{background:transparent;border:none;font-family:var(--display);font-size:9px;font-weight:700;color:var(--text);outline:none;width:100%;padding:0;}
+/* Name + Lvl badge live on one row so the badge sits visually beside
+   the name. The input flexes; the badge is a non-shrinking chip. */
+.profile-name-row{display:flex;align-items:center;gap:4px;min-width:0;}
+.profile-name-input{background:transparent;border:none;font-family:var(--display);font-size:9px;font-weight:700;color:var(--text);outline:none;flex:1;min-width:0;padding:0;text-overflow:ellipsis;}
 .profile-name-input::placeholder{color:var(--text-muted);opacity:.65;}
+/* Mirrors the prototype's .fc-level chip (mono, em-tinted). Sized for
+   the 144px rail — tight but legible at "Lvl 12". */
+.profile-level-badge{
+  flex-shrink:0;
+  font-family:var(--mono);
+  font-size:7px;
+  font-weight:500;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  padding:1px 4px;
+  border-radius:3px;
+  background:rgba(var(--em-rgb),.08);
+  border:1px solid rgba(var(--em-rgb),.22);
+  color:var(--em);
+  line-height:1.3;
+  white-space:nowrap;
+  cursor:default;
+}
 .profile-tagline-input{background:transparent;border:none;font-size:8px;color:var(--text-mid);outline:none;width:100%;padding:0;font-style:italic;}
 .profile-tagline-input::placeholder{color:var(--text-muted);opacity:.55;}
 
-/* Spotify top-right */
-.hub-right-col{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:14px;}
+/* Right rail — Sprint 2: Friends panel + expanded card. Fixed width
+   so the widget canvas in the middle doesn't reflow when a friend
+   card opens/closes. The grid-column/row hints below are leftover
+   from an earlier grid attempt — harmless because .hub-layout is
+   flex, kept for backward-compat with the existing mobile rule. */
+.hub-right-col{
+  grid-column:2;grid-row:1;
+  width:236px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:10px;
+  align-self:start;
+}
+
+/* Centre column — Widgets canvas wrapped in a panel shell to match
+   Trackers (left) and Friends (right). The inner #widgetCanvas keeps
+   its imperative drag math; we just frame it. The header sits above
+   the canvas, the canvas fills remaining vertical space, overflow is
+   clipped at the panel edge so dragged widgets can't bleed under the
+   right rail. */
+.hub-canvas-panel{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  /* Ensure the header row never gets shoved out by the canvas's
+     min-height. flex-shrink:0 on the head; the canvas absorbs all
+     the slack. */
+  position:relative;
+}
+.hub-canvas-panel-head{
+  flex-shrink:0;
+  padding:7px 12px 6px;
+  border-bottom:1px solid var(--border-lt);
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);
+  font-size:8.5px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);
+  background:var(--bg-raised);
+  /* Sit above any imperative widgets that get absolutely-positioned
+     in the canvas below. Without this, a widget dragged to a small
+     y can render visually over the header. */
+  position:relative;
+  z-index:2;
+}
+.hub-canvas-panel-label{
+  position:relative;padding-left:13px;
+}
+.hub-canvas-panel-label::before{
+  content:'//';position:absolute;left:0;top:0;
+  color:var(--em);opacity:.6;
+}
+.hub-canvas-panel-meta{margin-left:auto;}
+.hub-canvas-panel #widgetCanvas{
+  flex:1;
+  padding:14px;
+}
 
 /* Links row — spans full width */
 .hub-links-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
@@ -903,21 +979,94 @@ nav:hover .nav-tab-label{opacity:1;}
 .profile-col--with-rail .profile-photo,
 .profile-col--with-rail .profile-photo-placeholder{ height:144px; }
 .profile-col--with-rail .hub-action-btn{ width:144px; }
+/* Frame the trackers as a `.fc-panel` clone so the cream rail reads
+   as one consistent panel system (Friends + Trackers + Coach all
+   share this language). We don't touch QuickLog's JSX — the existing
+   .quick-log-header becomes the panel head, and the inner stacked
+   "TODAY / Tuesday 28 Apr" gets pushed onto one line. */
 .profile-col--with-rail .quick-log-section{
-  padding:0; max-width:none; margin:0;
-  margin-top:6px; width:100%;
+  padding:0; max-width:none; margin:6px 0 0;
+  width:100%;
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
 }
-.profile-col--with-rail .quick-log-header{ margin-bottom:8px; }
-.profile-col--with-rail .quick-log-date{ font-size:10px; }
+.profile-col--with-rail .quick-log-header{
+  margin:0;
+  padding:7px 12px 6px;
+  border-bottom:1px solid var(--border-lt);
+  background:transparent;
+}
+/* Force eyebrow + date onto a single row, eyebrow left, date right */
+.profile-col--with-rail .quick-log-header > div{
+  display:flex; align-items:center; gap:8px;
+}
+.profile-col--with-rail .quick-log-header .eyebrow{
+  margin:0 !important;
+  font-family:var(--mono);
+  font-size:8.5px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);
+  position:relative; padding-left:13px;
+}
+/* Match the // prefix used on .fc-panel-label for visual rhyme */
+.profile-col--with-rail .quick-log-header .eyebrow::before{
+  content:'//'; position:absolute; left:0; top:0;
+  color:var(--em); opacity:.6;
+  letter-spacing:0;
+}
+.profile-col--with-rail .quick-log-date{
+  margin-left:auto;
+  font-size:8px;letter-spacing:1.2px;
+  color:var(--brown-lt,#b09a7a);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
 .profile-col--with-rail .quick-log-cards{
   flex-direction:column; flex-wrap:nowrap;
   overflow-x:visible; gap:8px;
+  padding:10px 10px 12px;
 }
 .profile-col--with-rail .quick-log-card{
   min-width:0; width:100%; padding:10px 12px;
+  /* Base rule was designed for a dark surface (white-on-white-alpha
+     borders/bg). On the cream rail those vanish — re-skin with cream
+     tokens so the card has a visible outline and a soft inner fill. */
+  background:rgba(255,255,255,.6);
+  border:1px solid var(--border-lt);
 }
+.profile-col--with-rail .quick-log-card.checked{
+  /* Keep the per-tracker tint from the inline --tc style, just
+     soften the bg so it sits well on cream. */
+  background:rgba(var(--tc-rgb,42,158,98),.10);
+  border-color:var(--tc,var(--em));
+}
+/* Boolean toggle — base used white-30%-alpha border which is invisible
+   on cream. Use the border token + darker idle text so the ✗ reads. */
+.profile-col--with-rail .quick-log-toggle{
+  border-color:var(--border);
+  color:var(--text-muted);
+  background:#fff;
+}
+.profile-col--with-rail .quick-log-toggle.on{
+  /* `on` state already gets coloured via inline style (tracker.color);
+     just clean up the border + text so the white tick pops. */
+  border-color:transparent;
+  color:#fff;
+}
+/* Number stepper buttons — same invisibility issue. */
+.profile-col--with-rail .step-btn{
+  background:#fff;
+  border-color:var(--border);
+  color:var(--text-mid);
+}
+.profile-col--with-rail .step-btn:active{ background:var(--bg-base); }
+
 .profile-col--with-rail .quick-log-card-name{ max-width:100%; }
-.profile-col--with-rail .quick-log-empty{ font-size:11px; }
+.profile-col--with-rail .quick-log-empty{
+  font-size:11px;
+  padding:14px 12px;
+}
 
 /* On mobile the rail flips to a horizontal flex row alongside the
    profile card; let the trackers wrap to their own line and keep the
@@ -2004,4 +2153,404 @@ button:active:not(:disabled),
   color:var(--text-muted);
   text-align:center;
   font-size:var(--text-sm);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   FRIENDS RAIL (Sprint 2)
+   Compact panel + expandable card. Lives in .hub-right-col on the
+   cream hub. Class names mirror the design prototype's fc-* prefix
+   so the visual diff between mock and real-data versions is zero.
+   ────────────────────────────────────────────────────────────────── */
+
+/* ── Friends panel (compact list) ── */
+.fc-panel{
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+}
+.fc-panel-head{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 12px 6px;
+  border-bottom:1px solid var(--border-lt);
+  font-family:var(--mono);
+  font-size:8.5px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);
+}
+.fc-panel-label{display:flex;align-items:center;gap:5px;}
+.fc-panel-label::before{content:'//';color:var(--em);opacity:.6;}
+.fc-panel-meta{margin-left:auto;font-size:8px;color:var(--brown-lt,#b09a7a);letter-spacing:1.2px;}
+.fc-panel-body{display:flex;flex-direction:column;}
+.fc-panel-empty{
+  padding:14px 12px;
+  font-family:var(--mono);font-size:9.5px;line-height:1.5;
+  color:var(--text-muted);font-style:italic;
+}
+
+/* ── List row ── */
+.fc-row{
+  all:unset;
+  box-sizing:border-box;
+  display:flex;align-items:center;gap:10px;
+  padding:7px 12px;
+  border-bottom:1px solid var(--border-lt);
+  cursor:pointer;
+  transition:background .14s ease;
+  width:100%;
+}
+.fc-row:last-child{border-bottom:none;}
+.fc-row:hover{background:rgba(var(--em-rgb),.04);}
+.fc-row-selected{background:rgba(var(--em-rgb),.07);}
+.fc-row-avatar-wrap{position:relative;flex-shrink:0;}
+.fc-row-avatar{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:11px;font-style:italic;font-weight:700;
+  color:#fff;
+  border:1.5px solid var(--border);
+}
+.fc-row-online-dot{
+  position:absolute;bottom:0;right:0;
+  width:8px;height:8px;border-radius:50%;
+  background:#22c55e;
+  border:1.5px solid var(--bg-raised);
+}
+.fc-row-info{flex:1;min-width:0;}
+.fc-row-name{
+  font-family:var(--body);
+  font-size:12px;font-weight:500;
+  color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.fc-row-status{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:.3px;
+  color:var(--text-muted);
+}
+.fc-row-level{
+  flex-shrink:0;
+  font-family:var(--mono);
+  font-size:8px;letter-spacing:1px;
+  padding:1px 5px;border-radius:3px;
+  background:rgba(var(--em-rgb),.07);
+  border:1px solid rgba(var(--em-rgb),.18);
+  color:var(--em);
+}
+
+/* ── Expanded friend card ── */
+.fc-card{
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 14px 36px rgba(var(--em-rgb),.08);
+}
+.fc-header{
+  padding:18px 16px 12px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.fc-avatar-wrap{position:relative;flex-shrink:0;}
+.fc-avatar{
+  width:46px;height:46px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:17px;font-weight:700;font-style:italic;
+  color:#fff;
+  border:2px solid rgba(255,255,255,.6);
+}
+.fc-online-dot{
+  position:absolute;bottom:1px;right:1px;
+  width:11px;height:11px;border-radius:50%;
+  background:#22c55e;border:2px solid var(--bg-raised);
+}
+.fc-identity{flex:1;min-width:0;padding-top:2px;}
+.fc-name{
+  font-family:var(--display);
+  font-size:17px;font-style:italic;font-weight:700;
+  color:var(--text);
+  line-height:1.1;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.fc-meta-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.fc-handle{
+  font-family:var(--mono);
+  font-size:10px;letter-spacing:.5px;
+  color:var(--text-muted);
+}
+.fc-level{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:1.2px;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px;
+  background:rgba(var(--em-rgb),.08);
+  border:1px solid rgba(var(--em-rgb),.2);
+  color:var(--em);
+}
+.fc-divider{height:1px;background:var(--border-lt);margin:0 16px;}
+
+/* Streak strip */
+.fc-streak-row{
+  padding:13px 16px;
+  display:flex;align-items:baseline;gap:9px;
+}
+.fc-streak-num{
+  font-family:var(--mono);
+  font-size:30px;font-weight:500;
+  color:var(--em);
+  line-height:1;letter-spacing:-1px;
+}
+.fc-streak-body{flex:1;min-width:0;}
+.fc-streak-label{
+  display:block;
+  font-family:var(--mono);
+  font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-muted);
+}
+.fc-streak-habit{
+  display:block;margin-top:1px;
+  font-family:var(--body);
+  font-size:12px;font-weight:500;
+  color:var(--text-mid);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.fc-streak-quiet{
+  padding:11px 16px;
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-muted);
+}
+
+/* Heatmap */
+.fc-heatmap-wrap{padding:0 16px 13px;}
+.fc-heatmap-title{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:7px;
+}
+.fc-heatmap-inner{position:relative;}
+.fc-month-labels{display:flex;gap:2px;margin-bottom:3px;}
+.fc-month-lbl{
+  width:13px;min-width:13px;height:10px;
+  font-family:var(--mono);font-size:8px;letter-spacing:.3px;
+  color:var(--text-muted);
+  white-space:nowrap;overflow:hidden;
+}
+.fc-heatmap-grid{display:flex;gap:2px;}
+.fc-heatmap-col{display:flex;flex-direction:column;gap:2px;}
+.fc-cell{
+  width:11px;height:11px;border-radius:2px;
+  cursor:default;
+  transition:opacity .12s;
+  flex-shrink:0;
+}
+.fc-cell:hover{opacity:.8;}
+.fc-cell[data-i="0"]{background:rgba(var(--em-rgb),.07);}
+.fc-cell[data-i="1"]{background:rgba(var(--em-rgb),.22);}
+.fc-cell[data-i="2"]{background:rgba(var(--em-rgb),.5);}
+.fc-cell[data-i="3"]{background:var(--em);}
+
+/* Heatmap tooltip — portalled to body so overflow:hidden on the card
+   doesn't clip it. fixed positioning matches getBoundingClientRect. */
+.fc-tooltip{
+  position:fixed;z-index:9999;
+  background:var(--text);color:var(--cream,#fdfaf3);
+  border-radius:6px;
+  padding:5px 9px;
+  font-family:var(--mono);font-size:10px;line-height:1.5;
+  pointer-events:none;
+  white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  transform:translate(-50%,-100%) translateY(-6px);
+}
+.fc-tooltip-date{
+  display:block;
+  font-size:9px;
+  color:rgba(253,250,243,.6);
+}
+
+/* Recent wins chips */
+.fc-wins-wrap{padding:0 16px 16px;}
+.fc-wins-label{
+  font-family:var(--mono);
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:8px;
+}
+.fc-wins-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.fc-win-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 9px 4px 6px;
+  border-radius:6px;
+  background:rgba(var(--em-rgb),.06);
+  border:1px solid rgba(var(--em-rgb),.16);
+  font-family:var(--body);
+  font-size:11px;font-weight:500;
+  color:var(--text-mid);
+}
+.fc-win-chip-icon{font-size:13px;line-height:1;}
+.fc-empty-wins{
+  font-family:var(--mono);
+  font-size:9px;color:var(--text-muted);font-style:italic;
+}
+
+/* Heatmap empty placeholder — drawn at the same height as a populated
+   grid would be, so the card geometry doesn't jump when stats arrive. */
+.fc-heatmap-empty{
+  height:81px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;
+  color:var(--text-muted);font-style:italic;
+}
+
+/* ── Sprint 3: pending requests + add button ── */
+.fc-panel--pending{margin-bottom:8px;}
+.fc-request-row{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 12px;
+  border-bottom:1px solid var(--border-lt);
+}
+.fc-request-row:last-child{border-bottom:none;}
+.fc-request-actions{display:flex;gap:4px;flex-shrink:0;}
+.fc-request-btn{
+  width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:5px;
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--bg-base);
+  color:var(--text-muted);
+  transition:all .14s ease;
+}
+.fc-request-btn:hover{transform:scale(1.06);}
+.fc-request-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.fc-request-btn-accept{
+  background:var(--em);color:#fff;border-color:var(--em);
+}
+.fc-request-btn-accept:hover{background:var(--em-mid);}
+.fc-request-btn-decline:hover{background:rgba(196,50,50,.08);color:#c43232;border-color:rgba(196,50,50,.3);}
+
+.fc-add-btn{
+  width:100%;
+  font-family:var(--body);
+  font-size:11px;
+  padding:7px 0;
+  border-radius:9px;
+}
+
+/* ── Handle claim + add-friend modals ── */
+.handle-claim-modal,
+.add-friend-modal{
+  width:380px;max-width:92vw;
+  padding:26px 24px 22px;
+  background:var(--bg-raised);
+  border-radius:14px;
+}
+.handle-claim-eyebrow{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--em-mid);
+  margin-bottom:6px;
+}
+.handle-claim-title{
+  font-family:var(--display);
+  font-size:22px;font-weight:700;font-style:italic;
+  color:var(--em);
+  margin:0 0 8px;
+}
+.handle-claim-sub{
+  font-family:var(--body);
+  font-size:12.5px;line-height:1.55;
+  color:var(--text-mid);
+  margin:0 0 18px;
+}
+.handle-claim-form{display:flex;flex-direction:column;gap:12px;}
+.handle-claim-input-wrap{
+  display:flex;align-items:center;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:#fff;
+  padding:0 10px 0 12px;
+  transition:border-color .14s ease;
+}
+.handle-claim-input-wrap:focus-within{border-color:var(--em);}
+.handle-claim-prefix{
+  font-family:var(--mono);font-size:14px;font-weight:500;
+  color:var(--text-muted);
+  padding-right:6px;
+}
+.handle-claim-input{
+  flex:1;
+  background:none;border:none;outline:none;
+  padding:11px 0;
+  font-family:var(--mono);font-size:14px;
+  color:var(--text);
+}
+.handle-claim-error{
+  font-family:var(--mono);font-size:11px;
+  color:#c43232;
+  margin-top:-4px;
+  letter-spacing:.2px;
+}
+.handle-claim-actions{
+  display:flex;justify-content:flex-end;gap:8px;
+  margin-top:8px;
+}
+
+/* Add-friend specific */
+.add-friend-cap-banner{
+  font-family:var(--body);font-size:12px;line-height:1.5;
+  color:var(--text-mid);
+  background:rgba(var(--em-rgb),.06);
+  border:1px solid rgba(var(--em-rgb),.16);
+  border-radius:9px;
+  padding:10px 12px;
+  margin-bottom:14px;
+}
+.link-btn{
+  background:none;border:none;
+  color:var(--em);font-weight:600;
+  text-decoration:underline;
+  cursor:pointer;font-family:inherit;font-size:inherit;
+  padding:0;
+}
+.link-btn:hover{color:var(--em-mid);}
+.add-friend-results{
+  margin-top:14px;
+  max-height:280px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:6px;
+}
+.add-friend-hint{
+  font-family:var(--mono);font-size:10px;
+  color:var(--text-muted);
+  letter-spacing:.5px;
+  padding:8px 4px;
+}
+.add-friend-result{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;
+  border:1px solid var(--border-lt);
+  border-radius:9px;
+  background:var(--bg-base);
+}
+.add-friend-result-info{flex:1;min-width:0;}
+.add-friend-result-name{
+  font-family:var(--body);
+  font-size:13px;font-weight:600;
+  color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.add-friend-result-meta{
+  font-family:var(--mono);
+  font-size:10px;letter-spacing:.3px;
+  color:var(--text-muted);
+  margin-top:1px;
+}
+.add-friend-result-status{
+  font-family:var(--mono);
+  font-size:9px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--text-muted);
+  padding:4px 9px;
+  border-radius:5px;
+  background:rgba(0,0,0,.04);
 }

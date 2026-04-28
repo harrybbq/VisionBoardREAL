@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import MacroGoalsPanel from './MacroGoalsPanel';
 import { useSubscriptionContext } from '../context/SubscriptionContext';
+import { getOwnProfile, updateOwnProfile } from '../lib/friends/queries';
 
 export const SCHEMES = [
   { id: 'green',  name: 'Forest Green', em: '#1a7a4a', mid: '#2a9e62', light: '#4dc485', grad: 'linear-gradient(145deg,#f0f7f3 0%,#d8eee5 40%,#b0d9c5 70%,#7ec8a8 100%)' },
@@ -77,6 +78,105 @@ export const OPTIONAL_PANELS = [
     tagline: 'MET-based kcal burn · logs to cardioLogs',
   },
 ];
+
+/**
+ * Self-contained card for the Friends privacy toggle. Reads + writes
+ * the user's `profiles.is_searchable` directly via the friends
+ * queries module, so SettingsSection doesn't need to thread profile
+ * state through. Silently no-ops if the social schema isn't
+ * present (the read just fails and the card hides itself).
+ */
+function FriendsPrivacyCard({ userId }) {
+  const [searchable, setSearchable] = useState(null);
+  const [handle, setHandle] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [available, setAvailable] = useState(null); // null = checking; false = schema missing
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await getOwnProfile(userId);
+        if (cancelled) return;
+        setSearchable(p?.is_searchable ?? true);
+        setHandle(p?.handle || null);
+        setAvailable(true);
+      } catch {
+        if (!cancelled) setAvailable(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  if (available === false) return null; // schema not present → hide entirely
+  if (available === null) return null;   // still loading on first paint
+
+  async function handleToggle() {
+    const next = !searchable;
+    setSearchable(next); // optimistic
+    setSaving(true);
+    setError(null);
+    try {
+      await updateOwnProfile(userId, { is_searchable: next });
+    } catch (e) {
+      setSearchable(!next); // revert
+      setError(e.message || 'Could not save.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ padding: '22px' }}>
+      <h3 style={{ margin: '0 0 4px' }}>Friends</h3>
+      <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
+        Friends added to your list always see your activity. This setting only controls whether strangers can find you by handle search.
+      </p>
+      <label
+        style={{
+          display: 'flex', alignItems: 'center', gap: '14px',
+          padding: '12px 14px', borderRadius: '10px',
+          border: searchable ? '2px solid var(--em)' : '2px solid var(--border)',
+          background: searchable ? 'rgba(var(--em-rgb),0.08)' : 'var(--card, rgba(255,255,255,0.04))',
+          cursor: handle ? 'pointer' : 'not-allowed', transition: 'all .18s',
+          opacity: handle ? 1 : 0.55,
+        }}
+        title={handle ? '' : 'Claim a handle first to be searchable.'}
+      >
+        <input
+          type="checkbox"
+          checked={!!searchable}
+          disabled={!handle || saving}
+          onChange={handleToggle}
+          style={{ width: '18px', height: '18px', accentColor: 'var(--em)', cursor: handle ? 'pointer' : 'not-allowed' }}
+        />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--sans)', fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
+            Show me in handle search
+          </div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.5px', marginTop: '2px' }}>
+            {handle
+              ? `Other users can send you a friend request via @${handle}.`
+              : 'Open the Friends rail on the hub to claim a handle first.'}
+          </div>
+        </div>
+        <span style={{
+          fontFamily: 'var(--mono)', fontSize: '9px', letterSpacing: '1.4px',
+          textTransform: 'uppercase', color: searchable ? 'var(--em)' : 'var(--text-muted)',
+        }}>
+          {searchable ? 'On' : 'Off'}
+        </span>
+      </label>
+      {error && (
+        <div style={{ marginTop: 10, color: '#c43232', fontSize: 12, fontFamily: 'var(--mono)' }}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SettingsSection({ S, update, active, userId, onOpenLegal }) {
   const [deleting, setDeleting] = useState(false);
@@ -320,6 +420,9 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             </div>
           </div>
         )}
+
+        {/* Friends privacy */}
+        {userId && <FriendsPrivacyCard userId={userId} />}
 
         {/* Data & Privacy */}
         <div className="card" style={{ padding: '22px' }}>
