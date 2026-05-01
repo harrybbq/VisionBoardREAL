@@ -178,8 +178,19 @@ function FriendsPrivacyCard({ userId }) {
   );
 }
 
-export default function SettingsSection({ S, update, active, userId, onOpenLegal }) {
+// Tab definition — single source of truth so the nav and the
+// content switcher stay in sync. Order = display order.
+const SETTINGS_TABS = [
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'privacy',    label: 'Privacy'    },
+  { id: 'goals',      label: 'Goals'      },
+  { id: 'tools',      label: 'Tools'      },
+  { id: 'data',       label: 'Data'       },
+];
+
+export default function SettingsSection({ S, update, active, userId, onOpenLegal, onOpenPalette, onOpenShortcuts }) {
   const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState('appearance');
   const currentScheme = S.colorScheme || 'green';
   const currentTheme = S.theme || 'cream';
   const { hasPro } = useSubscriptionContext();
@@ -249,8 +260,37 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
         <div className="sec-title">Settings</div>
       </motion.div>
 
-      <div style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Tab navigation — flick between categories without endless
+          scrolling. Active state persists per-session in component
+          state; we don't write it to S because tab choice is more
+          ephemeral than the data we sync to cloud. */}
+      <div className="settings-tabs" role="tablist" aria-label="Settings categories">
+        {SETTINGS_TABS.map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`settings-panel-${tab.id}`}
+            id={`settings-tab-${tab.id}`}
+            className={`settings-tab${activeTab === tab.id ? ' settings-tab-active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
+      <div
+        id={`settings-panel-${activeTab}`}
+        role="tabpanel"
+        aria-labelledby={`settings-tab-${activeTab}`}
+        style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '20px' }}
+      >
+
+        {/* ─── APPEARANCE TAB ─── */}
+        {activeTab === 'appearance' && (
+        <>
         {/* Colour Scheme */}
         <div className="card" style={{ padding: '22px' }}>
           <h3 style={{ margin: '0 0 4px' }}>Colour Scheme</h3>
@@ -421,9 +461,22 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
           </div>
         )}
 
-        {/* Friends privacy */}
-        {userId && <FriendsPrivacyCard userId={userId} />}
+        </>
+        )}
 
+        {/* ─── PRIVACY TAB ─── */}
+        {activeTab === 'privacy' && (
+        <>
+        {/* Friends privacy */}
+        {userId
+          ? <FriendsPrivacyCard userId={userId} />
+          : <div className="settings-empty">Sign in to manage privacy.</div>}
+        </>
+        )}
+
+        {/* ─── DATA TAB ─── */}
+        {activeTab === 'data' && (
+        <>
         {/* Data & Privacy */}
         <div className="card" style={{ padding: '22px' }}>
           <h3 style={{ margin: '0 0 4px' }}>Your Data</h3>
@@ -453,25 +506,9 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
           )}
         </div>
 
-        {/* Nutrition Goals */}
-        {userId && <MacroGoalsPanel userId={userId} />}
-
-        {/* Walkthrough / tour */}
-        <div className="card" style={{ padding: '22px' }}>
-          <h3 style={{ margin: '0 0 4px' }}>Walkthrough</h3>
-          <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
-            Replay the 30-second intro tour — useful if you want a refresher or you skipped it the first time.
-          </p>
-          <button
-            type="button"
-            className="tut-replay-btn"
-            onClick={() => update(prev => ({ ...prev, tutorialCompleted: false }))}
-          >
-            <span aria-hidden="true">↺</span> Replay tutorial
-          </button>
-        </div>
-
-        {/* Danger Zone */}
+        {/* Danger Zone — lives inside the Data tab so destructive
+            actions are co-located with export. The visible separation
+            from the rest of Data tab is the red-tinted border. */}
         <div className="card" style={{ padding: '22px', borderColor: 'rgba(220,38,38,0.3)' }}>
           <h3 style={{ margin: '0 0 4px', color: '#f87171' }}>Danger Zone</h3>
           <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
@@ -490,6 +527,93 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             {deleting ? 'Deleting…' : '🗑 Delete All Data'}
           </button>
         </div>
+
+        </>
+        )}
+
+        {/* ─── GOALS TAB ─── */}
+        {activeTab === 'goals' && (
+        <>
+        {/* Nutrition Goals */}
+        {userId
+          ? <MacroGoalsPanel userId={userId} />
+          : <div className="settings-empty">Sign in to set your nutrition goals.</div>}
+        </>
+        )}
+
+        {/* ─── TOOLS TAB ─── */}
+        {activeTab === 'tools' && (
+        <>
+        {/* Tools — command palette + keyboard shortcuts. Used to live
+            as a button in the page header but moved here to keep the
+            chrome quieter. The Cmd+K / Ctrl+K hotkey still works. */}
+        {(onOpenPalette || onOpenShortcuts) && (
+          <div className="card" style={{ padding: '22px' }}>
+            <h3 style={{ margin: '0 0 4px' }}>Tools</h3>
+            <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
+              Quick navigation and keyboard reference. Cmd+K (or Ctrl+K) opens the command palette from anywhere.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {onOpenPalette && (
+                <button
+                  type="button"
+                  onClick={onOpenPalette}
+                  style={{
+                    background: 'rgba(255,255,255,.07)', border: '1px solid var(--border)',
+                    borderRadius: '10px', color: 'var(--text)', padding: '10px 16px',
+                    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'var(--sans, var(--body))',
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    transition: 'all .18s',
+                  }}
+                >
+                  <span aria-hidden="true">⌕</span>
+                  Command palette
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', opacity: 0.6, marginLeft: '4px' }}>
+                    ⌃K
+                  </span>
+                </button>
+              )}
+              {onOpenShortcuts && (
+                <button
+                  type="button"
+                  onClick={onOpenShortcuts}
+                  style={{
+                    background: 'rgba(255,255,255,.07)', border: '1px solid var(--border)',
+                    borderRadius: '10px', color: 'var(--text)', padding: '10px 16px',
+                    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    fontFamily: 'var(--sans, var(--body))',
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    transition: 'all .18s',
+                  }}
+                >
+                  <span aria-hidden="true">⌨</span>
+                  Keyboard shortcuts
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', opacity: 0.6, marginLeft: '4px' }}>
+                    ?
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Walkthrough / tour */}
+        <div className="card" style={{ padding: '22px' }}>
+          <h3 style={{ margin: '0 0 4px' }}>Walkthrough</h3>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
+            Replay the 30-second intro tour — useful if you want a refresher or you skipped it the first time.
+          </p>
+          <button
+            type="button"
+            className="tut-replay-btn"
+            onClick={() => update(prev => ({ ...prev, tutorialCompleted: false }))}
+          >
+            <span aria-hidden="true">↺</span> Replay tutorial
+          </button>
+        </div>
+        </>
+        )}
 
       </div>
     </section>

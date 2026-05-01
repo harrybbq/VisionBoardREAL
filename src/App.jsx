@@ -29,8 +29,13 @@ import CookieBanner from './components/CookieBanner';
 import InstallPrompt from './components/InstallPrompt';
 import TutorialOverlay from './components/TutorialOverlay';
 import { useCapacitor, haptic } from './hooks/useCapacitor';
+import { useIsMobile } from './hooks/useIsMobile';
 import { useVisions } from './lib/visions/useVisions';
 import { usePublishProfile } from './lib/friends/usePublishProfile';
+import BottomTabBar from './components/mobile/BottomTabBar';
+import MoreDrawer from './components/mobile/MoreDrawer';
+import MobileAppBar from './components/mobile/MobileAppBar';
+import { registerPushToken, handleIncomingPush } from './lib/push/handlers';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -59,7 +64,10 @@ const MODAL_CAPS = {
 };
 
 function Board({ userId, userEmail, onSignOut }) {
-  const { S, update, loading, justMigrated, dismissMigrationBanner } = useVisionBoardState(userId);
+  const {
+    S, update, loading, justMigrated, dismissMigrationBanner,
+    loadError, retryLoad, startFresh,
+  } = useVisionBoardState(userId);
   const { atLimit } = useTierLimits();
   const { hasPro } = useSubscriptionContext();
   const [activeSection, setActiveSection] = useState('hub');
@@ -71,11 +79,21 @@ function Board({ userId, userEmail, onSignOut }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [legalPage, setLegalPage] = useState(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  // Native plugins (no-op on web)
+  // Native plugins (no-op on web).
+  // Push handlers delegate to src/lib/push/handlers.js — that module
+  // owns the routing logic so this file stays slim. handleIncomingPush
+  // takes a fresh `actions` bag each call so it always sees the
+  // current navigate/showToast closures rather than stale ones.
   useCapacitor({
-    onPushToken: token => console.info('[Push] Device token:', token),
-    onPushMessage: msg => console.info('[Push] Message:', msg),
+    onPushToken: token => {
+      registerPushToken(userId, token, /* platform inferred server-side */ 'unknown');
+    },
+    onPushMessage: msg => {
+      handleIncomingPush(msg, { navigate, showToast: showCoinToast });
+    },
   });
   const bgInputRef = useRef(null);
   const coinToastTimer = useRef(null);
@@ -259,6 +277,84 @@ function Board({ userId, userEmail, onSignOut }) {
     );
   }
 
+  // Load error — refused to overwrite cloud with defaults. The user
+  // sees a clear screen and gets to choose: retry the load, sign out,
+  // or (for empty_state) explicitly start fresh.
+  if (loadError) {
+    const isEmpty = loadError.kind === 'empty_state';
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', padding: '24px', textAlign: 'center',
+        background: 'var(--bg-base)', color: 'var(--text)',
+        fontFamily: 'var(--body)',
+      }}>
+        <div style={{
+          maxWidth: 480, padding: '32px 28px',
+          background: 'var(--bg-raised)', border: '1px solid var(--border)',
+          borderRadius: 14,
+          boxShadow: '0 14px 36px rgba(0,0,0,0.08)',
+        }}>
+          <div style={{
+            fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: 2.5,
+            textTransform: 'uppercase', color: 'var(--em-mid, var(--em))',
+            marginBottom: 8,
+          }}>{isEmpty ? 'No data found' : 'Could not load'}</div>
+          <h2 style={{
+            fontFamily: 'var(--display)', fontSize: 24, fontStyle: 'italic',
+            fontWeight: 700, color: 'var(--em)', margin: '0 0 14px',
+          }}>
+            {isEmpty ? 'We didn\'t overwrite anything.' : 'We couldn\'t reach your data.'}
+          </h2>
+          <p style={{ color: 'var(--text-mid)', fontSize: 13.5, lineHeight: 1.6, margin: '0 0 20px' }}>
+            {loadError.message}
+          </p>
+          {isEmpty && (
+            <p style={{
+              color: 'var(--text-muted)', fontSize: 12, lineHeight: 1.6,
+              margin: '0 0 20px', fontStyle: 'italic',
+            }}>
+              If you've never set up a Vision Board on this account before, choose Start fresh.
+              Otherwise — please don't proceed and contact support; your data may be recoverable.
+            </p>
+          )}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={retryLoad}
+              style={{ padding: '10px 20px' }}
+            >
+              Try again
+            </button>
+            {isEmpty && (
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  if (window.confirm('This will set up your account with default data. If you had data here before, it will not come back. Continue?')) {
+                    startFresh();
+                  }
+                }}
+                style={{ padding: '10px 20px' }}
+              >
+                Start fresh
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={onSignOut}
+              style={{ padding: '10px 20px' }}
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const showBanner = !noBanner && (justMigrated || localDataExists);
   const currentBg = backgrounds[activeSection];
 
@@ -302,10 +398,38 @@ function Board({ userId, userEmail, onSignOut }) {
       <div id="hub-overlay" className={activeSection === 'hub' && currentBg ? 'visible' : ''}></div>
       <div id="shop-overlay" className={activeSection === 'shop' && currentBg ? 'visible' : ''}></div>
 
-      {/* Sidebar nav */}
+      {/* Sidebar nav (desktop only — hidden via @media on mobile) */}
       <Nav activeSection={activeSection} onNavigate={navigate} onSignOut={onSignOut} />
 
-      {/* Fixed page header */}
+      {/* Mobile chrome — bottom tab bar + app bar + More drawer.
+          Only mounts on mobile viewports so we don't pay for these
+          components on desktop where the sidenav handles navigation.
+          The CSS hides .m-appbar and .m-tabs on desktop anyway, but
+          conditional mounting saves a render and clarifies intent. */}
+      {isMobile && (
+        <>
+          <MobileAppBar
+            activeSection={activeSection}
+            coins={S.coins || 0}
+            onOpenCoinHistory={() => handleOpenModal('coinHistoryModal')}
+            onNavigateSettings={() => navigate('settings')}
+          />
+          <BottomTabBar
+            activeSection={activeSection}
+            onNavigate={navigate}
+            onOpenMore={() => setMoreOpen(true)}
+            moreOpen={moreOpen}
+          />
+          <MoreDrawer
+            open={moreOpen}
+            onClose={() => setMoreOpen(false)}
+            onNavigate={navigate}
+            activeSection={activeSection}
+          />
+        </>
+      )}
+
+      {/* Fixed page header (desktop only — hidden via @media on mobile) */}
       <PageHeader
         activeSection={activeSection}
         coins={S.coins || 0}
@@ -314,7 +438,6 @@ function Board({ userId, userEmail, onSignOut }) {
         onChangeBg={handleChangeBgClick}
         onRemoveBg={currentBg ? handleRemoveBg : null}
         onSignOut={onSignOut}
-        onOpenPalette={() => setPaletteOpen(true)}
       />
 
       {/* Main sections */}
@@ -351,7 +474,7 @@ function Board({ userId, userEmail, onSignOut }) {
         )}
         {activeSection === 'settings' && (
           <motion.div key="settings" {...pageMotion}>
-            <SettingsSection S={S} update={update} active userId={userId} onOpenLegal={setLegalPage} />
+            <SettingsSection S={S} update={update} active userId={userId} onOpenLegal={setLegalPage} onOpenPalette={() => setPaletteOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} />
           </motion.div>
         )}
       </AnimatePresence>

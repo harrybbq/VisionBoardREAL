@@ -1037,12 +1037,33 @@ html[data-theme="dark-os"] .fc-panel{
   border: 1px solid var(--os-border);
   border-radius: 9px;
 }
+/* Pending requests deserve attention — without this they read as "just
+   another panel" against the near-black left column and the user
+   misses an actionable inbox. Subtle em-light tint + accent border
+   make it scannable at a glance without being shouty. */
+html[data-theme="dark-os"] .fc-panel--pending{
+  border-color: rgba(var(--em-rgb), 0.45);
+  background: linear-gradient(180deg,
+    rgba(var(--em-rgb), 0.06) 0%,
+    var(--os-surface) 70%);
+  box-shadow: 0 0 0 1px rgba(var(--em-rgb), 0.08), 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+html[data-theme="dark-os"] .fc-panel--pending .fc-panel-label::before{
+  color: var(--em-light);
+  opacity: 1;
+}
+html[data-theme="dark-os"] .fc-panel--pending .fc-panel-meta{
+  color: var(--em-light);
+  font-weight: 600;
+}
 html[data-theme="dark-os"] .fc-panel-head{
   border-bottom: 1px solid var(--os-border);
   color: var(--text-muted);
 }
 html[data-theme="dark-os"] .fc-panel-label::before{ color: var(--em-light); opacity: .7; }
 html[data-theme="dark-os"] .fc-panel-meta{ color: var(--text-muted); }
+html[data-theme="dark-os"] .fc-panel-meta-online{ color: var(--em-light); }
+html[data-theme="dark-os"] .fc-panel-meta-sep{ opacity: .4; }
 html[data-theme="dark-os"] .fc-panel-empty{ color: var(--text-muted); }
 
 /* List rows */
@@ -1181,4 +1202,330 @@ html[data-theme="dark-os"] .add-friend-result-meta{ color: var(--text-muted); }
 html[data-theme="dark-os"] .add-friend-result-status{
   background: rgba(255,255,255,.04);
   color: var(--text-muted);
+}
+
+/* Kebab menu retint */
+html[data-theme="dark-os"] .fc-menu-trigger{ color: var(--text-muted); }
+html[data-theme="dark-os"] .fc-menu-trigger:hover{
+  background: rgba(255,255,255,.05);
+  color: #ddd8ce;
+}
+html[data-theme="dark-os"] .fc-menu{
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+  box-shadow: 0 6px 22px rgba(0,0,0,.45);
+}
+html[data-theme="dark-os"] .fc-menu-item{ color: #ddd8ce; }
+html[data-theme="dark-os"] .fc-menu-item:hover{
+  background: rgba(var(--em-rgb), .12);
+}
+html[data-theme="dark-os"] .fc-menu-item-warn{ color: #ff6b6b; }
+html[data-theme="dark-os"] .fc-menu-item-warn:hover{
+  background: rgba(196, 50, 50, .14);
+  color: #ff6b6b;
+}
+
+/* Report modal retint */
+html[data-theme="dark-os"] .report-reason-chip{
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+  color: #9a958c;
+}
+html[data-theme="dark-os"] .report-reason-chip:hover{
+  border-color: var(--em-light);
+  color: #ddd8ce;
+}
+html[data-theme="dark-os"] .report-reason-chip.selected{
+  background: rgba(var(--em-rgb), .14);
+  border-color: var(--em-light);
+  color: var(--em-light);
+}
+html[data-theme="dark-os"] .report-context-input{
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+  color: #ddd8ce;
+}
+html[data-theme="dark-os"] .report-context-input:focus{ border-color: var(--em-light); }
+html[data-theme="dark-os"] .report-context-input::placeholder{ color: var(--text-muted); }
+
+/* Friend card footer — Unfriend button retint */
+html[data-theme="dark-os"] .fc-footer-btn{
+  border-color: var(--os-border-md);
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .fc-footer-btn:hover{
+  background: rgba(196,50,50,.10);
+  border-color: rgba(255,107,107,.4);
+  color: #ff6b6b;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   ACHIEVEMENT BOARD — dark-os overrides
+   Retints the redesigned board for the OS aesthetic. Cream tokens
+   live at :root in index.css; we override the .ach-* tokens here.
+   ────────────────────────────────────────────────────────────────── */
+html[data-theme="dark-os"] {
+  --ach-canvas-bg:        #0a0a09;
+  --ach-grid-line:        rgba(255,255,255,0.025);
+  --ach-conn-active:      rgba(var(--em-rgb), 0.55);
+  --ach-conn-done:        rgba(200, 151, 10, 0.7);
+  --ach-conn-locked:      #2a2a27;
+  --ach-node-active-bg:   #141f19;
+  --ach-node-active-bdr:  rgba(var(--em-rgb), 0.38);
+  --ach-node-active-shadow: rgba(var(--em-rgb), 0.18);
+  --ach-node-done-bg:     #1a1608;
+  --ach-node-done-bdr:    rgba(200, 151, 10, 0.45);
+  --ach-node-done-shadow: rgba(200, 151, 10, 0.22);
+  --ach-node-locked-bg:   #111110;
+  --ach-node-locked-bdr:  #2a2a27;
+}
+
+/* Canvas — flat dark + grid */
+html[data-theme="dark-os"] .ach-canvas-wrap{
+  border-color: var(--os-border);
+  box-shadow: none;
+}
+
+/* Hint pills */
+html[data-theme="dark-os"] .ach-hint-key{
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .ach-hint-pill{ color: var(--text-muted); }
+
+/* Card backgrounds — replace gradients with flat surfaces */
+html[data-theme="dark-os"] .ach-card.status-active{
+  background: var(--ach-node-active-bg);
+  box-shadow: 0 4px 0 rgba(var(--em-rgb), 0.12), 0 8px 24px var(--ach-node-active-shadow);
+}
+html[data-theme="dark-os"] .ach-card.status-completed{
+  background: var(--ach-node-done-bg);
+  box-shadow: 0 4px 0 rgba(160, 100, 0, 0.18), 0 0 24px var(--ach-node-done-shadow);
+}
+html[data-theme="dark-os"] .ach-card.status-locked{
+  background: var(--ach-node-locked-bg);
+  box-shadow: none;
+  opacity: .55;
+  filter: saturate(.3);
+}
+
+/* Card text — light on dark */
+html[data-theme="dark-os"] .ach-name{ color: #ddd8ce; }
+html[data-theme="dark-os"] .ach-card.status-completed .ach-name{ color: #d4a94e; }
+html[data-theme="dark-os"] .ach-card.status-locked .ach-name{ color: var(--text-muted); }
+html[data-theme="dark-os"] .ach-desc{ color: var(--text-muted); }
+html[data-theme="dark-os"] .ach-card.status-active .ach-desc{ color: #9a958c; }
+
+/* Icon wrapper retint — sits inside dark card */
+html[data-theme="dark-os"] .ach-icon-wrap{
+  background: var(--os-surface3);
+  border-color: var(--os-border);
+}
+html[data-theme="dark-os"] .ach-card.status-active .ach-icon-wrap{
+  background: rgba(var(--em-rgb), 0.10);
+  border-color: rgba(var(--em-rgb), 0.22);
+}
+html[data-theme="dark-os"] .ach-card.status-completed .ach-icon-wrap{
+  background: rgba(200, 151, 10, 0.12);
+  border-color: rgba(200, 151, 10, 0.30);
+}
+
+/* Labels — match dark theme accents */
+html[data-theme="dark-os"] .ach-label.status-active{ color: var(--em-mid); }
+html[data-theme="dark-os"] .ach-label.status-completed{ color: #d4a94e; }
+html[data-theme="dark-os"] .ach-label.status-locked{ color: var(--text-muted); }
+
+/* Coin badge */
+html[data-theme="dark-os"] .ach-coin-badge{
+  background: rgba(200, 151, 10, 0.12);
+  border-color: rgba(200, 151, 10, 0.28);
+  color: #d4a94e;
+}
+
+/* Progress strip */
+html[data-theme="dark-os"] .ach-progress-strip{ background: var(--os-border); }
+html[data-theme="dark-os"] .ach-progress-fill{
+  background: linear-gradient(90deg, var(--em), var(--em-light));
+}
+html[data-theme="dark-os"] .ach-card.status-completed .ach-progress-fill{
+  background: linear-gradient(90deg, #b08a3a, #d4a94e);
+}
+html[data-theme="dark-os"] .ach-progress-count{ color: var(--em-light); }
+
+/* Action bar */
+html[data-theme="dark-os"] .ach-actions{ border-top-color: var(--os-border); }
+
+/* Empty state */
+html[data-theme="dark-os"] .ach-canvas-empty-icon{
+  background: var(--os-surface);
+  border-color: var(--os-border-md);
+  color: var(--text-muted);
+}
+
+/* Stats strip */
+html[data-theme="dark-os"] .ach-stats{
+  background: var(--os-surface);
+  border-color: var(--os-border);
+}
+html[data-theme="dark-os"] .ach-stats-item{ border-right-color: var(--os-border); }
+html[data-theme="dark-os"] .ach-stats-val{ color: #ddd8ce; }
+html[data-theme="dark-os"] .ach-stats-val-em{ color: var(--em-light); }
+html[data-theme="dark-os"] .ach-stats-val-gold{ color: #d4a94e; }
+html[data-theme="dark-os"] .ach-stats-lbl{ color: var(--text-muted); }
+
+/* Zoom controls */
+html[data-theme="dark-os"] .ach-zoom-btn{
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .ach-zoom-btn:hover{
+  border-color: var(--em-mid);
+  color: var(--em-light);
+}
+html[data-theme="dark-os"] .ach-zoom-val{ color: var(--text-muted); }
+
+/* Connect-mode toast — slightly stronger box-shadow on dark */
+html[data-theme="dark-os"] .ach-connect-toast{
+  box-shadow: 0 4px 24px rgba(var(--em-rgb), 0.4), 0 0 0 1px rgba(var(--em-rgb), 0.3);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   HUB FOOTER (year countdown) — dark-os retint
+   Base CSS pins the footer at left:56px to clear the cream sidebar
+   (56px wide). Dark-os shrinks <nav> to 48px, leaving an 8px gap
+   between the sidebar's right edge and the footer's left edge. We
+   also retint the cream-beige background + colors for dark-os.
+   ────────────────────────────────────────────────────────────────── */
+html[data-theme="dark-os"] .hub-footer{
+  left: 48px;
+  background: rgba(12, 12, 11, 0.92);
+  border-top: 1px solid var(--os-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+html[data-theme="dark-os"] .hub-footer-label{
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .yc-val{
+  color: var(--em-light);
+}
+html[data-theme="dark-os"] .yc-lbl{
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .yc-sep{
+  color: var(--os-border-md);
+}
+html[data-theme="dark-os"] .year-progress-bar{
+  background: rgba(var(--em-rgb), 0.08);
+}
+html[data-theme="dark-os"] .year-progress-fill{
+  background: linear-gradient(90deg, var(--em), var(--em-light));
+}
+html[data-theme="dark-os"] .year-progress-pct{
+  color: var(--text-muted);
+}
+
+/* Settings tabs — dark-os retint */
+html[data-theme="dark-os"] .settings-tabs{
+  border-bottom-color: var(--os-border);
+}
+html[data-theme="dark-os"] .settings-tab{
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .settings-tab:hover{
+  color: #ddd8ce;
+}
+html[data-theme="dark-os"] .settings-tab-active{
+  color: var(--em-light);
+  border-bottom-color: var(--em-light);
+}
+html[data-theme="dark-os"] .settings-empty{
+  background: var(--os-surface);
+  border-color: var(--os-border-md);
+  color: var(--text-muted);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   MOBILE CHROME — dark-os retint
+   App bar + bottom tabs + More drawer get the OS aesthetic when
+   dark-os is active.
+   ────────────────────────────────────────────────────────────────── */
+html[data-theme="dark-os"] .m-appbar {
+  background: rgba(12, 12, 11, 0.92);
+  border-bottom: 1px solid var(--os-border);
+}
+html[data-theme="dark-os"] .m-appbar-logo {
+  background: rgba(var(--em-rgb), 0.13);
+  border-color: rgba(var(--em-rgb), 0.3);
+  color: var(--em-light);
+}
+html[data-theme="dark-os"] .m-appbar-eyebrow {
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .m-appbar-coins {
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+  color: #d4a94e;
+}
+
+html[data-theme="dark-os"] .m-tabs {
+  background: rgba(12, 12, 11, 0.96);
+  border-top-color: var(--os-border);
+}
+html[data-theme="dark-os"] .m-tab-icon,
+html[data-theme="dark-os"] .m-tab-label {
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .m-tab-active .m-tab-icon,
+html[data-theme="dark-os"] .m-tab-active .m-tab-label {
+  color: var(--em-light);
+}
+
+html[data-theme="dark-os"] .m-drawer {
+  background: var(--os-surface);
+  border-top-color: var(--os-border);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.5);
+}
+html[data-theme="dark-os"] .m-drawer-handle {
+  background: var(--os-border-md);
+}
+html[data-theme="dark-os"] .m-drawer-eyebrow {
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .m-drawer-item {
+  background: var(--os-surface2);
+  border-color: var(--os-border-md);
+}
+html[data-theme="dark-os"] .m-drawer-item:active {
+  background: rgba(var(--em-rgb), 0.10);
+}
+html[data-theme="dark-os"] .m-drawer-item-active {
+  border-color: var(--em-light);
+  background: rgba(var(--em-rgb), 0.10);
+}
+html[data-theme="dark-os"] .m-drawer-item-icon {
+  background: rgba(var(--em-rgb), 0.13);
+  color: var(--em-light);
+}
+html[data-theme="dark-os"] .m-drawer-item-label {
+  color: #ddd8ce;
+}
+html[data-theme="dark-os"] .m-drawer-item-desc {
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .m-drawer-item-chev {
+  color: var(--text-muted);
+}
+
+/* Node arrival pulse — tweak shadow base for dark canvas */
+html[data-theme="dark-os"] .ach-card.status-active.ach-card-arriving{
+  animation: achNodeArriveDark 1.1s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes achNodeArriveDark{
+  0%   { box-shadow: 0 4px 0 rgba(var(--em-rgb),.12), 0 8px 24px rgba(var(--em-rgb),.18); }
+  20%  { box-shadow: 0 0 0 6px rgba(var(--em-rgb),.35), 0 0 32px rgba(var(--em-rgb),.55), 0 8px 24px rgba(var(--em-rgb),.30); }
+  60%  { box-shadow: 0 0 0 10px rgba(var(--em-rgb),.12), 0 0 48px rgba(var(--em-rgb),.28), 0 8px 24px rgba(var(--em-rgb),.20); }
+  100% { box-shadow: 0 4px 0 rgba(var(--em-rgb),.12), 0 8px 24px rgba(var(--em-rgb),.18); }
 }

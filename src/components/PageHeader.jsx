@@ -25,7 +25,7 @@ function getDynamicGreeting(name) {
   return `Still up${n}? 🌙`;
 }
 
-export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg, onSignOut, onOpenPalette }) {
+export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg, onSignOut }) {
   const greeting = getDynamicGreeting(profileName);
   const labelRef = useRef(null);
   const prevSection = useRef(activeSection);
@@ -56,23 +56,9 @@ export default function PageHeader({ activeSection, coins, onOpenCoinHistory, pr
       {/* Push everything right */}
       <div style={{ flex: 1 }} />
 
-      {/* Search / command palette trigger */}
-      <button
-        onClick={onOpenPalette}
-        title="Command palette (Ctrl+K)"
-        style={{
-          background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.25)',
-          borderRadius: '8px', color: 'rgba(255,255,255,0.75)', cursor: 'pointer',
-          fontSize: '13px', padding: '4px 9px', lineHeight: 1,
-          marginRight: '6px', transition: 'all .18s',
-          display: 'flex', alignItems: 'center', gap: '5px',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.55)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.35)'; }}
-      >
-        ⌕
-        <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', opacity: 0.6 }} className="header-search-hint">⌃K</span>
-      </button>
+      {/* Command palette / shortcuts now live in Settings → Tools.
+          The Ctrl+K / Cmd+K hotkey is still bound globally via
+          useKeyboardShortcuts so power users keep their muscle memory. */}
 
       {/* Sign out — mobile only */}
       <button className="mobile-signout-btn" onClick={onSignOut} title="Sign out">→</button>

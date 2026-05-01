@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   listAcceptedFriends,
   listPendingRequests,
@@ -9,7 +9,9 @@ import {
   blockUser,
   reportUser,
   searchByHandle,
+  derivePresence,
   FREE_FRIEND_CAP,
+  ONLINE_THRESHOLD_MS,
 } from './queries';
 
 /**
@@ -96,20 +98,50 @@ export function useFriends(userId, hasPro) {
 
   const search = useCallback((q) => searchByHandle(q), []);
 
+  // ── presence ticker ──────────────────────────────────────────
+  // Re-render the friend list every minute so the online/offline
+  // boundary actually flips when a friend's last_active_at ages out
+  // of the threshold. Without this, a friend who went silent at
+  // load time would *display* online forever until something else
+  // triggered a re-render. Cheap (no network), only ticks while the
+  // hook is mounted (i.e. while the rail is rendered).
+  const [presenceTick, setPresenceTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setPresenceTick(t => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Friends enriched with derived `online` + `lastSeenDays` so callers
+  // (the rail, the card) don't have to re-implement the presence
+  // heuristic. presenceTick is in the dep array purely to force
+  // recomputation on the minute boundary.
+  const friendsWithPresence = useMemo(() => {
+    return friends.map(f => ({
+      ...f,
+      ...derivePresence(f.last_active_at),
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [friends, presenceTick]);
+
   // ── derived ──────────────────────────────────────────────────
   // Free users: 5 friends. Pro/Lifetime: unlimited (we still cap
   // the displayed badge at "∞" via the component).
   const friendCap = hasPro ? Infinity : FREE_FRIEND_CAP;
   const atCap = friends.length >= friendCap;
 
+  const onlineCount = friendsWithPresence.filter(f => f.online).length;
+  const offlineCount = friendsWithPresence.length - onlineCount;
+
   return {
     ownProfile,
-    friends,
+    friends: friendsWithPresence,
     pending,
     loading,
     error,
     atCap,
     friendCap,
+    onlineCount,
+    offlineCount,
     refresh,
     send,
     accept,
@@ -119,5 +151,6 @@ export function useFriends(userId, hasPro) {
     report,
     search,
     setOwnProfile, // exposed so HandleClaimModal can update without a round-trip
+    ONLINE_THRESHOLD_MS,
   };
 }

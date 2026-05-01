@@ -1,19 +1,28 @@
+import { useEffect, useRef, useState } from 'react';
 import FriendsHeatmap from './FriendsHeatmap';
 
 /**
  * Expanded "cheerleader" view of a single friend.
  *
  * Sections (top-to-bottom):
- *   1. Header — avatar, name, @handle, Lvl badge
+ *   1. Header — avatar, name, @handle, Lvl badge, ⋯ menu (Report/Block)
  *   2. Streak strip — big number + habit name OR a quiet "last active"
  *      line for friends without an active streak (no shaming language)
  *   3. 91-day activity heatmap (with hover tooltip)
  *   4. Recent wins — chips for the last few completed achievements
+ *   5. Footer — "Remove from friends" button
  *
- * The shape of the `friend` prop mirrors what we'll later receive from
- * Supabase (see future_ideas — Sprint 3 schema). Names match the
- * eventual `public_stats` row + a denormalised display blob, so this
- * component won't need restructuring when real data lands.
+ * Action surfacing rationale:
+ *   - "Unfriend" is a normal, non-hostile action (people drift apart;
+ *     boards change). Surfaced as a visible footer button.
+ *   - "Report" and "Block" are *moderation* actions — they imply the
+ *     other person did something wrong. Tucked behind ⋯ so they don't
+ *     dominate a card that's meant to celebrate someone.
+ *
+ * Callbacks (all optional — card still renders without them):
+ *   onReport(friend)    — opens the report flow
+ *   onBlock(friend)     — block + remove friendship
+ *   onUnfriend(friend)  — remove friendship
  */
 
 const COLORS = ['#1a7a4a', '#2563eb', '#7c3aed', '#c2410c', '#0891b2', '#be185d', '#854d0e'];
@@ -28,10 +37,46 @@ function initials(name) {
   return name.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function FriendCard({ friend, loading = false, statsMissing = false }) {
+export default function FriendCard({
+  friend,
+  loading = false,
+  statsMissing = false,
+  onReport,
+  onBlock,
+  onUnfriend,
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu on outside-click. Lives on FriendCard rather than a
+  // shared Popover because the menu is small and lifecycle-tied to
+  // the card itself.
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDoc(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
+    };
+  }, [menuOpen]);
+
   if (!friend) return null;
   const hasStreak = friend.streak > 0;
   const hasHeatmap = Array.isArray(friend.heatmap) && friend.heatmap.length > 0;
+  // Only Report + Block live in the kebab now. Unfriend has its own
+  // footer button so users can find it without opening a menu.
+  const hasMenu = !!(onReport || onBlock);
+
+  function handleMenu(action) {
+    setMenuOpen(false);
+    action?.(friend);
+  }
 
   return (
     <div className="fc-card">
@@ -50,6 +95,43 @@ export default function FriendCard({ friend, loading = false, statsMissing = fal
             <span className="fc-level">Lvl {friend.level}</span>
           </div>
         </div>
+        {hasMenu && (
+          <div className="fc-menu-wrap" ref={menuRef}>
+            <button
+              type="button"
+              className="fc-menu-trigger"
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label="More actions"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              title="More"
+            >⋯</button>
+            {menuOpen && (
+              <div className="fc-menu" role="menu">
+                {onReport && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="fc-menu-item"
+                    onClick={() => handleMenu(onReport)}
+                  >
+                    Report
+                  </button>
+                )}
+                {onBlock && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="fc-menu-item fc-menu-item-warn"
+                    onClick={() => handleMenu(onBlock)}
+                  >
+                    Block
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="fc-divider" />
@@ -109,6 +191,24 @@ export default function FriendCard({ friend, loading = false, statsMissing = fal
           <div className="fc-empty-wins">{loading ? 'Loading…' : 'None yet'}</div>
         )}
       </div>
+
+      {/* Footer — visible Unfriend action. Subdued styling because the
+          card's primary purpose is celebration, not friend management,
+          but the option must exist somewhere obvious. */}
+      {onUnfriend && (
+        <>
+          <div className="fc-divider" />
+          <div className="fc-footer">
+            <button
+              type="button"
+              className="fc-footer-btn"
+              onClick={() => onUnfriend(friend)}
+            >
+              Remove from friends
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

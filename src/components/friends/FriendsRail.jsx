@@ -4,6 +4,7 @@ import FriendCard from './FriendCard';
 import PendingRequestsList from './PendingRequestsList';
 import HandleClaimModal from './HandleClaimModal';
 import AddFriendModal from './AddFriendModal';
+import ReportFriendModal from './ReportFriendModal';
 import { useFriends } from '../../lib/friends/useFriends';
 import { getFriendPublicStats } from '../../lib/friends/queries';
 import { useSubscriptionContext } from '../../context/SubscriptionContext';
@@ -30,6 +31,9 @@ export default function FriendsRail({ userId, onUpgrade }) {
   const [showHandleModal, setShowHandleModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [busyRequestId, setBusyRequestId] = useState(null);
+  // Report flow holds the friend being reported in state so the modal
+  // doesn't have to re-look-up by id when opened.
+  const [reportTarget, setReportTarget] = useState(null);
 
   // ── derived sets (used by AddFriendModal to suppress duplicates) ──
   const friendIds = useMemo(() => new Set(friends.friends.map(f => f.id)), [friends.friends]);
@@ -66,29 +70,37 @@ export default function FriendsRail({ userId, onUpgrade }) {
       name: base.display_name || `@${base.handle}`,
       handle: base.handle,
       level: base.level || 1,
-      online: false, // presence layer not wired yet — slot reserved
+      online: !!base.online,
       streak: selectedStats?.current_streak || 0,
       streakHabit: selectedStats?.streak_habit || null,
       heatmap: selectedStats?.heatmap_days || [],
       wins: selectedStats?.recent_wins || [],
-      // For the quiet-state copy. last_active_at lives on profiles
-      // (not public_stats) — Sprint 4+ can plumb it through; for now
-      // we just hide the line if no streak.
-      lastSeenDays: null,
+      // Plumbed through from profiles.last_active_at via useFriends
+      // → derivePresence. Drives the "Last active Xd ago" copy in
+      // FriendCard's quiet-state strip.
+      lastSeenDays: base.lastSeenDays,
     };
   }, [selectedId, friends.friends, selectedStats]);
 
   // ── friend list row shape (FriendListRow expects the mock shape) ──
-  const rows = useMemo(() => friends.friends.map(f => ({
-    id: f.id,
-    name: f.display_name || `@${f.handle}`,
-    handle: f.handle,
-    level: f.level || 1,
-    online: false,
-    streak: 0,           // populated lazily via selectedStats; rows show handle as fallback
-    streakHabit: null,
-    lastSeenDays: null,
-  })), [friends.friends]);
+  // Sort online-first, then by level desc as a tie-breaker so the
+  // most-engaged friend tops the list when several are online.
+  const rows = useMemo(() => {
+    const mapped = friends.friends.map(f => ({
+      id: f.id,
+      name: f.display_name || `@${f.handle}`,
+      handle: f.handle,
+      level: f.level || 1,
+      online: !!f.online,
+      streak: 0,           // not in list view; row shows handle / last-seen instead
+      streakHabit: null,
+      lastSeenDays: f.lastSeenDays,
+    }));
+    return mapped.sort((a, b) => {
+      if (a.online !== b.online) return a.online ? -1 : 1;
+      return (b.level || 0) - (a.level || 0);
+    });
+  }, [friends.friends]);
 
   // ── handle claim gating ──
   // If the user has no handle yet, the rail itself is locked behind a
@@ -168,6 +180,8 @@ export default function FriendsRail({ userId, onUpgrade }) {
         friends={rows}
         selectedId={selectedId}
         onSelect={handleSelect}
+        onlineCount={friends.onlineCount}
+        offlineCount={friends.offlineCount}
       />
 
       {/* Add-friend CTA — lives below the list so it doesn't compete
@@ -185,6 +199,32 @@ export default function FriendsRail({ userId, onUpgrade }) {
           friend={selectedFriend}
           loading={statsLoading}
           statsMissing={!selectedStats && !statsLoading}
+          onReport={(f) => setReportTarget(f)}
+          onBlock={async (f) => {
+            // Block is destructive — confirm via native dialog. The
+            // queries module also drops the friendship row in the same
+            // call, so the user is immediately removed from the list.
+            const ok = window.confirm(
+              `Block ${f.name}? They'll be removed from your friends and won't be able to find you again.`
+            );
+            if (!ok) return;
+            try {
+              await friends.block(f.id);
+              setSelectedId(null); // close the card since this friend is gone
+            } catch (e) {
+              window.alert(e.message || 'Could not block.');
+            }
+          }}
+          onUnfriend={async (f) => {
+            const ok = window.confirm(`Remove ${f.name} from your friends?`);
+            if (!ok) return;
+            try {
+              await friends.unfriend(f.id);
+              setSelectedId(null);
+            } catch (e) {
+              window.alert(e.message || 'Could not unfriend.');
+            }
+          }}
         />
       )}
 
@@ -197,6 +237,16 @@ export default function FriendsRail({ userId, onUpgrade }) {
         onSend={async (toUserId) => { await friends.send(toUserId); }}
         onClose={() => setShowAddModal(false)}
         onUpgrade={onUpgrade}
+      />
+
+      <ReportFriendModal
+        open={!!reportTarget}
+        friend={reportTarget}
+        onSubmit={async (reason, context) => {
+          if (!reportTarget) return;
+          await friends.report(reportTarget.id, reason, context);
+        }}
+        onClose={() => setReportTarget(null)}
       />
     </>
   );

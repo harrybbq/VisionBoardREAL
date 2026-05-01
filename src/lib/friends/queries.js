@@ -22,6 +22,27 @@ import { supabase } from '../supabase';
 // can do — a check-list note in the migration README catches it.
 export const FREE_FRIEND_CAP = 5;
 
+// Presence threshold — a friend whose last_active_at is within this
+// window is "online". The heartbeat in usePublishProfile fires every
+// 60s while the tab is visible, so this gives 3 missed pings of
+// tolerance for transient network issues before going offline.
+export const ONLINE_THRESHOLD_MS = 3 * 60 * 1000;
+
+const DAY_MS = 86_400_000;
+
+/** Pure helper — derives presence + last-seen from a profile-shaped
+ *  row. Used to enrich friend rows in useFriends without re-fetching. */
+export function derivePresence(lastActiveAt) {
+  if (!lastActiveAt) return { online: false, lastSeenDays: null };
+  const t = new Date(lastActiveAt).getTime();
+  if (!Number.isFinite(t)) return { online: false, lastSeenDays: null };
+  const ageMs = Date.now() - t;
+  if (ageMs < ONLINE_THRESHOLD_MS) {
+    return { online: true, lastSeenDays: 0 };
+  }
+  return { online: false, lastSeenDays: Math.max(0, Math.floor(ageMs / DAY_MS)) };
+}
+
 const HANDLE_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
 /** Validate a handle locally. Mirrors the SQL check constraint
@@ -160,7 +181,10 @@ export async function listAcceptedFriends(userId) {
   if (otherIds.length === 0) return [];
   const { data: profiles, error: pErr } = await supabase
     .from('profiles')
-    .select('id, handle, display_name, avatar_url, level')
+    // last_active_at drives the online-bubble heuristic in the rail.
+    // Pulled here (rather than per-friend on selection) so the list
+    // can sort online-first without an N+1 round-trip.
+    .select('id, handle, display_name, avatar_url, level, last_active_at')
     .in('id', otherIds);
   if (pErr) throw new Error(friendlyError(pErr, 'Could not load friend profiles.'));
   return (profiles || []).map(p => ({

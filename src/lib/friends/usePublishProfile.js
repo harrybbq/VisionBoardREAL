@@ -148,4 +148,57 @@ export function usePublishProfile(userId, S, hasPro, visionState) {
 
     return () => clearTimeout(timerRef.current);
   }, [userId, S, hasPro, visionState]);
+
+  // ── Presence heartbeat ─────────────────────────────────────────
+  // The debounced publish above only fires when state CHANGES. If
+  // a user opens the app and just looks at it without editing —
+  // their last_active_at goes stale and friends see them as offline.
+  //
+  // Fix: a separate 60s interval that pings last_active_at while
+  // the tab is visible. Three tab-visible passes (3 minutes total)
+  // is the offline threshold the friends rail uses, so a real-life
+  // "I left the tab open" friend stays online; an actual close +
+  // walk-away goes offline within 3 minutes.
+  //
+  // We don't ping when the tab is hidden — there's no point pumping
+  // network requests for a backgrounded app, and visibility change
+  // re-fires this immediately on focus return so the gap is
+  // ~unnoticeable.
+  useEffect(() => {
+    if (!userId) return;
+    let intervalId = null;
+
+    async function ping() {
+      // Skip if we know the previous publish failed for "schema not
+      // applied" reasons — those errors don't auto-recover and
+      // pinging just spams the console.
+      try {
+        await updateOwnProfile(userId, { last_active_at: new Date().toISOString() });
+      } catch {
+        // silent — same rationale as the debounced publish
+      }
+    }
+
+    function start() {
+      if (intervalId) return;
+      ping(); // immediate ping on focus
+      intervalId = setInterval(ping, 60_000);
+    }
+    function stop() {
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') start();
+      else stop();
+    }
+
+    if (document.visibilityState === 'visible') start();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [userId]);
 }
