@@ -61,7 +61,14 @@ function FlameBadge({ streak }) {
   );
 }
 
-// ── Single tracker card ───────────────────────────────────────────────────
+// ── Single tracker row ────────────────────────────────────────────────────
+//
+// Style note (2026-05-03): Switched from a stacked card with a circular
+// ✓/✗ toggle to a clean horizontal row matching the mobile hub. The
+// old "✗ in a circle" for unchecked state read as broken / redundant —
+// the row treatment is calmer and the inactive state is just the empty
+// circle, no glyph. Number trackers keep their stepper but stripped of
+// the card chrome.
 function TrackerCard({ tracker, value, streak, onChange }) {
   const [savedVisible, setSavedVisible] = useState(false);
   const savedTimer = useRef(null);
@@ -88,54 +95,53 @@ function TrackerCard({ tracker, value, streak, onChange }) {
   const incProps = useLongPress(() => handleStep(1));
   const decProps = useLongPress(() => handleStep(-1));
 
-  const checked = tracker.type === 'boolean' && value === true;
-  const numVal = tracker.type === 'number' ? (typeof value === 'number' ? value : 0) : null;
+  const isBool = tracker.type === 'boolean';
+  const checked = isBool && value === true;
+  const numVal = isBool ? null : (typeof value === 'number' ? value : 0);
+  const numActive = !isBool && numVal > 0;
+  const trackerColor = tracker.color || 'var(--em)';
 
   return (
-    <motion.div
-      className={`quick-log-card${checked ? ' checked' : ''}`}
-      style={{ '--tc': tracker.color }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+    <button
+      type="button"
+      className={`quick-log-row${(checked || numActive) ? ' is-done' : ''}`}
+      onClick={isBool ? handleBoolToggle : undefined}
+      // Number trackers: row click is a no-op so the user can use the
+      // explicit -/+ buttons. Cleaner than guessing intent.
     >
+      <span
+        className="quick-log-row-check"
+        style={(checked || numActive) ? { background: trackerColor, borderColor: trackerColor } : undefined}
+        aria-hidden="true"
+      >
+        {(checked || numActive) && (
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </span>
+      <span className="quick-log-row-name">{tracker.name}</span>
       <FlameBadge streak={streak} />
-      <div className="quick-log-card-dot" style={{ background: tracker.color }} />
-      <div className="quick-log-card-name">{tracker.name}</div>
-
-      {tracker.type === 'boolean' ? (
-        <motion.button
-          className={`quick-log-toggle${checked ? ' on' : ''}`}
-          style={checked ? { background: tracker.color } : {}}
-          onClick={handleBoolToggle}
-          whileTap={{ scale: 0.88 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 18 }}
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={checked ? 'on' : 'off'}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: [0.5, 1.15, 1], opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{ duration: 0.24, times: [0, 0.6, 1], ease: 'easeOut' }}
-              style={{ display: 'inline-block' }}
-            >
-              {checked ? '✓' : '✗'}
-            </motion.span>
-          </AnimatePresence>
-        </motion.button>
+      {isBool ? (
+        <span className={`quick-log-row-pill${checked ? ' is-done' : ''}`}>
+          {checked ? <>&#10003; Done</> : '–'}
+        </span>
       ) : (
-        <div className="quick-log-stepper">
-          <button className="step-btn" {...decProps}>−</button>
-          <div className="step-val">
+        <span
+          className="quick-log-row-stepper"
+          // Stop the parent button click from firing when stepping
+          onClick={e => e.stopPropagation()}
+        >
+          <button type="button" className="step-btn" {...decProps}>−</button>
+          <span className="step-val">
             <span className="step-num">{numVal}</span>
             {tracker.unit && <span className="step-unit">{tracker.unit}</span>}
-          </div>
-          <button className="step-btn" {...incProps}>+</button>
-        </div>
+          </span>
+          <button type="button" className="step-btn" {...incProps}>+</button>
+        </span>
       )}
-
       <SavedBadge visible={savedVisible} />
-    </motion.div>
+    </button>
   );
 }
 
@@ -278,7 +284,7 @@ export default function QuickLog({ S, update, onNavigateTrack, onShowCoinToast }
           >Go to Track →</motion.button>
         </div>
       ) : (
-        <div className="quick-log-cards">
+        <div className="quick-log-rows">
           {trackers.map(t => (
             <TrackerCard
               key={t.id}

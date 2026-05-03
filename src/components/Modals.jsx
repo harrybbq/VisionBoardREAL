@@ -385,27 +385,23 @@ function AddShopModal({ openId, onClose, onAdd }) {
     setStatus('⏳ Fetching product info…');
     setFetching(true);
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      // Routed through a Netlify function — calling Anthropic / fetching
+      // arbitrary URLs from the browser is blocked by CORS and would
+      // also leak the API key. The function does OG / JSON-LD / Twitter
+      // Card extraction server-side. No API spend.
+      const resp = await fetch('/.netlify/functions/shop-autofill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
-          system: 'You are a product info extractor. Given a product URL, respond ONLY with a JSON object (no markdown) with keys: name (string), price (string like "£49.99" or "" if unknown), imageUrl (string — a direct image URL for the product, or "" if not determinable from URL alone), notes (one sentence description). Make reasonable guesses based on the URL path and domain.',
-          messages: [{ role: 'user', content: `Extract product info from this URL: ${url}` }],
-        }),
+        body: JSON.stringify({ url }),
       });
       const data = await resp.json();
-      const text = data.content?.find(b => b.type === 'text')?.text || '';
-      let info;
-      try { info = JSON.parse(text.replace(/```json|```/g, '').trim()); } catch { info = null; }
-      if (info) {
+      if (data && data.ok && (data.name || data.imageUrl)) {
         setForm(f => ({
           ...f,
-          name: f.name || info.name || '',
-          price: f.price || info.price || '',
-          imageUrl: info.imageUrl || f.imageUrl,
-          notes: f.notes || info.notes || '',
+          name:     f.name     || data.name     || '',
+          price:    f.price    || data.price    || '',
+          imageUrl: data.imageUrl || f.imageUrl || '',
+          notes:    f.notes    || data.notes    || '',
         }));
         setStatus('✓ Auto-filled from URL');
       } else {
