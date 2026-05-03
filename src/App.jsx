@@ -36,6 +36,7 @@ import BottomTabBar from './components/mobile/BottomTabBar';
 import MoreDrawer from './components/mobile/MoreDrawer';
 import MobileAppBar from './components/mobile/MobileAppBar';
 import { registerPushToken, handleIncomingPush } from './lib/push/handlers';
+import NotificationPermissionPrompt, { hasAskedPushPrePrompt } from './components/NotificationPermissionPrompt';
 
 const pageMotion = {
   initial: { opacity: 0, y: 14 },
@@ -132,7 +133,14 @@ function Board({ userId, userEmail, onSignOut }) {
   // and stamps newly-met visions (with a toast). See src/lib/visions.
   // The hook is safe to call before state has loaded; it just won't
   // stamp anything until S has the shape it expects.
-  const visionState = useVisions(S, update, showCoinToast);
+  // Auto-trigger the push pre-prompt the first time a vision unlocks
+  // — it's the celebratable moment we want to ride. The pre-prompt's
+  // own localStorage guard ensures this fires at most once per device,
+  // even if a flurry of unlocks arrives in the same session.
+  const [pushPrePromptOpen, setPushPrePromptOpen] = useState(false);
+  const visionState = useVisions(S, update, showCoinToast, () => {
+    if (!hasAskedPushPrePrompt()) setPushPrePromptOpen(true);
+  });
 
   // Publish the user's friend-facing slice (display_name, level,
   // public_stats heatmap + wins) to Supabase so friends can see it.
@@ -514,6 +522,24 @@ function Board({ userId, userEmail, onSignOut }) {
       <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <CookieBanner onOpenLegal={setLegalPage} />
       <InstallPrompt />
+      <NotificationPermissionPrompt
+        open={pushPrePromptOpen}
+        onClose={() => setPushPrePromptOpen(false)}
+        onPushToken={token => registerPushToken(userId, token, 'unknown')}
+        onPushMessage={msg => handleIncomingPush(msg, {
+          navigate, showToast: showCoinToast, prefs: S.notifications,
+        })}
+        headline="Vision unlocked. Want a ping for the next one?"
+        body={(
+          <>
+            We'll only ping you for the categories you turn on in
+            Settings — vision unlocks, friend requests, streak warnings.
+            No marketing, no signup nudges.
+            <br /><br />
+            Quiet hours are honored. You can turn any of this off whenever.
+          </>
+        )}
+      />
       {legalPage && <LegalPage page={legalPage} onClose={() => setLegalPage(null)} />}
 
       {/* Onboarding tutorial — shows once for new users, replayable

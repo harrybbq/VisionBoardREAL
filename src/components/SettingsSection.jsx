@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import MacroGoalsPanel from './MacroGoalsPanel';
 import NotificationsPanel from './NotificationsPanel';
+import SubscriptionPanel from './SubscriptionPanel';
 import { useSubscriptionContext } from '../context/SubscriptionContext';
 import { getOwnProfile, updateOwnProfile } from '../lib/friends/queries';
 
@@ -605,6 +606,11 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             toggling here is a no-op observable, but the prefs
             persist so users can configure ahead of first push. */}
         <NotificationsPanel S={S} update={update} />
+
+        {/* Subscription — current plan, restore + manage links.
+            Restore is required by Apple's review guidelines; manage
+            link deep-links to the platform-native subs UI. */}
+        <SubscriptionPanel />
 
         {/* Walkthrough / tour */}
         <div className="card" style={{ padding: '22px' }}>

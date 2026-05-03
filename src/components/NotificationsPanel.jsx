@@ -12,6 +12,9 @@
  * a notification they didn't opt into.
  */
 
+import { useState } from 'react';
+import NotificationPermissionPrompt, { PushPermissionStatusRow } from './NotificationPermissionPrompt';
+
 const CATEGORIES = [
   {
     id: 'visionUnlock',
@@ -37,6 +40,9 @@ const CATEGORIES = [
 
 export default function NotificationsPanel({ S, update }) {
   const prefs = S.notifications || {};
+  const [permPromptOpen, setPermPromptOpen] = useState(false);
+  // Bump on close so the status row re-reads OS permission state
+  const [permTick, setPermTick] = useState(0);
 
   function toggle(id) {
     update(prev => ({
@@ -81,6 +87,17 @@ export default function NotificationsPanel({ S, update }) {
         web users see in-app toasts only. Quiet hours and the daily reminder
         require the iOS or Android build.
       </p>
+
+      {/* Device permission status */}
+      <PushPermissionStatusRow
+        key={permTick}
+        onAsk={() => setPermPromptOpen(true)}
+      />
+
+      <NotificationPermissionPrompt
+        open={permPromptOpen}
+        onClose={() => { setPermPromptOpen(false); setPermTick(t => t + 1); }}
+      />
 
       {/* Category toggles */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>

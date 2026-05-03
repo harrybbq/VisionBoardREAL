@@ -4,6 +4,18 @@
  * Initialises all Capacitor native plugins when running inside a native
  * Android / iOS shell. Safe to call in a web browser — every import is
  * guarded by Capacitor.isNativePlatform() so no-ops on the web.
+ *
+ * Push permission policy:
+ *   The OS push permission prompt is NOT triggered automatically here.
+ *   We only attach push listeners if permission is already 'granted'.
+ *   The first-time prompt is gated behind our own pre-prompt modal so
+ *   the user understands what they're opting into BEFORE the iOS
+ *   one-shot dialog fires (denied permission can't be re-asked
+ *   programmatically — that conversion is locked in forever).
+ *
+ *   Use `requestPushPermission()` (exported below) from a button or
+ *   pre-prompt to actually trigger the OS dialog when the moment is
+ *   right (e.g. after first vision unlock, after first habit log).
  */
 import { useEffect, useRef } from 'react';
 
@@ -14,11 +26,44 @@ async function getCap() {
   return capCore;
 }
 
+/**
+ * Internal helper: register listeners + register() the device.
+ * Idempotent — safe to call even if already registered, the plugin
+ * dedupes the underlying APNs/FCM registration.
+ */
+async function attachPushListeners({ onPushToken, onPushMessage, listenersRef, cancelledRef }) {
+  const { PushNotifications } = await import('@capacitor/push-notifications');
+  await PushNotifications.register();
+
+  const t1 = await PushNotifications.addListener('registration', token => {
+    onPushToken?.(token.value);
+  });
+  const t2 = await PushNotifications.addListener('registrationError', err => {
+    console.error('Push registration error:', err.error);
+  });
+  const t3 = await PushNotifications.addListener('pushNotificationReceived', notification => {
+    onPushMessage?.({ ...notification, foreground: true });
+  });
+  const t4 = await PushNotifications.addListener('pushNotificationActionPerformed', action => {
+    onPushMessage?.({ ...action.notification, tapped: true });
+  });
+
+  if (!cancelledRef.current) {
+    listenersRef.current.push(t1, t2, t3, t4);
+  }
+}
+
 export function useCapacitor({ onPushToken, onPushMessage } = {}) {
   const listenersRef = useRef([]);
+  const cancelledRef = useRef(false);
+  // Stash the latest callbacks in refs so requestPushPermission() can
+  // re-attach listeners without depending on stale closures.
+  const callbacksRef = useRef({ onPushToken, onPushMessage });
+  callbacksRef.current.onPushToken = onPushToken;
+  callbacksRef.current.onPushMessage = onPushMessage;
 
   useEffect(() => {
-    let cancelled = false;
+    cancelledRef.current = false;
 
     async function init() {
       const { Capacitor } = await getCap();
@@ -42,42 +87,20 @@ export function useCapacitor({ onPushToken, onPushMessage } = {}) {
         console.warn('SplashScreen:', e.message);
       }
 
-      // ── Push Notifications ───────────────────────────────────────────────
+      // ── Push Notifications (passive — only attach if already granted) ───
+      // Do NOT call requestPermissions() here. That's gated behind our own
+      // pre-prompt UI to protect first-time conversion. We only wire
+      // listeners + register if the user has previously granted.
       try {
         const { PushNotifications } = await import('@capacitor/push-notifications');
-
         const { receive } = await PushNotifications.checkPermissions();
-        const needsRequest = receive === 'prompt' || receive === 'prompt-with-rationale';
-
-        if (needsRequest) {
-          const { receive: granted } = await PushNotifications.requestPermissions();
-          if (granted !== 'granted') {
-            return;
-          }
-        }
-
-        await PushNotifications.register();
-
-        const t1 = await PushNotifications.addListener('registration', token => {
-          onPushToken?.(token.value);
-        });
-
-        const t2 = await PushNotifications.addListener('registrationError', err => {
-          console.error('Push registration error:', err.error);
-        });
-
-        const t3 = await PushNotifications.addListener('pushNotificationReceived', notification => {
-          // App is in foreground
-          onPushMessage?.({ ...notification, foreground: true });
-        });
-
-        const t4 = await PushNotifications.addListener('pushNotificationActionPerformed', action => {
-          // User tapped a notification
-          onPushMessage?.({ ...action.notification, tapped: true });
-        });
-
-        if (!cancelled) {
-          listenersRef.current.push(t1, t2, t3, t4);
+        if (receive === 'granted') {
+          await attachPushListeners({
+            onPushToken: v => callbacksRef.current.onPushToken?.(v),
+            onPushMessage: v => callbacksRef.current.onPushMessage?.(v),
+            listenersRef,
+            cancelledRef,
+          });
         }
       } catch (e) {
         console.warn('PushNotifications:', e.message);
@@ -97,12 +120,11 @@ export function useCapacitor({ onPushToken, onPushMessage } = {}) {
             } else {
               window._backPressedOnce = true;
               setTimeout(() => { window._backPressedOnce = false; }, 2000);
-              // Optionally show a toast here
             }
           }
         });
 
-        if (!cancelled) listenersRef.current.push(t5);
+        if (!cancelledRef.current) listenersRef.current.push(t5);
       } catch (e) {
         console.warn('App (backButton):', e.message);
       }
@@ -111,13 +133,75 @@ export function useCapacitor({ onPushToken, onPushMessage } = {}) {
     init();
 
     return () => {
-      cancelled = true;
-      // Remove all native event listeners on unmount
+      cancelledRef.current = true;
       listenersRef.current.forEach(l => l.remove());
       listenersRef.current = [];
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+}
+
+/**
+ * Trigger the OS push permission dialog and, if granted, register +
+ * attach listeners using the most recently mounted callbacks.
+ *
+ * Returns one of:
+ *   'unsupported' — not on a native platform
+ *   'granted'     — user said yes, listeners attached
+ *   'denied'      — user said no (cannot be re-asked on iOS)
+ *   'error'       — plugin/registration failure
+ *
+ * The caller (NotificationsPanel button or auto pre-prompt flow) should
+ * call this AFTER showing a value-prop explanation. Once the iOS prompt
+ * has shown and been denied, there is no second chance via this API.
+ */
+export async function requestPushPermission({ onPushToken, onPushMessage } = {}) {
+  try {
+    const { Capacitor } = await getCap();
+    if (!Capacitor.isNativePlatform()) return 'unsupported';
+
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    const current = await PushNotifications.checkPermissions();
+    let receive = current.receive;
+
+    if (receive === 'prompt' || receive === 'prompt-with-rationale') {
+      const res = await PushNotifications.requestPermissions();
+      receive = res.receive;
+    }
+
+    if (receive !== 'granted') return 'denied';
+
+    await PushNotifications.register();
+    if (onPushToken) {
+      await PushNotifications.addListener('registration', token => onPushToken(token.value));
+    }
+    if (onPushMessage) {
+      await PushNotifications.addListener('pushNotificationReceived', n => onPushMessage({ ...n, foreground: true }));
+      await PushNotifications.addListener('pushNotificationActionPerformed', a => onPushMessage({ ...a.notification, tapped: true }));
+    }
+    return 'granted';
+  } catch (e) {
+    console.warn('requestPushPermission:', e.message);
+    return 'error';
+  }
+}
+
+/**
+ * Probe current OS push permission state without prompting. Useful for
+ * the NotificationsPanel status row ("● Enabled on this device").
+ *
+ * Returns: 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale' | 'unsupported' | 'error'
+ */
+export async function getPushPermissionState() {
+  try {
+    const { Capacitor } = await getCap();
+    if (!Capacitor.isNativePlatform()) return 'unsupported';
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    const { receive } = await PushNotifications.checkPermissions();
+    return receive;
+  } catch {
+    return 'error';
+  }
 }
 
 /**

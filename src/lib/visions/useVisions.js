@@ -20,7 +20,7 @@ import { VISIONS_BY_ID } from './definitions';
  * Returns: the derived level/xp object so callers can render it
  * without re-deriving themselves.
  */
-export function useVisions(S, update, showToast) {
+export function useVisions(S, update, showToast, onUnlock) {
   // Ref guards against the toast-storm-on-load problem. Stays true
   // until the first run sees a fully-loaded `S` and either backfills
   // or confirms it was already backfilled.
@@ -35,6 +35,10 @@ export function useVisions(S, update, showToast) {
   // every paint. We always reach for `.current` inside the effect.
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
+  // Same trick for onUnlock — caller's identity changes each render
+  // but we want to fire-and-forget against the latest closure.
+  const onUnlockRef = useRef(onUnlock);
+  onUnlockRef.current = onUnlock;
 
   useEffect(() => {
     if (!S || !update) return;
@@ -99,6 +103,10 @@ export function useVisions(S, update, showToast) {
         // can come later if visions deserve their own visual.
         fireToast(`${def.icon} Vision unlocked: ${def.title}`, true, 3200);
       }
+      // Notify caller — used by App.jsx to fire the push pre-prompt
+      // on the user's first vision unlock (a real celebratable moment
+      // is the cleanest soft prompt for the OS push dialog).
+      onUnlockRef.current?.(id);
     }
     // showToast intentionally excluded from deps — held in a ref above
     // so we re-run only when state or the updater identity changes.

@@ -16,3 +16,9 @@
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Headers = "Content-Type"
+
+# ── Scheduled Functions ──────────────────────────────────────────────
+# push-dispatch sweeps the notifications_queue every minute. Cheap —
+# the function returns immediately when the queue is empty.
+[functions."push-dispatch"]
+  schedule = "* * * * *"
