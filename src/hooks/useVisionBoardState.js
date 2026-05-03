@@ -39,10 +39,40 @@ function stripForSave(state) {
 // on null. Result: a transient blip at login wiped a user's real data
 // to defaults, with no warning, irreversibly.
 //
-// The new contract is a discriminated result: `{ kind, ... }`. Only
+// The contract is now a discriminated result: `{ kind, ... }`. Only
 // `no_row` is safe to recover from with a default save. Anything else
 // surfaces as a load error to the UI; we never auto-overwrite ambiguous
 // state.
+//
+// History note (2026-05-03): the discriminated-result fix landed but a
+// second incident still wiped a dev preview to defaults. Cause was
+// never definitively identified — most plausible is `maybeSingle()`
+// returning {data: null, error: null} for a userId that DID have a row
+// (RLS edge case, query cancellation race, etc). Added a localStorage
+// breadcrumb (`vb4_seen_user:{userId}`) recorded on every successful
+// `loaded` outcome. If we ever subsequently see `no_row` for the same
+// userId, we refuse to save defaults and surface a `seen_before_no_row`
+// error instead. The user can retry, sign out, or explicitly start
+// fresh — no silent overwrite is possible.
+
+const SEEN_USER_PREFIX = 'vb4_seen_user:';
+
+function markUserSeen(userId) {
+  try { localStorage.setItem(SEEN_USER_PREFIX + userId, String(Date.now())); } catch {}
+}
+
+function hasSeenUser(userId) {
+  try { return !!localStorage.getItem(SEEN_USER_PREFIX + userId); } catch { return false; }
+}
+
+/**
+ * Wipe the breadcrumb for the given user. Only call this after a
+ * user-confirmed `startFresh()` — that's the one path where we WANT
+ * the next load to be allowed to seed defaults again.
+ */
+function clearUserSeen(userId) {
+  try { localStorage.removeItem(SEEN_USER_PREFIX + userId); } catch {}
+}
 
 async function loadFromCloud(userId) {
   // maybeSingle() returns data:null + error:null when zero rows exist,
@@ -165,14 +195,41 @@ export function useVisionBoardState(userId) {
       if (cancelled) return;
 
       if (result.kind === 'loaded') {
+        // Mark that we've successfully loaded data for this userId on
+        // this device. Future `no_row` for the same userId is then
+        // suspicious and refuses to seed defaults. See the history
+        // note above the helpers for context.
+        markUserSeen(userId);
         setS(result.state);
         setLoading(false);
         return;
       }
 
       if (result.kind === 'no_row') {
-        // First-time user OR account that's never had data. Safe to
-        // create a row with defaults (or migrated localStorage).
+        // ── First-line defense ─────────────────────────────────────
+        // If we've previously loaded data for this userId on this
+        // device, `no_row` is anomalous — almost certainly a
+        // false-negative from the server (RLS edge case, query
+        // cancellation race, transient empty response). Refuse to
+        // overwrite, surface an error, leave it to the user.
+        if (hasSeenUser(userId)) {
+          console.warn('[useVisionBoardState] Refusing to save defaults: userId previously had data', { userId });
+          if (!cancelled) {
+            setLoadError({
+              kind: 'seen_before_no_row',
+              message:
+                "Your account is signed in but the server returned no saved data — " +
+                "and we know this account had data before on this device. " +
+                "We refused to overwrite the cloud with defaults. " +
+                "Try Try Again. If it persists, check your network and reach out before signing out.",
+            });
+            setLoading(false);
+          }
+          return;
+        }
+
+        // ── Genuine first-time user on this device ────────────────
+        // Safe to create a row with defaults (or migrated localStorage).
         const local = readLocalStorage();
         const initial = local ?? addTransient({ ...DEFAULT_STATE });
         try {
@@ -187,6 +244,9 @@ export function useVisionBoardState(userId) {
           return;
         }
         if (cancelled) return;
+        // Mark seen now that we've created the row, so even THIS user
+        // can't be wiped if maybeSingle returns no_row again later.
+        markUserSeen(userId);
         if (local) setJustMigrated(true);
         setS(initial);
         setLoading(false);
@@ -244,13 +304,20 @@ export function useVisionBoardState(userId) {
    * Explicit user-confirmed reset. Only call this from a UI that has
    * shown the user the consequences (e.g. "Start fresh — this will
    * permanently overwrite any saved data"). Used to recover from the
-   * `empty_state` error path when the user has decided to start over.
+   * `empty_state` or `seen_before_no_row` error paths when the user
+   * has decided to start over.
+   *
+   * Clears the breadcrumb first so the new `loaded` write registers
+   * cleanly, and the next anomalous `no_row` is treated as a genuine
+   * first-time event for the (now reset) account.
    */
   async function startFresh() {
     if (!userIdRef.current) return;
     const fresh = addTransient({ ...DEFAULT_STATE });
     try {
+      clearUserSeen(userIdRef.current);
       await saveToCloud(userIdRef.current, fresh);
+      markUserSeen(userIdRef.current);
       setS(fresh);
       setLoadError(null);
     } catch (e) {

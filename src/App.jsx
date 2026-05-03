@@ -298,6 +298,20 @@ function Board({ userId, userEmail, onSignOut }) {
   // or (for empty_state) explicitly start fresh.
   if (loadError) {
     const isEmpty = loadError.kind === 'empty_state';
+    const isSeenBefore = loadError.kind === 'seen_before_no_row';
+    // Both "empty_state" and "seen_before_no_row" need the rescue
+    // affordances (Start fresh, warning copy) — they're both
+    // anomalous states where we refused to overwrite ambiguous cloud
+    // data. Plain `load_failed` only gets Try-again + Sign-out.
+    const isAlarm = isEmpty || isSeenBefore;
+    const eyebrow =
+      isSeenBefore ? 'Refused to overwrite' :
+      isEmpty      ? 'No data found'        :
+                     'Could not load';
+    const headline =
+      isSeenBefore ? 'Wait — we know you had data here.' :
+      isEmpty      ? 'We didn\'t overwrite anything.'    :
+                     'We couldn\'t reach your data.';
     return (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -315,23 +329,26 @@ function Board({ userId, userEmail, onSignOut }) {
             fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: 2.5,
             textTransform: 'uppercase', color: 'var(--em-mid, var(--em))',
             marginBottom: 8,
-          }}>{isEmpty ? 'No data found' : 'Could not load'}</div>
+          }}>{eyebrow}</div>
           <h2 style={{
             fontFamily: 'var(--display)', fontSize: 24, fontStyle: 'italic',
             fontWeight: 700, color: 'var(--em)', margin: '0 0 14px',
           }}>
-            {isEmpty ? 'We didn\'t overwrite anything.' : 'We couldn\'t reach your data.'}
+            {headline}
           </h2>
           <p style={{ color: 'var(--text-mid)', fontSize: 13.5, lineHeight: 1.6, margin: '0 0 20px' }}>
             {loadError.message}
           </p>
-          {isEmpty && (
+          {isAlarm && (
             <p style={{
               color: 'var(--text-muted)', fontSize: 12, lineHeight: 1.6,
               margin: '0 0 20px', fontStyle: 'italic',
             }}>
-              If you've never set up a Vision Board on this account before, choose Start fresh.
-              Otherwise — please don't proceed and contact support; your data may be recoverable.
+              {isSeenBefore
+                ? 'If Try Again keeps failing, your row may have been deleted server-side. ' +
+                  'Choose Start fresh ONLY if you accept losing whatever was in the cloud.'
+                : 'If you\'ve never set up a Vision Board on this account before, choose Start fresh. ' +
+                  'Otherwise — please don\'t proceed and contact support; your data may be recoverable.'}
             </p>
           )}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -343,7 +360,7 @@ function Board({ userId, userEmail, onSignOut }) {
             >
               Try again
             </button>
-            {isEmpty && (
+            {isAlarm && (
               <button
                 type="button"
                 className="btn btn-ghost"
