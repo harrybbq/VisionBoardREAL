@@ -36,7 +36,14 @@ async function getPurchases() {
   try {
     // Try the package once. If it's not installed (dev / web build)
     // we cache the failure so we don't retry on every call.
-    const mod = await import('@revenuecat/purchases-capacitor');
+    //
+    // Path stored in a variable + /* @vite-ignore */ so Vite's
+    // dev-server import analysis skips it. The production build
+    // also externalizes this id via vite.config.js. Both layers
+    // are needed: rollupOptions.external only governs the bundle,
+    // not the dev server's pre-transform pass.
+    const pkg = '@revenuecat/purchases-capacitor';
+    const mod = await import(/* @vite-ignore */ pkg);
     _purchases = mod.Purchases || mod.default || mod;
     return _purchases;
   } catch {
@@ -189,7 +196,9 @@ export async function openManageSubscription() {
     const url = platform === 'ios'
       ? 'https://apps.apple.com/account/subscriptions'
       : 'https://play.google.com/store/account/subscriptions';
-    const { Browser } = await import('@capacitor/browser').catch(() => ({ Browser: null }));
+    // Same dev-server escape hatch as getPurchases() above — see comment there.
+    const browserPkg = '@capacitor/browser';
+    const { Browser } = await import(/* @vite-ignore */ browserPkg).catch(() => ({ Browser: null }));
     if (Browser) {
       await Browser.open({ url });
       return true;
