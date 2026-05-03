@@ -195,6 +195,95 @@ function AddAchievementModal({ openId, onClose, onAdd }) {
   );
 }
 
+// ── Edit Achievement ──
+function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete }) {
+  // openId format: 'editAchievementModal:${id}'. Mirrors EditHabitModal
+  // — keeps the parsing pattern consistent across edit modals.
+  const isOpen = typeof openId === 'string' && openId.startsWith('editAchievementModal:');
+  const achId = isOpen ? openId.split(':')[1] : null;
+  const ach = achId ? (achievements || []).find(a => a.id === achId) : null;
+
+  const [form, setForm] = useState({ name: '', desc: '', icon: '', coins: '' });
+
+  // Sync form when the target achievement changes (i.e. modal opens
+  // for a new id). Don't sync on every render — that wipes user edits.
+  useEffect(() => {
+    if (ach) {
+      setForm({
+        name: ach.name || '',
+        desc: ach.desc || '',
+        icon: ach.icon || '',
+        coins: ach.coins != null ? String(ach.coins) : '',
+      });
+    }
+  }, [achId]);
+
+  if (!isOpen || !ach) return null;
+
+  function submit() {
+    if (!form.name.trim()) return;
+    onEdit(achId, {
+      name: form.name.trim(),
+      desc: form.desc.trim(),
+      icon: form.icon || ach.icon || '🏆',
+      coins: parseInt(form.coins) || 0,
+    });
+    onClose(openId);
+  }
+
+  function handleDelete() {
+    if (!window.confirm('Delete this achievement? Any connections to/from it will be removed too. This cannot be undone.')) return;
+    onDelete(achId);
+    onClose(openId);
+  }
+
+  return (
+    <Modal id={openId} openId={openId} onClose={onClose}>
+      <h3>Edit Achievement</h3>
+      <div className="fg"><label>Title</label><input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+      <div className="fg"><label>Description</label><input type="text" value={form.desc} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Icon</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '8px' }}>
+          {PRESET_EMOJIS.map(e => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => setForm(f => ({ ...f, icon: e }))}
+              style={{
+                fontSize: '18px', padding: '4px', borderRadius: '7px', cursor: 'pointer', lineHeight: 1,
+                border: form.icon === e ? '2px solid var(--em)' : '2px solid transparent',
+                background: form.icon === e ? 'rgba(42,158,98,0.15)' : 'rgba(0,0,0,0.06)',
+                transition: 'all .12s',
+              }}
+            >{e}</button>
+          ))}
+        </div>
+        <input type="text" placeholder="Or type a custom emoji…" maxLength={2} value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
+      </div>
+      <div className="fg"><label>⬡ Coin Reward on Completion</label><input type="number" min="0" value={form.coins} onChange={e => setForm(f => ({ ...f, coins: e.target.value }))} /></div>
+      {ach.completed && (
+        <div style={{
+          padding: '10px 12px', borderRadius: '8px', marginBottom: '12px',
+          background: 'rgba(200,151,10,0.10)', border: '1px solid rgba(200,151,10,0.32)',
+          fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text)',
+          lineHeight: 1.5,
+        }}>
+          This achievement is completed. Editing the coin reward won't refund or re-award coins —
+          that's intentional so historical reward totals stay honest.
+        </div>
+      )}
+      <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+        <button className="btn btn-ghost" onClick={handleDelete} style={{ color: 'rgb(220,60,60)' }}>Delete</button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn btn-ghost" onClick={() => onClose(openId)}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Save</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ── Add Tracker ──
 function AddTrackerModal({ openId, onClose, onAdd }) {
   const [form, setForm] = useState({ name: '', type: 'boolean', unit: '', goal: '', color: '#1a7a4a', weeklyTarget: '', weeklyCoins: '' });
@@ -966,6 +1055,27 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
   function handleAddAchievement(ach) {
     update(prev => ({ ...prev, achievements: [...prev.achievements, ach] }));
   }
+  function handleEditAchievement(id, patch) {
+    // Preserve x/y/completed/locked/coinAwarded — only swap user-editable
+    // fields so editing doesn't accidentally reset position or lose
+    // completion state.
+    update(prev => ({
+      ...prev,
+      achievements: (prev.achievements || []).map(a =>
+        a.id === id ? { ...a, ...patch } : a
+      ),
+    }));
+  }
+  function handleDeleteAchievement(id) {
+    // Drop the achievement and any connections that touch it. Without
+    // the connection sweep, orphaned edges would render with broken
+    // endpoints in the SVG.
+    update(prev => ({
+      ...prev,
+      achievements: (prev.achievements || []).filter(a => a.id !== id),
+      connections: (prev.connections || []).filter(([f, t]) => f !== id && t !== id),
+    }));
+  }
   function handleAddTracker(tracker) {
     update(prev => ({ ...prev, trackers: [...prev.trackers, tracker] }));
   }
@@ -1040,6 +1150,7 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       <AddYouTubeModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddYT} />
       <CoinHistoryModal openId={effectiveOpen} onClose={onClose} coins={S.coins || 0} coinHistory={S.coinHistory || []} />
       <AddAchievementModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddAchievement} />
+      <EditAchievementModal openId={effectiveOpen} onClose={onClose} achievements={S.achievements} onEdit={handleEditAchievement} onDelete={handleDeleteAchievement} />
       <AddTrackerModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddTracker} />
       <MultiLogModal
         openId={effectiveOpen}

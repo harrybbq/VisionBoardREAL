@@ -820,6 +820,7 @@ nav:hover .nav-tab-label{opacity:1;}
 .ach-btn:hover{ transform:scale(1.15); }
 .ach-btn-complete{ background:var(--gold); color:#fff; }
 .ach-btn-connect{ background:var(--em); color:#fff; }
+.ach-btn-edit{ background:var(--text-muted); color:#fff; }
 .ach-btn-delete{ background:#c84040; color:#fff; }
 
 /* Empty state */

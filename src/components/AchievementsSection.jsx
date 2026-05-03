@@ -143,7 +143,7 @@ function AchNode({
   ach, conns, allAchs,
   connectingFrom,
   onDragCommit,
-  onComplete, onConnect, onDelete,
+  onComplete, onConnect, onDelete, onEdit,
 }) {
   const parents = conns.filter(([, t]) => t === ach.id);
   const completedParents = parents.filter(([f]) => {
@@ -317,6 +317,12 @@ function AchNode({
           >✦</button>
           <button
             type="button"
+            className="ach-btn ach-btn-edit"
+            title="Edit"
+            onClick={e => { e.stopPropagation(); onEdit(ach.id); }}
+          >✎</button>
+          <button
+            type="button"
             className="ach-btn ach-btn-delete"
             title="Delete"
             onClick={e => { e.stopPropagation(); onDelete(ach.id); }}
@@ -415,6 +421,13 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
 
   function handleCancelConnect() {
     update(prev => ({ ...prev, connectingFrom: null }));
+  }
+
+  function handleEdit(id) {
+    // Defer to the existing modal pattern so all edit/delete logic
+    // lives in one place (Modals.jsx → EditAchievementModal). Same
+    // shape as habit edit: 'editAchievementModal:<id>'.
+    onOpenModal('editAchievementModal:' + id);
   }
 
   // ── derived ─────────────────────────────────────────────────────
@@ -523,6 +536,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
               onComplete={handleToggleComplete}
               onConnect={handleConnect}
               onDelete={handleDelete}
+              onEdit={handleEdit}
             />
           ))}
 
