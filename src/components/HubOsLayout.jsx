@@ -278,12 +278,12 @@ export function OsQuickLogPanel({ S, update, onNavigateTrack, onShowCoinToast })
 }
 
 // ── Panel: AI Coach wrapper ───────────────────────────────────────────────
-export function OsCoachPanel({ S, update, onOpenWaitlist, onCoachAct }) {
+export function OsCoachPanel({ S, update, onOpenWaitlist, onCoachAct, userId }) {
   return (
     <OsPanel label="AI Coach" right="Brief" innerPadding={false}>
       <div className="os-panel-body os-coach-body">
         <AiCoachWidget S={S} update={update} onOpenWaitlist={onOpenWaitlist} onCoachAct={onCoachAct} />
-        <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} />
+        <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} userId={userId} />
       </div>
     </OsPanel>
   );
@@ -538,7 +538,8 @@ export default function HubOsLayout({
           )}
           <OsCoachPanel S={S} update={update}
             onOpenWaitlist={onOpenWaitlist}
-            onCoachAct={onCoachAct} />
+            onCoachAct={onCoachAct}
+            userId={userId} />
         </div>
       </div>
 

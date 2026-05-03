@@ -384,7 +384,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
         </aside>
       </div>
       <AiCoachWidget S={S} update={update} onOpenWaitlist={onOpenWaitlist} onCoachAct={onCoachAct} />
-      <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} />
+      <CoachBriefPanel S={S} update={update} onCoachAct={onCoachAct} userId={userId} />
     </section>
   );
 }

@@ -124,23 +124,42 @@ export default function PaywallModal({ openId, onClose, onUpgrade, onShowToast }
             onClick={e => e.stopPropagation()}
           >
             <div className="paywall-hero">
-              <div className="paywall-hero-icon">✦</div>
+              <div className="paywall-hero-icon">◐</div>
               <div className="paywall-hero-eyebrow">VisionBoard Pro</div>
               <h3 className="paywall-hero-title">
                 {hasPro
                   ? "You're already on Pro"
-                  : `You've reached your free limit of ${cap.limit} ${cap.label}`}
+                  : "Your coach watches your patterns and nudges you when it sees a slip."}
               </h3>
               <p className="paywall-hero-sub">
-                Pro removes every cap and unlocks the AI Coach, daily briefs, and more.
+                {hasPro
+                  ? 'Manage your subscription below.'
+                  : `You've reached your free limit of ${cap.limit} ${cap.label}. ` +
+                    'Unlock proactive nudges, the AI daily brief, and remove every cap.'}
               </p>
             </div>
 
+            {/* Inline preview — what your coach noticed.
+                Shown only to non-Pro users; gives them a real example
+                pulled from their own data when possible. */}
+            {!hasPro && (
+              <div className="paywall-preview">
+                <div className="paywall-preview-eyebrow">A nudge your coach would send</div>
+                <p className="paywall-preview-body">
+                  "Wednesday is your weakest day for Gym Session — three weeks running.
+                  Want to schedule a 15-min walk instead?"
+                </p>
+                <div className="paywall-preview-blur">
+                  <span>+ 2 more pattern insights this week</span>
+                </div>
+              </div>
+            )}
+
             <div className="paywall-features">
+              <PaywallFeature icon="◐" title="Proactive nudges" sub="Coach spots patterns in your week and nudges before you slip." />
+              <PaywallFeature icon="✦" title="Daily brief + weekly review" sub="3-line focus / watch / micro action every morning. Sundays: a deep look back." />
               <PaywallFeature icon="∞" title="Unlimited everything" sub="Habits, achievements, widgets, holidays — no caps." />
-              <PaywallFeature icon="✦" title="AI Coach + Daily Brief" sub="Personal insights and weekly reviews tailored to your data." />
-              <PaywallFeature icon="◉" title="Camera nutrition scanner" sub="Point your phone at food, get instant macros." />
-              <PaywallFeature icon="◇" title="Custom themes & full history" sub="Pick any colour, see your full year of data." />
+              <PaywallFeature icon="◇" title="Custom themes + full history" sub="Dark OS, custom colours, your entire year of data." />
             </div>
 
             {/* Storefront — three package cards. Replaces the single

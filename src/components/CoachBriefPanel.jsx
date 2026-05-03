@@ -1,5 +1,6 @@
 import { useSubscriptionContext } from '../context/SubscriptionContext';
 import { useDailyBrief } from '../hooks/useDailyBrief';
+import CoachNudges from './CoachNudges';
 
 /**
  * Daily Brief panel — Pro only.
@@ -8,7 +9,7 @@ import { useDailyBrief } from '../hooks/useDailyBrief';
  * Sundays, a Weekly Review card. Wraps the LLM-suggested verbs in
  * the same coach action handler used by AiCoachWidget.
  */
-export default function CoachBriefPanel({ S, update, onCoachAct }) {
+export default function CoachBriefPanel({ S, update, onCoachAct, userId }) {
   const { isPro, isLifetime } = useSubscriptionContext();
   const isUnlocked = isPro || isLifetime;
   const { brief, loading, error, refresh } = useDailyBrief({ S, update, isPro: isUnlocked });
@@ -51,6 +52,10 @@ export default function CoachBriefPanel({ S, update, onCoachAct }) {
 
   return (
     <div className="coach-brief-panel">
+      {/* Pattern-based proactive nudges (FEATURE 3). Renders nothing
+          when no patterns are detected — daily brief still shows. */}
+      <CoachNudges S={S} userId={userId} onCoachAct={onCoachAct} />
+
       <div className="coach-brief-header">
         <span className="coach-brief-icon">✦</span>
         <span className="coach-brief-title">Today's Brief</span>
