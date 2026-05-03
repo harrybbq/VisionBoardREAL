@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { firePurchase } from '../utils/confetti';
 import SectionHelp from './SectionHelp';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const PRIORITY_LABEL = { high: '🔴 High', med: '🟡 Medium', low: '🟢 Low' };
 const PRIORITY_CLASS = { high: 'priority-high', med: 'priority-med', low: 'priority-low' };
@@ -130,6 +132,13 @@ function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onDr
 
 export default function ShopSection({ S, update, active, onOpenModal, onShowCoinToast }) {
   const { shopItems, shopCategories, shopFilter, coins } = S;
+  const isMobile = useIsMobile();
+  // Mobile category tab — independent of priority filter so the user
+  // can stack "Tech category" + "High priority" without one fighting
+  // the other. 'all' = show every category. Sticky to component state
+  // so a refresh resets to all (intentional — desktop session doesn't
+  // remember the filter either).
+  const [mobileCategory, setMobileCategory] = useState('all');
 
   const total = shopItems.length;
   const bought = shopItems.filter(s => s.bought).length;
@@ -242,25 +251,59 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
           ))}
         </div>
 
+        {/* Mobile category tabs — single-category view per tab. The
+            existing desktop layout below stacks every category on the
+            page; on a phone that's an endless scroll. Tabs let the
+            user pivot one tap at a time. */}
+        {isMobile && shopFilter === 'all' && (
+          <div className="shop-mobile-tabs" role="tablist">
+            <button
+              role="tab"
+              aria-selected={mobileCategory === 'all'}
+              className={`shop-mobile-tab${mobileCategory === 'all' ? ' is-active' : ''}`}
+              onClick={() => setMobileCategory('all')}
+            >All ({filtered.length})</button>
+            <button
+              role="tab"
+              aria-selected={mobileCategory === 'uncategorised'}
+              className={`shop-mobile-tab${mobileCategory === 'uncategorised' ? ' is-active' : ''}`}
+              onClick={() => setMobileCategory('uncategorised')}
+            >Uncategorised ({filtered.filter(s => !s.categoryId).length})</button>
+            {shopCategories.map(cat => (
+              <button
+                key={cat.id}
+                role="tab"
+                aria-selected={mobileCategory === cat.id}
+                className={`shop-mobile-tab${mobileCategory === cat.id ? ' is-active' : ''}`}
+                onClick={() => setMobileCategory(cat.id)}
+              >{cat.name} ({filtered.filter(s => s.categoryId === cat.id).length})</button>
+            ))}
+          </div>
+        )}
+
         <div className="shop-grid" id="shopGrid" style={{ marginTop: '16px', display: 'block' }}>
           {shopFilter === 'all' ? (
             <>
-              <div className="shop-category-section">
-                <div className="shop-category-header">
-                  <div className="shop-category-label">Uncategorised</div>
-                  <div className="shop-category-line"></div>
-                  <div className="shop-category-count">{filtered.filter(s => !s.categoryId).length}</div>
+              {(!isMobile || mobileCategory === 'all' || mobileCategory === 'uncategorised') && (
+                <div className="shop-category-section">
+                  <div className="shop-category-header">
+                    <div className="shop-category-label">Uncategorised</div>
+                    <div className="shop-category-line"></div>
+                    <div className="shop-category-count">{filtered.filter(s => !s.categoryId).length}</div>
+                  </div>
+                  <DropZone
+                    categoryId={null}
+                    items={filtered.filter(s => !s.categoryId)}
+                    coins={coins}
+                    onToggleBought={handleToggleBought}
+                    onDeleteItem={handleDeleteItem}
+                    onDrop={handleDrop}
+                  />
                 </div>
-                <DropZone
-                  categoryId={null}
-                  items={filtered.filter(s => !s.categoryId)}
-                  coins={coins}
-                  onToggleBought={handleToggleBought}
-                  onDeleteItem={handleDeleteItem}
-                  onDrop={handleDrop}
-                />
-              </div>
-              {shopCategories.map(cat => (
+              )}
+              {shopCategories
+                .filter(cat => !isMobile || mobileCategory === 'all' || mobileCategory === cat.id)
+                .map(cat => (
                 <div key={cat.id} className="shop-category-section">
                   <div className="shop-category-header">
                     <div className="shop-category-label">{cat.name}</div>

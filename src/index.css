@@ -2343,21 +2343,24 @@ body{font-size:var(--text-base);line-height:var(--lh-body);}
   .profile-name-input{font-size:var(--text-md) !important;font-weight:700;}
   .profile-tagline-input{font-size:var(--text-sm) !important;}
 
-  /* Track: tracker chips row (horizontal scroll) */
+  /* Track: tracker rows (full-width vertical stack on mobile) */
+  /* Horizontal-scroll list felt clever but hid trackers off-screen.
+     Stacking vertically reads as "today's trackers list" matching
+     the mobile hub aesthetic. */
   .track-layout{flex-direction:column;gap:var(--space-4);}
-  .trackers-panel{overflow-x:auto;padding:var(--space-3);}
+  .trackers-panel{overflow-x:visible;padding:var(--space-3);position:static;}
   #trackersList{
-    display:flex;flex-direction:row;gap:var(--space-2);
-    overflow-x:auto;padding-bottom:var(--space-2);scrollbar-width:none;
+    display:flex;flex-direction:column;gap:8px;
+    overflow:visible;padding-bottom:0;
   }
-  #trackersList::-webkit-scrollbar{display:none;}
   .tracker-item{
-    min-width:130px;flex-shrink:0;
-    border-radius:var(--radius-md);
-    padding:var(--space-2) var(--space-3);
-    background:rgba(255,255,255,.1);
-    border:1px solid rgba(255,255,255,.18);
+    width:100%;min-width:0;flex-shrink:1;
+    border-radius:10px;
+    padding:12px 14px;
+    background:var(--card, rgba(255,255,255,.05));
+    border:1px solid var(--border);
   }
+  .tracker-item:hover{transform:none;}
 
   /* Quick log: horizontal scroll */
   .quick-log-cards{
@@ -2806,6 +2809,28 @@ button:active:not(:disabled),
      mobile. The countdown is desktop chrome; mobile users see the
      tabs anchored to the bottom edge instead. */
   .hub-footer { display: none !important; }
+
+  /* Section title typography — pull every section's title into the
+     mobile hub's operator-console look so Track / Holiday / Shop
+     feel like the same app as the redesigned Hub + Habits. Italic
+     serif at 500 weight reads better at phone scale than the
+     desktop's 800-weight display face. */
+  .sec-title {
+    font-family: var(--serif, Georgia, serif) !important;
+    font-style: italic !important;
+    font-size: 28px !important;
+    font-weight: 500 !important;
+    color: var(--text) !important;
+    letter-spacing: -0.4px !important;
+    line-height: 1 !important;
+  }
+  .eyebrow {
+    font-family: var(--mono) !important;
+    font-size: 10px !important;
+    letter-spacing: 1.6px !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 14px !important;
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -3048,6 +3073,242 @@ button:active:not(:disabled),
   font-size: 13px;
   line-height: 1.55;
   color: var(--text);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile shared section primitives
+   Header block + add-button pattern reused across MobileHubSection,
+   MobileHabitsSection, and the mobile-tab variants of Shop / Track.
+   Keeps the typographic system consistent across all phone screens.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.m-section-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.m-section-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.m-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.m-section-title {
+  font-family: var(--serif, Georgia, serif);
+  font-style: italic;
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.m-add-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--em);
+  background: rgba(var(--em-rgb), 0.08);
+  color: var(--em);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.m-add-btn:active { background: rgba(var(--em-rgb), 0.18); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile Habits Section
+   ────────────────────────────────────────────────────────────────────────── */
+
+.m-habits {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.m-habits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.m-habit-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card, rgba(255,255,255,0.04));
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.m-habit-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.m-habit-name {
+  font-family: var(--serif, Georgia, serif);
+  font-style: italic;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.m-habit-kebab {
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.m-habit-kebab:active { background: var(--border); }
+
+.m-habit-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.m-habit-meta-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border) 60%);
+  margin-right: 4px;
+}
+.m-habit-meta-pill {
+  white-space: nowrap;
+}
+
+.m-habit-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0 6px;
+}
+.m-habit-pill {
+  width: 22px;
+  height: 64px;
+  border-radius: 999px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.m-habit-pill-fill {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  border-radius: 999px;
+  transition: height 0.4s ease;
+}
+.m-habit-time-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.m-habit-time {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.m-habit-time-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.m-habit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+.m-habit-count { white-space: nowrap; }
+.m-habit-relapse-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.m-habit-relapse-btn:active { background: var(--border); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile Shop tabs
+   At ≤768px, replace the stacked-categories layout with horizontally
+   scrollable category tabs at the top, showing one category at a time.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .shop-mobile-tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid var(--border);
+    margin: 12px 0 16px;
+  }
+  .shop-mobile-tabs::-webkit-scrollbar { display: none; }
+  .shop-mobile-tab {
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 12px 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .shop-mobile-tab.is-active {
+    color: var(--em);
+    border-bottom-color: var(--em);
+  }
+  /* Hide the desktop "all categories stacked" layout on mobile;
+     shop renders ShopCategoryTabsMobile component when isMobile. */
 }
 
 /* ── Camera scanner scan-line animation ── */

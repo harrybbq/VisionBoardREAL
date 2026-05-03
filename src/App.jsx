@@ -15,6 +15,7 @@ import TrackSection from './components/TrackSection';
 import ShopSection from './components/ShopSection';
 import HolidaySection from './components/HolidaySection';
 import HabitsSection from './components/HabitsSection';
+import MobileHabitsSection from './components/mobile/MobileHabitsSection';
 import SettingsSection from './components/SettingsSection';
 import { SCHEMES, applyScheme, applyTheme } from './components/SettingsSection';
 import { useSubscriptionContext } from './context/SubscriptionContext';
@@ -492,7 +493,11 @@ function Board({ userId, userEmail, onSignOut }) {
         )}
         {activeSection === 'habits' && (
           <motion.div key="habits" {...pageMotion}>
-            <HabitsSection S={S} update={update} active onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            {isMobile ? (
+              <MobileHabitsSection S={S} update={update} onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            ) : (
+              <HabitsSection S={S} update={update} active onOpenModal={handleOpenModal} onShowCoinToast={showCoinToast} />
+            )}
           </motion.div>
         )}
         {activeSection === 'settings' && (
