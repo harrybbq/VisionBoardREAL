@@ -29,6 +29,7 @@ const SECTION_LABELS = {
   habits: 'Habits',
   settings: 'Settings',
   friends: 'Friends',
+  profile: 'Profile',
 };
 
 export default function MobileAppBar({

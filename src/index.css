@@ -3358,6 +3358,200 @@ button:active:not(:disabled),
 .m-habit-relapse-btn:active { background: var(--border); }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   Mobile Profile Section
+   ────────────────────────────────────────────────────────────────────────── */
+
+.m-profile {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.m-profile-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card, rgba(255,255,255,0.04));
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.m-profile-card-quiet { background: transparent; }
+.m-profile-card-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.m-profile-card-help {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: -2px 0 4px;
+}
+
+/* Photo block */
+.m-profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+.m-profile-photo {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card, rgba(255,255,255,0.04));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .15s;
+}
+.m-profile-photo:hover { border-color: var(--em); }
+.m-profile-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.m-profile-photo-placeholder {
+  font-family: var(--mono);
+  font-size: 28px;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+.m-profile-photo-edit {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--em-on, #fff);
+  background: rgba(0,0,0,0.55);
+  padding: 3px 0;
+  text-align: center;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.m-profile-photo:hover .m-profile-photo-edit { opacity: 1; }
+.m-profile-photo-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Field rows */
+.m-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.m-profile-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.m-profile-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-base, rgba(255,255,255,0.6));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 12px;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  transition: border-color .15s, background .15s;
+}
+.m-profile-input:focus {
+  outline: none;
+  border-color: var(--em);
+  background: var(--card, rgba(255,255,255,0.04));
+}
+
+.m-profile-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+.m-profile-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.m-profile-btn:disabled { opacity: .5; cursor: wait; }
+.m-profile-btn-primary {
+  background: var(--em);
+  border-color: var(--em);
+  color: var(--em-on, #fff);
+}
+.m-profile-btn-primary:hover:not(:disabled) {
+  background: var(--em-mid, var(--em));
+}
+.m-profile-btn-danger {
+  border-color: rgba(220, 60, 60, 0.4);
+  color: rgb(220, 60, 60);
+}
+.m-profile-btn-danger:hover {
+  background: rgba(220, 60, 60, 0.08);
+}
+
+.m-profile-msg {
+  margin-top: 4px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  border: 1px solid var(--border);
+}
+.m-profile-msg-ok {
+  background: rgba(var(--em-rgb), 0.10);
+  border-color: rgba(var(--em-rgb), 0.32);
+  color: var(--text);
+}
+.m-profile-msg-err {
+  background: rgba(220, 60, 60, 0.08);
+  border-color: rgba(220, 60, 60, 0.30);
+  color: var(--text);
+}
+.m-profile-msg-info {
+  color: var(--text-muted);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
    Mobile Shop tabs
    At ≤768px, replace the stacked-categories layout with horizontally
    scrollable category tabs at the top, showing one category at a time.

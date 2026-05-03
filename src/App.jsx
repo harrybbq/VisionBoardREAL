@@ -17,6 +17,7 @@ import HolidaySection from './components/HolidaySection';
 import HabitsSection from './components/HabitsSection';
 import MobileHabitsSection from './components/mobile/MobileHabitsSection';
 import MobileFriendsSection from './components/mobile/MobileFriendsSection';
+import MobileProfileSection from './components/mobile/MobileProfileSection';
 import SettingsSection from './components/SettingsSection';
 import { SCHEMES, applyScheme, applyTheme } from './components/SettingsSection';
 import { useSubscriptionContext } from './context/SubscriptionContext';
@@ -518,6 +519,19 @@ function Board({ userId, userEmail, onSignOut }) {
             <MobileFriendsSection
               userId={userId}
               onUpgrade={() => handleOpenModal('paywall:friends')}
+            />
+          </motion.div>
+        )}
+        {/* Profile — mobile-only route. Centralises photo / name /
+            email / password / sign-out under More → Profile so users
+            don't have to dig into Settings tabs to find them. */}
+        {activeSection === 'profile' && (
+          <motion.div key="profile" {...pageMotion}>
+            <MobileProfileSection
+              S={S}
+              update={update}
+              userEmail={userEmail}
+              onSignOut={onSignOut}
             />
           </motion.div>
         )}

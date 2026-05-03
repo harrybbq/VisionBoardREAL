@@ -6,6 +6,7 @@ import { haptic } from '../../hooks/useCapacitor';
  *
  * Holds the secondary sections that don't make the cut for primary
  * bottom tabs:
+ *   - Profile      (mobile-only — photo, name, email, password)
  *   - Achievements
  *   - Shopping
  *   - Friends   (mobile-only route → MobileFriendsSection wraps the
@@ -19,6 +20,7 @@ import { haptic } from '../../hooks/useCapacitor';
  *   - Esc → close (keyboard accessibility)
  */
 const MORE_ITEMS = [
+  { id: 'profile',      icon: '◐', label: 'Profile',      desc: 'Photo, name, email, password' },
   { id: 'achievements', icon: '★', label: 'Achievements', desc: 'Your goal map' },
   { id: 'shop',         icon: '◈', label: 'Shopping',     desc: 'Things to buy with coins' },
   { id: 'friends',      icon: '◌', label: 'Friends',      desc: 'See your friends\' progress' },
