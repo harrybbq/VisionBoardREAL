@@ -5,6 +5,7 @@ import {
   loginRevenueCat,
   getCustomerInfo,
   deriveTierFromEntitlements,
+  derivePlanFromEntitlements,
   isAvailable as rcIsAvailable,
 } from '../lib/billing/revenuecat';
 
@@ -21,6 +22,10 @@ import {
  */
 export function useSubscription(userId) {
   const [tier, setTier] = useState('free');
+  // proPlan = 'monthly' | 'annual' | 'lifetime' | null. Independent of
+  // `tier` so a free user is null but a pro user can be either monthly
+  // or annual (drives the migration banner + plan label in Settings).
+  const [proPlan, setProPlan] = useState(null);
   const [proIsLive, setProIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -87,6 +92,10 @@ export function useSubscription(userId) {
           // (or we surface a "Restore purchases" prompt if not).
           setTier(rcTier);
         }
+        // Plan is always derived from RC (DB only stores tier, not plan)
+        // so this runs regardless of which side wins on tier itself.
+        const rcPlan = derivePlanFromEntitlements(info.entitlements?.active);
+        if (rcPlan) setProPlan(rcPlan);
       } catch {
         // Silent — RC is an enhancement, never a blocker
       }
@@ -99,6 +108,10 @@ export function useSubscription(userId) {
   const isPro = tier === 'pro';
   const isLifetime = tier === 'lifetime';
 
+  // Lifetime users get proPlan='lifetime' even if RC didn't surface
+  // it explicitly — keeps the Settings label honest.
+  const effectivePlan = proPlan || (isLifetime ? 'lifetime' : null);
+
   return {
     tier,
     isPro,
@@ -108,6 +121,12 @@ export function useSubscription(userId) {
     // them (active sub OR lifetime purchase)". Prefer this for any new
     // gate so lifetime users never get silently locked out.
     hasPro: isPro || isLifetime,
+    // proPlan distinguishes monthly vs annual within the pro tier.
+    // null = free user OR pro user whose plan can't be determined yet.
+    // Drives the migration banner and the plan label in Settings.
+    proPlan: effectivePlan,
+    isMonthly: effectivePlan === 'monthly',
+    isAnnual:  effectivePlan === 'annual',
     proIsLive,
     loading,
   };

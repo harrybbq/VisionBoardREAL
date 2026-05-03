@@ -192,6 +192,34 @@ export function deriveTierFromEntitlements(entitlements) {
 }
 
 /**
+ * Within the `pro` tier, distinguish monthly vs annual based on which
+ * SKU is currently granting the entitlement. Returns:
+ *   'annual'    → user is on the yearly plan
+ *   'monthly'   → user is on the monthly plan
+ *   'lifetime'  → one-time lifetime purchase (separate entitlement)
+ *   null        → free user, or pro plan can't be determined
+ *
+ * The mapping reads the entitlement's `productIdentifier` and matches
+ * against our App Store Connect product IDs (yearly / monthly /
+ * lifetime — the same names visible in the RC dashboard offering).
+ *
+ * Used by the subscription panel to label the plan accurately and by
+ * the migration banner to show "Switch to annual and save" only to
+ * users currently on monthly.
+ */
+export function derivePlanFromEntitlements(entitlements) {
+  if (!entitlements) return null;
+  const lifetime = entitlements.pro_lifetime || entitlements.lifetime;
+  if (lifetime?.isActive) return 'lifetime';
+  const pro = entitlements.pro || entitlements['VisionBoard Pro'];
+  if (!pro?.isActive) return null;
+  const product = (pro.productIdentifier || '').toLowerCase();
+  if (product.includes('year') || product.includes('annual')) return 'annual';
+  if (product.includes('month'))                              return 'monthly';
+  return null; // unknown SKU pattern — surface no plan label
+}
+
+/**
  * Sync the RC SDK's user identity with our Supabase user. Call on
  * sign-in (and call `logoutRevenueCat` on sign-out) so purchases on
  * a shared device get attributed to the right account.

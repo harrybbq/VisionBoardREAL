@@ -19,14 +19,19 @@ import { useState } from 'react';
 import { useSubscriptionContext } from '../context/SubscriptionContext';
 import { restorePurchases, openManageSubscription, presentCustomerCenter } from '../lib/billing/revenuecat';
 
-const TIER_LABEL = {
-  free: 'Free',
-  pro: 'Pro — Monthly',
+const PLAN_LABEL = {
+  monthly:  'Pro — Monthly',
+  annual:   'Pro — Yearly',
   lifetime: 'Lifetime',
 };
+const TIER_LABEL = { free: 'Free', pro: 'Pro', lifetime: 'Lifetime' };
 
 export default function SubscriptionPanel() {
-  const { tier, hasPro, proIsLive, loading } = useSubscriptionContext();
+  const { tier, hasPro, proPlan, isMonthly, proIsLive, loading } = useSubscriptionContext();
+  // Prefer the precise plan label when we know it; fall back to the
+  // generic tier name so a freshly-purchased user (RC sync still in
+  // flight) never sees a blank.
+  const planLabel = (proPlan && PLAN_LABEL[proPlan]) || TIER_LABEL[tier] || 'Free';
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const [msgKind, setMsgKind] = useState('info'); // 'info' | 'ok' | 'err'
@@ -94,7 +99,7 @@ export default function SubscriptionPanel() {
             Current plan
           </div>
           <div style={{ fontFamily: 'var(--sans)', fontSize: '16px', fontWeight: 700, color: 'var(--text)', marginTop: '2px' }}>
-            {TIER_LABEL[tier] || 'Free'}
+            {planLabel}
           </div>
         </div>
         {!hasPro && proIsLive && (
@@ -106,6 +111,52 @@ export default function SubscriptionPanel() {
           }}>£3.99 / mo</span>
         )}
       </div>
+
+      {/* Annual upgrade banner — shown only to monthly subscribers.
+          Pitch: switch to yearly and lock in the discount. The actual
+          purchase still happens in the platform's manage-subscription
+          surface (Apple/Google handle plan changes), so we deep-link
+          into that rather than running a custom upgrade flow. */}
+      {isMonthly && (
+        <div style={{
+          padding: '14px',
+          borderRadius: '10px',
+          border: '1px solid var(--em)',
+          background: 'rgba(var(--em-rgb), 0.06)',
+          marginBottom: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap',
+        }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{
+              fontFamily: 'var(--mono)', fontSize: '10px',
+              letterSpacing: '1.4px', textTransform: 'uppercase',
+              color: 'var(--em)', marginBottom: '4px',
+            }}>Save £18.88 / year</div>
+            <div style={{
+              fontFamily: 'var(--sans)', fontSize: '13px',
+              color: 'var(--text)', lineHeight: 1.5,
+            }}>
+              Switch to <strong>Yearly</strong> and pay £29 instead of £47.88
+              over a year. Same Pro features, ~39% off.
+            </div>
+          </div>
+          <button
+            onClick={handleCustomerCenter}
+            style={{
+              padding: '9px 14px', borderRadius: '8px',
+              background: 'var(--em)', border: '1px solid var(--em)',
+              color: 'var(--em-on, #fff)',
+              fontFamily: 'var(--mono)', fontSize: '11px',
+              letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >Switch to yearly</button>
+        </div>
+      )}
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
