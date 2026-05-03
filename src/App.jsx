@@ -92,7 +92,11 @@ function Board({ userId, userEmail, onSignOut }) {
       registerPushToken(userId, token, /* platform inferred server-side */ 'unknown');
     },
     onPushMessage: msg => {
-      handleIncomingPush(msg, { navigate, showToast: showCoinToast });
+      handleIncomingPush(msg, {
+        navigate,
+        showToast: showCoinToast,
+        prefs: S.notifications,
+      });
     },
   });
   const bgInputRef = useRef(null);

@@ -1557,6 +1557,14 @@ nav:hover .nav-tab-label{opacity:1;}
 #coinToast.spend{background:#8b5e00;color:#fff;box-shadow:0 4px 20px rgba(139,94,0,.4);}
 #coinToast.error{background:#b91c1c;color:#fff;box-shadow:0 4px 20px rgba(185,28,28,.4);}
 #coinToast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* Push the toast above the bottom tab bar + home indicator on mobile.
+   Without this it sits behind the tabs and the user never sees it
+   confirm a coin earn / spend. */
+@media(max-width:768px){
+  #coinToast{
+    bottom: calc(var(--m-tabs-h, 64px) + var(--m-safe-bottom, 0px) + 16px);
+  }
+}
 /* Coin badge on shop cards */
 .shop-coin-cost{
   display:inline-flex;align-items:center;gap:4px;

@@ -55,4 +55,22 @@ export const DEFAULT_STATE = {
   //   whose state already meets several visions.
   visions: {},
   visionsBackfilled: false,
+  // ── Notifications ────────────────────────────────────────────────
+  // Preferences for push + in-app notifications. The push delivery
+  // pipeline (Sprint 3 of FEATURE 2) reads these to decide whether
+  // to fire a notification for a given event kind. Categories map
+  // 1:1 to the `data.kind` values handled in src/lib/push/handlers.js.
+  //   - quietHours: ISO HH:mm strings; no notifications fire in this
+  //     window. Empty start/end strings disable quiet hours.
+  //   - dailyReminderAt: HH:mm string for the optional daily nudge,
+  //     null to disable.
+  // The panel in Settings → Tools writes here.
+  notifications: {
+    visionUnlock: true,
+    friendRequest: true,
+    streakWarning: true,
+    coachNudge: true,
+    quietHours: { start: '', end: '' },
+    dailyReminderAt: null,
+  },
 };

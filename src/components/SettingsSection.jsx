@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import MacroGoalsPanel from './MacroGoalsPanel';
+import NotificationsPanel from './NotificationsPanel';
 import { useSubscriptionContext } from '../context/SubscriptionContext';
 import { getOwnProfile, updateOwnProfile } from '../lib/friends/queries';
 
@@ -597,6 +598,13 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             </div>
           </div>
         )}
+
+        {/* Notifications — preferences card. The push delivery
+            pipeline reads these to gate which kinds of pushes fire.
+            Until APNs/FCM keys land + a server dispatcher exists,
+            toggling here is a no-op observable, but the prefs
+            persist so users can configure ahead of first push. */}
+        <NotificationsPanel S={S} update={update} />
 
         {/* Walkthrough / tour */}
         <div className="card" style={{ padding: '22px' }}>

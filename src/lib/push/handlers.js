@@ -55,6 +55,59 @@ export async function registerPushToken(userId, token, platform = 'unknown') {
 }
 
 /**
+ * Map push `data.kind` (kebab-case wire format) → preference key in
+ * S.notifications (camelCase). Anything not in this map is treated as
+ * an "always-allowed" system push and bypasses the prefs check.
+ */
+const KIND_TO_PREF = {
+  'vision-unlock':  'visionUnlock',
+  'friend-request': 'friendRequest',
+  'streak-warning': 'streakWarning',
+  'coach-nudge':    'coachNudge',
+};
+
+/**
+ * Returns true if `now` falls inside the user's quiet-hours window.
+ * Window can wrap midnight (e.g. 22:00 → 07:00). Both blank disables.
+ *
+ * Tapped pushes always pass through — quiet hours suppress proactive
+ * surfacing, not the user's own intent to follow up on something.
+ */
+function isInQuietHours(prefs, now = new Date()) {
+  const q = prefs?.quietHours;
+  if (!q || !q.start || !q.end) return false;
+  const [sh, sm] = q.start.split(':').map(Number);
+  const [eh, em] = q.end.split(':').map(Number);
+  if ([sh, sm, eh, em].some(n => Number.isNaN(n))) return false;
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const start = sh * 60 + sm;
+  const end = eh * 60 + em;
+  if (start === end) return false;
+  // Wrap-midnight case: e.g. 22:00 → 07:00 means [22:00, 24:00) ∪ [00:00, 07:00)
+  if (start > end) return cur >= start || cur < end;
+  return cur >= start && cur < end;
+}
+
+/**
+ * Decide whether this incoming push should be surfaced to the user
+ * given their notification preferences. Returns true to allow.
+ *
+ *   - Per-category opt-out (S.notifications[prefKey] === false) suppresses.
+ *   - Quiet hours suppress proactive (non-tapped) pushes only.
+ *   - Pushes with no recognized kind always pass (they're system-level).
+ *   - Tapped pushes always pass — the user explicitly engaged.
+ */
+function shouldSurfacePush(msg, prefs) {
+  if (!prefs) return true;
+  if (msg?.tapped) return true;
+  const kind = msg?.data?.kind;
+  const prefKey = KIND_TO_PREF[kind];
+  if (prefKey && prefs[prefKey] === false) return false;
+  if (isInQuietHours(prefs)) return false;
+  return true;
+}
+
+/**
  * Route an incoming push message to the right in-app side-effect.
  *
  * Supported payloads (declared in the `data` field of the push):
@@ -67,12 +120,16 @@ export async function registerPushToken(userId, token, platform = 'unknown') {
  *   { title, body, data: { kind, ... }, foreground?, tapped? }
  *
  * `actions` is the dependency-injection bag — caller passes in
- * navigate / showToast / etc so this module doesn't import the world.
+ * navigate / showToast / prefs so this module doesn't import the world.
+ *   - prefs: S.notifications snapshot for category + quiet-hours gating
  */
 export function handleIncomingPush(msg, actions = {}) {
-  const { navigate, showToast } = actions;
+  const { navigate, showToast, prefs } = actions;
   const data = msg?.data || {};
   const kind = data.kind;
+
+  // Honor the user's preferences before doing anything observable.
+  if (!shouldSurfacePush(msg, prefs)) return;
 
   // Default: just toast the title + body if it's foreground
   if (!kind) {
