@@ -16,6 +16,7 @@ import ShopSection from './components/ShopSection';
 import HolidaySection from './components/HolidaySection';
 import HabitsSection from './components/HabitsSection';
 import MobileHabitsSection from './components/mobile/MobileHabitsSection';
+import MobileFriendsSection from './components/mobile/MobileFriendsSection';
 import SettingsSection from './components/SettingsSection';
 import { SCHEMES, applyScheme, applyTheme } from './components/SettingsSection';
 import { useSubscriptionContext } from './context/SubscriptionContext';
@@ -427,6 +428,9 @@ function Board({ userId, userEmail, onSignOut }) {
             coins={S.coins || 0}
             onOpenCoinHistory={() => handleOpenModal('coinHistoryModal')}
             onNavigateSettings={() => navigate('settings')}
+            onChangeBg={handleChangeBgClick}
+            onRemoveBg={currentBg ? handleRemoveBg : null}
+            hasBg={!!currentBg}
           />
           <BottomTabBar
             activeSection={activeSection}
@@ -503,6 +507,18 @@ function Board({ userId, userEmail, onSignOut }) {
         {activeSection === 'settings' && (
           <motion.div key="settings" {...pageMotion}>
             <SettingsSection S={S} update={update} active userId={userId} onOpenLegal={setLegalPage} onOpenPalette={() => setPaletteOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} />
+          </motion.div>
+        )}
+        {/* Friends — mobile-only route. Desktop puts FriendsRail in
+            the hub right rail; mobile gives it a dedicated screen via
+            MoreDrawer. Render on desktop too so deep-linking works,
+            but in practice the bottom-tab/drawer surface is mobile. */}
+        {activeSection === 'friends' && (
+          <motion.div key="friends" {...pageMotion}>
+            <MobileFriendsSection
+              userId={userId}
+              onUpgrade={() => handleOpenModal('paywall:friends')}
+            />
           </motion.div>
         )}
       </AnimatePresence>

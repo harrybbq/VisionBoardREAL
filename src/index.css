@@ -2612,6 +2612,30 @@ button:active:not(:disabled),
 .m-appbar-coins-icon { font-size: 11px; }
 .m-appbar-coins-val { font-weight: 500; letter-spacing: 0.3px; }
 
+/* Background-change button. Themed via CSS vars so it picks up the
+   active theme — em-tinted ghost on cream, em-tinted ghost on dark-os.
+   Becomes solid-em-bordered when a background is currently set so the
+   user can tell the slot is filled. */
+.m-appbar-bg {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-appbar-bg:hover { color: var(--em); border-color: var(--em); }
+.m-appbar-bg:active { background: rgba(var(--em-rgb), 0.10); }
+.m-appbar-bg.m-appbar-bg-active {
+  color: var(--em);
+  border-color: var(--em);
+  background: rgba(var(--em-rgb), 0.10);
+}
+
 /* ── Bottom tab bar (mobile) ── */
 .m-tabs {
   position: fixed;

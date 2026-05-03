@@ -8,9 +8,8 @@ import { haptic } from '../../hooks/useCapacitor';
  * bottom tabs:
  *   - Achievements
  *   - Shopping
- *   - Friends   (placeholder — currently routes to hub since friends
- *               lives in the hub right rail; future native build can
- *               wire a dedicated friends route)
+ *   - Friends   (mobile-only route → MobileFriendsSection wraps the
+ *               FriendsRail orchestrator full-width)
  *   - Settings
  *
  * Interactions:
@@ -22,7 +21,7 @@ import { haptic } from '../../hooks/useCapacitor';
 const MORE_ITEMS = [
   { id: 'achievements', icon: '★', label: 'Achievements', desc: 'Your goal map' },
   { id: 'shop',         icon: '◈', label: 'Shopping',     desc: 'Things to buy with coins' },
-  { id: 'friends',      icon: '◌', label: 'Friends',      desc: 'See your friends\' progress', routeAs: 'hub' },
+  { id: 'friends',      icon: '◌', label: 'Friends',      desc: 'See your friends\' progress' },
   { id: 'settings',     icon: '⚙', label: 'Settings',     desc: 'Theme, privacy, tools' },
 ];
 

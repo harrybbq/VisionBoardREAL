@@ -1469,6 +1469,16 @@ html[data-theme="dark-os"] .m-appbar-coins {
   border-color: var(--os-border-md);
   color: #d4a94e;
 }
+html[data-theme="dark-os"] .m-appbar-bg {
+  border-color: var(--os-border-md);
+  color: var(--text-muted);
+}
+html[data-theme="dark-os"] .m-appbar-bg:hover,
+html[data-theme="dark-os"] .m-appbar-bg.m-appbar-bg-active {
+  color: var(--em-light);
+  border-color: var(--em);
+  background: rgba(var(--em-rgb), 0.14);
+}
 
 html[data-theme="dark-os"] .m-tabs {
   background: rgba(12, 12, 11, 0.96);
