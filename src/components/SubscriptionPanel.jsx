@@ -17,7 +17,7 @@
  */
 import { useState } from 'react';
 import { useSubscriptionContext } from '../context/SubscriptionContext';
-import { restorePurchases, openManageSubscription } from '../lib/billing/revenuecat';
+import { restorePurchases, openManageSubscription, presentCustomerCenter } from '../lib/billing/revenuecat';
 
 const TIER_LABEL = {
   free: 'Free',
@@ -61,6 +61,15 @@ export default function SubscriptionPanel() {
     if (!ok) flash('info', 'Open the App Store or Play Store and find VisionBoard under Subscriptions.');
   }
 
+  // Customer Center is RevenueCat's prebuilt sheet — view active sub,
+  // change plan, cancel, request refunds, see purchase history. Apple's
+  // review guidelines treat this as the canonical "manage subscription"
+  // surface, so we surface it as the primary action when on native.
+  async function handleCustomerCenter() {
+    const ok = await presentCustomerCenter();
+    if (!ok) flash('info', "Customer Center isn't available on the web. Try this from the iOS or Android app.");
+  }
+
   if (loading) return null;
 
   return (
@@ -100,6 +109,22 @@ export default function SubscriptionPanel() {
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        {hasPro && (
+          <button
+            onClick={handleCustomerCenter}
+            style={{
+              padding: '9px 14px', borderRadius: '8px',
+              background: 'var(--em)',
+              border: '1px solid var(--em)',
+              color: 'var(--em-on, #fff)',
+              fontFamily: 'var(--mono)', fontSize: '11px',
+              letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Manage subscription
+          </button>
+        )}
         <button
           onClick={handleRestore}
           disabled={busy}
@@ -118,17 +143,18 @@ export default function SubscriptionPanel() {
         {hasPro && (
           <button
             onClick={handleManage}
+            title="Open the platform's subscription page directly (fallback if Customer Center isn't available)"
             style={{
               padding: '9px 14px', borderRadius: '8px',
               background: 'transparent',
               border: '1px solid var(--border)',
-              color: 'var(--text)',
+              color: 'var(--text-muted)',
               fontFamily: 'var(--mono)', fontSize: '11px',
               letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600,
               cursor: 'pointer',
             }}
           >
-            Manage subscription
+            Open store page
           </button>
         )}
       </div>

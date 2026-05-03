@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   initRevenueCat,
+  loginRevenueCat,
   getCustomerInfo,
   deriveTierFromEntitlements,
   isAvailable as rcIsAvailable,
@@ -72,7 +73,12 @@ export function useSubscription(userId) {
       try {
         await initRevenueCat({ userId });
         if (!(await rcIsAvailable())) return;
-        const info = await getCustomerInfo();
+        // Attribute future purchases to this Supabase user so a device
+        // signed into multiple accounts doesn't cross-contaminate.
+        // Returns the post-login CustomerInfo, saving us a separate
+        // getCustomerInfo round-trip.
+        const loginInfo = await loginRevenueCat(userId);
+        const info = loginInfo || await getCustomerInfo();
         if (cancelled || !info) return;
         const rcTier = deriveTierFromEntitlements(info.entitlements?.active);
         if (rcTier !== 'free' && dbTier === 'free') {

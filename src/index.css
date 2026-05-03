@@ -2107,6 +2107,67 @@ input,select,textarea,button{touch-action:manipulation;}
   text-transform:uppercase;color:var(--text-muted);text-align:center;
 }
 
+/* ── Paywall storefront (RevenueCat package cards) ── */
+.paywall-storefront{
+  padding:18px 22px 10px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  border-top:1px solid var(--accent-line-soft);margin-top:14px;
+}
+@media(max-width:540px){
+  .paywall-storefront{grid-template-columns:1fr;}
+}
+.paywall-pkg{
+  position:relative;
+  display:flex;flex-direction:column;gap:4px;
+  padding:14px 12px;
+  border-radius:10px;
+  background:var(--card, rgba(255,255,255,0.04));
+  border:1.5px solid var(--border);
+  color:var(--text);
+  cursor:pointer;
+  text-align:left;
+  transition:border-color .14s, transform .04s, background .14s;
+  font:inherit;
+  -webkit-tap-highlight-color:transparent;
+}
+.paywall-pkg:hover{border-color:var(--em);}
+.paywall-pkg:active{transform:scale(.99);}
+.paywall-pkg[disabled]{opacity:.5;cursor:wait;}
+.paywall-pkg-em{border-color:var(--em);background:rgba(var(--em-rgb),0.06);}
+.paywall-pkg-gold{border-color:var(--gold, #c8970a);background:rgba(200,151,10,0.06);}
+.paywall-pkg-badge{
+  position:absolute;top:-9px;left:12px;
+  font-family:var(--mono);font-size:9px;letter-spacing:1.2px;
+  text-transform:uppercase;font-weight:700;
+  padding:3px 7px;border-radius:5px;
+  background:var(--em);color:var(--em-on, #fff);
+}
+.paywall-pkg-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--text-muted);
+}
+.paywall-pkg-price{
+  font-family:var(--serif, Georgia, serif);font-style:italic;
+  font-size:22px;font-weight:500;color:var(--text);
+  letter-spacing:-.4px;line-height:1.1;
+}
+.paywall-pkg-sub{
+  font-family:var(--sans);font-size:11px;line-height:1.4;
+  color:var(--text-mid);
+}
+.paywall-pkg-busy{
+  font-family:var(--mono);font-size:10px;letter-spacing:.6px;
+  color:var(--em);margin-top:2px;
+}
+.paywall-error{
+  margin:8px 22px 0;padding:10px 12px;
+  border-radius:8px;
+  background:rgba(220,60,60,0.08);
+  border:1px solid rgba(220,60,60,0.25);
+  font-family:var(--mono);font-size:11px;line-height:1.5;
+  color:var(--text);
+}
+
 /* ── Section help button ─────────────────────────────────────────────────── */
 .section-help-wrap{
   position:relative;

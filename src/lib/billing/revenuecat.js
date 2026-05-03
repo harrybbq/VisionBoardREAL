@@ -170,23 +170,96 @@ export async function getCustomerInfo() {
 
 /**
  * Maps RevenueCat entitlement keys → our internal tier shape.
- * Configure these in the RC dashboard:
- *   - 'pro'         → matches `profiles.tier === 'pro'` (monthly OR annual)
- *   - 'pro_lifetime'→ matches `profiles.tier === 'lifetime'` (if we ever add it)
+ *
+ * Configure in the RC dashboard → Entitlements:
+ *   - 'pro'           → grants 'pro' tier (monthly OR yearly)
+ *   - 'pro_lifetime'  → grants 'lifetime' tier (one-time lifetime SKU)
+ *
+ * Fallback to 'VisionBoard Pro' (with space) and 'lifetime' is included
+ * because RC entitlement IDs are user-named and we've seen the dashboard
+ * configured with the display string. Cleanest long-term: rename in the
+ * dashboard to lowercase identifiers and the fallback can be removed.
  *
  * Returns 'free' / 'pro' / 'lifetime'.
  */
 export function deriveTierFromEntitlements(entitlements) {
   if (!entitlements) return 'free';
   if (entitlements.pro_lifetime?.isActive) return 'lifetime';
+  if (entitlements.lifetime?.isActive) return 'lifetime';
   if (entitlements.pro?.isActive) return 'pro';
+  if (entitlements['VisionBoard Pro']?.isActive) return 'pro';
   return 'free';
+}
+
+/**
+ * Sync the RC SDK's user identity with our Supabase user. Call on
+ * sign-in (and call `logoutRevenueCat` on sign-out) so purchases on
+ * a shared device get attributed to the right account.
+ *
+ * Returns the post-login CustomerInfo so callers can re-derive tier
+ * immediately rather than waiting for the next getCustomerInfo poll.
+ */
+export async function loginRevenueCat(userId) {
+  if (!userId) return null;
+  if (!(await isAvailable())) return null;
+  try {
+    const Purchases = await getPurchases();
+    const result = await Purchases.logIn({ appUserID: userId });
+    return result?.customerInfo || null;
+  } catch (e) {
+    console.warn('loginRevenueCat failed:', e?.message);
+    return null;
+  }
+}
+
+export async function logoutRevenueCat() {
+  if (!(await isAvailable())) return;
+  try {
+    const Purchases = await getPurchases();
+    await Purchases.logOut();
+  } catch (e) {
+    console.warn('logoutRevenueCat failed:', e?.message);
+  }
+}
+
+/**
+ * Present RevenueCat's prebuilt Customer Center sheet — the surface
+ * that lets users view their active subscription, manage billing,
+ * cancel, request refunds, see purchase history. Apple's review
+ * guidelines treat this as the canonical "manage subscription"
+ * affordance, so we surface it from Settings → Subscription.
+ *
+ * Requires `@revenuecat/purchases-ui-capacitor` to be installed.
+ * Falls back to `openManageSubscription` (App Store / Play Store
+ * deep-link) if the UI plugin isn't present.
+ */
+export async function presentCustomerCenter() {
+  try {
+    const cap = await import('@capacitor/core');
+    if (!cap.Capacitor.isNativePlatform()) return false;
+    // Same dev-server escape hatch as getPurchases() — variable +
+    // /* @vite-ignore */ keeps Vite's import analyzer from failing
+    // when the optional UI plugin isn't installed.
+    const uiPkg = '@revenuecat/purchases-ui-capacitor';
+    const mod = await import(/* @vite-ignore */ uiPkg).catch(() => null);
+    if (!mod) {
+      // Plugin not installed — fall back to the platform store page
+      return openManageSubscription();
+    }
+    const RevenueCatUI = mod.RevenueCatUI || mod.default || mod;
+    await RevenueCatUI.presentCustomerCenter();
+    return true;
+  } catch (e) {
+    console.warn('presentCustomerCenter failed, falling back:', e?.message);
+    return openManageSubscription();
+  }
 }
 
 /**
  * Open the platform-native subscription management surface. iOS opens
  * the App Store subscriptions page, Android opens the Play Store
- * subscriptions page. Used by Settings → Subscription "Manage" link.
+ * subscriptions page. Used as the fallback when Customer Center isn't
+ * available (web, or UI plugin not installed).
  */
 export async function openManageSubscription() {
   try {
