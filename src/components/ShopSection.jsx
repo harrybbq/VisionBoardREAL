@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { firePurchase } from '../utils/confetti';
 import SectionHelp from './SectionHelp';
-import { useIsMobile } from '../hooks/useIsMobile';
 
 const PRIORITY_LABEL = { high: '🔴 High', med: '🟡 Medium', low: '🟢 Low' };
 const PRIORITY_CLASS = { high: 'priority-high', med: 'priority-med', low: 'priority-low' };
@@ -132,13 +131,12 @@ function DropZone({ categoryId, items, coins, onToggleBought, onDeleteItem, onDr
 
 export default function ShopSection({ S, update, active, onOpenModal, onShowCoinToast }) {
   const { shopItems, shopCategories, shopFilter, coins } = S;
-  const isMobile = useIsMobile();
-  // Mobile category tab — independent of priority filter so the user
-  // can stack "Tech category" + "High priority" without one fighting
-  // the other. 'all' = show every category. Sticky to component state
-  // so a refresh resets to all (intentional — desktop session doesn't
-  // remember the filter either).
-  const [mobileCategory, setMobileCategory] = useState('all');
+  // Category tab — independent of priority filter so the user can
+  // stack "Tech category" + "High priority" without one fighting the
+  // other. 'all' = show every category stacked. Sticky to component
+  // state so a refresh resets to all (intentional — same on every
+  // viewport so behavior is predictable across desktop/mobile).
+  const [activeCategory, setActiveCategory] = useState('all');
 
   const total = shopItems.length;
   const bought = shopItems.filter(s => s.bought).length;
@@ -251,31 +249,30 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
           ))}
         </div>
 
-        {/* Mobile category tabs — single-category view per tab. The
-            existing desktop layout below stacks every category on the
-            page; on a phone that's an endless scroll. Tabs let the
-            user pivot one tap at a time. */}
-        {isMobile && shopFilter === 'all' && (
-          <div className="shop-mobile-tabs" role="tablist">
+        {/* Category tabs — pivots between categories one tap at a
+            time. "All" stacks every category (legacy desktop view).
+            Lives at every viewport so behavior is predictable. */}
+        {shopFilter === 'all' && (
+          <div className="shop-tabs" role="tablist">
             <button
               role="tab"
-              aria-selected={mobileCategory === 'all'}
-              className={`shop-mobile-tab${mobileCategory === 'all' ? ' is-active' : ''}`}
-              onClick={() => setMobileCategory('all')}
+              aria-selected={activeCategory === 'all'}
+              className={`shop-tab${activeCategory === 'all' ? ' is-active' : ''}`}
+              onClick={() => setActiveCategory('all')}
             >All ({filtered.length})</button>
             <button
               role="tab"
-              aria-selected={mobileCategory === 'uncategorised'}
-              className={`shop-mobile-tab${mobileCategory === 'uncategorised' ? ' is-active' : ''}`}
-              onClick={() => setMobileCategory('uncategorised')}
+              aria-selected={activeCategory === 'uncategorised'}
+              className={`shop-tab${activeCategory === 'uncategorised' ? ' is-active' : ''}`}
+              onClick={() => setActiveCategory('uncategorised')}
             >Uncategorised ({filtered.filter(s => !s.categoryId).length})</button>
             {shopCategories.map(cat => (
               <button
                 key={cat.id}
                 role="tab"
-                aria-selected={mobileCategory === cat.id}
-                className={`shop-mobile-tab${mobileCategory === cat.id ? ' is-active' : ''}`}
-                onClick={() => setMobileCategory(cat.id)}
+                aria-selected={activeCategory === cat.id}
+                className={`shop-tab${activeCategory === cat.id ? ' is-active' : ''}`}
+                onClick={() => setActiveCategory(cat.id)}
               >{cat.name} ({filtered.filter(s => s.categoryId === cat.id).length})</button>
             ))}
           </div>
@@ -284,7 +281,7 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
         <div className="shop-grid" id="shopGrid" style={{ marginTop: '16px', display: 'block' }}>
           {shopFilter === 'all' ? (
             <>
-              {(!isMobile || mobileCategory === 'all' || mobileCategory === 'uncategorised') && (
+              {(activeCategory === 'all' || activeCategory === 'uncategorised') && (
                 <div className="shop-category-section">
                   <div className="shop-category-header">
                     <div className="shop-category-label">Uncategorised</div>
@@ -302,7 +299,7 @@ export default function ShopSection({ S, update, active, onOpenModal, onShowCoin
                 </div>
               )}
               {shopCategories
-                .filter(cat => !isMobile || mobileCategory === 'all' || mobileCategory === cat.id)
+                .filter(cat => activeCategory === 'all' || activeCategory === cat.id)
                 .map(cat => (
                 <div key={cat.id} className="shop-category-section">
                   <div className="shop-category-header">

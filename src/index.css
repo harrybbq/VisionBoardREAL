@@ -3552,42 +3552,48 @@ button:active:not(:disabled),
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Mobile Shop tabs
-   At ≤768px, replace the stacked-categories layout with horizontally
-   scrollable category tabs at the top, showing one category at a time.
+   Shop category tabs (all viewports)
+   Pivots between categories one click/tap at a time. "All" shows the
+   stacked-categories legacy layout. Horizontal scroll on narrow widths;
+   wraps cleanly at desktop widths.
    ────────────────────────────────────────────────────────────────────────── */
+.shop-tabs {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  margin: 12px 0 16px;
+}
+.shop-tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 12px 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.shop-tab:hover { color: var(--text); }
+.shop-tab.is-active {
+  color: var(--em);
+  border-bottom-color: var(--em);
+}
 @media (max-width: 768px) {
-  .shop-mobile-tabs {
-    display: flex;
-    gap: 0;
+  /* On phones the wrap fights horizontal scroll — switch to scroll
+     so a long category list doesn't push the grid down. */
+  .shop-tabs {
+    flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    border-bottom: 1px solid var(--border);
-    margin: 12px 0 16px;
   }
-  .shop-mobile-tabs::-webkit-scrollbar { display: none; }
-  .shop-mobile-tab {
-    appearance: none;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted);
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-weight: 600;
-    padding: 12px 14px;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .shop-mobile-tab.is-active {
-    color: var(--em);
-    border-bottom-color: var(--em);
-  }
-  /* Hide the desktop "all categories stacked" layout on mobile;
-     shop renders ShopCategoryTabsMobile component when isMobile. */
+  .shop-tabs::-webkit-scrollbar { display: none; }
 }
 
 /* ── Camera scanner scan-line animation ── */
