@@ -121,9 +121,21 @@ exports.handler = async (event, context) => {
       // S.notifications into user_data.state; we read it here so the
       // user's latest toggle wins even if the queue was populated
       // before they opted out.
+      //
+      // Tokens come from the dedicated push_tokens table — NOT from
+      // user_data.state.pushTokens (legacy, removed 2026-05-03 after
+      // the read-modify-write race wiped a user's data on phone).
       const userState = await supabase.selectOne('user_data', { id: row.user_id }, 'state');
       const prefs = userState?.data?.state?.notifications || {};
-      const tokens = userState?.data?.state?.pushTokens || [];
+      const tokenRows = await supabase.select('push_tokens', {
+        match: { user_id: row.user_id },
+        select: 'token,platform,last_seen_at',
+      });
+      const tokens = (tokenRows.data || []).map(t => ({
+        token: t.token,
+        platform: t.platform,
+        registeredAt: t.last_seen_at,
+      }));
 
       const prefKey = KIND_TO_PREF[row.kind];
       if (prefKey && prefs[prefKey] === false) {
@@ -186,12 +198,11 @@ exports.handler = async (event, context) => {
         }
       }
 
-      // Prune dead tokens from the user's stored list
-      if (deadTokens.length > 0) {
-        const remaining = tokens.filter(t => !deadTokens.includes(t.token));
-        await supabase.update('user_data', { id: row.user_id }, {
-          state: { ...userState.data.state, pushTokens: remaining },
-        });
+      // Prune dead tokens from the dedicated table. Single DELETE per
+      // token avoids any read-modify-write of user_data state — the
+      // exact pattern that caused the May 3 wipe.
+      for (const dead of deadTokens) {
+        await supabase.delete('push_tokens', { user_id: row.user_id, token: dead });
       }
 
       if (anyDelivered) {
@@ -365,8 +376,17 @@ function createSupabaseAdmin(url, serviceKey) {
     Prefer: 'return=representation',
   };
 
-  async function select(table, { limit } = {}) {
-    const u = `${base}/${table}?select=*${limit ? `&limit=${limit}` : ''}`;
+  async function select(table, opts = {}) {
+    // Two call shapes for backward compat:
+    //   select('foo', { limit })                          → simple
+    //   select('foo', { match: {...}, select: '...', limit })
+    const cols = opts.select || '*';
+    const filters = opts.match
+      ? '&' + Object.entries(opts.match)
+          .map(([k, v]) => `${k}=eq.${encodeURIComponent(v)}`).join('&')
+      : '';
+    const lim = opts.limit ? `&limit=${opts.limit}` : '';
+    const u = `${base}/${table}?select=${cols}${filters}${lim}`;
     const r = await fetch(u, { headers });
     if (!r.ok) return { error: await r.text() };
     return { data: await r.json() };
@@ -393,5 +413,13 @@ function createSupabaseAdmin(url, serviceKey) {
     return { data: await r.json() };
   }
 
-  return { select, selectOne, update };
+  async function del(table, match) {
+    const filters = Object.entries(match).map(([k, v]) => `${k}=eq.${encodeURIComponent(v)}`).join('&');
+    const u = `${base}/${table}?${filters}`;
+    const r = await fetch(u, { method: 'DELETE', headers });
+    if (!r.ok) return { error: await r.text() };
+    return { ok: true };
+  }
+
+  return { select, selectOne, update, delete: del };
 }

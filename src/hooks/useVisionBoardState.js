@@ -111,6 +111,22 @@ async function loadFromCloud(userId) {
     return { kind: 'empty_state', photo: data.photo };
   }
 
+  // Shape sanity check (added 2026-05-03 after the push-handler wipe).
+  // A real saved state always has a `profile` key — it's set on
+  // first save and only ever updated, never deleted. A state object
+  // that's missing it is almost certainly the result of a partial
+  // write from somewhere (legacy push handler, future bug). Treat as
+  // empty_state so we surface the rescue UI rather than load it as
+  // "real" and then auto-save over the actual data later.
+  const looksReal = 'profile' in data.state;
+  if (!looksReal) {
+    console.warn(
+      '[useVisionBoardState] State row exists but is missing required shape markers — treating as empty_state to avoid clobber.',
+      { keys: Object.keys(data.state) }
+    );
+    return { kind: 'empty_state', photo: data.photo };
+  }
+
   const state = addTransient({ ...DEFAULT_STATE, ...data.state });
   if (data.photo) state.profile = { ...state.profile, photo: data.photo };
   return { kind: 'loaded', state };

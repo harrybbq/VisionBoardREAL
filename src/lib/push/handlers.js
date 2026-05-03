@@ -22,33 +22,35 @@ import { supabase } from '../supabase';
 /**
  * Persist the device push token to a place the server can read it.
  *
- * For v1 we stash it in the user's `user_data.state.pushTokens` JSON
- * blob — works without a schema migration. When we hit ~100 users
- * we'll graduate this to a dedicated `push_tokens` table with
- * (user_id, token, platform, registered_at, last_seen_at).
+ * Tokens live in their own `push_tokens` table — NOT in user_data.
+ * History (2026-05-03): the original implementation read user_data
+ * state, mutated it, and wrote it back. That race-condition
+ * read-modify-write wiped a real user's data on phone. The dedicated
+ * table is the architectural fix — no read-modify-write of state,
+ * no possibility of clobbering anything else on the user_data row.
+ *
+ * Apply `supabase/push_tokens_schema.sql` once before this is useful.
+ * The migration is idempotent and includes a one-time copy of any
+ * legacy tokens out of user_data.state.pushTokens. Until applied,
+ * this function silently no-ops (the upsert fails on missing table,
+ * we swallow it).
  */
 export async function registerPushToken(userId, token, platform = 'unknown') {
   if (!userId || !token) return;
   try {
-    // Read current tokens from the user_data row
-    const { data, error } = await supabase
-      .from('user_data')
-      .select('state')
-      .eq('id', userId)
-      .maybeSingle();
-    if (error) return;
-    const state = data?.state || {};
-    const pushTokens = Array.isArray(state.pushTokens) ? state.pushTokens : [];
-    // Deduplicate by token; bump registeredAt if already present
-    const filtered = pushTokens.filter(t => t.token !== token);
-    const next = [
-      ...filtered,
-      { token, platform, registeredAt: new Date().toISOString() },
-    ].slice(-5); // cap at 5 devices per user
+    // Single-statement upsert to a dedicated table. No read of state,
+    // no possibility of overwriting user data. Conflict on (user_id,
+    // token) just bumps last_seen_at — the natural cap on devices is
+    // managed server-side via a periodic prune (or a count check
+    // here later if we need stricter device caps).
     await supabase
-      .from('user_data')
-      .update({ state: { ...state, pushTokens: next } })
-      .eq('id', userId);
+      .from('push_tokens')
+      .upsert({
+        user_id: userId,
+        token,
+        platform,
+        last_seen_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,token' });
   } catch {
     // Silent fail — push token storage failing shouldn't crash the app
   }
