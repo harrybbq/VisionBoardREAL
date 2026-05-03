@@ -229,7 +229,7 @@ export async function logoutRevenueCat() {
  * guidelines treat this as the canonical "manage subscription"
  * affordance, so we surface it from Settings → Subscription.
  *
- * Requires `@revenuecat/purchases-ui-capacitor` to be installed.
+ * Requires `@revenuecat/purchases-capacitor-ui` to be installed.
  * Falls back to `openManageSubscription` (App Store / Play Store
  * deep-link) if the UI plugin isn't present.
  */
@@ -240,7 +240,7 @@ export async function presentCustomerCenter() {
     // Same dev-server escape hatch as getPurchases() — variable +
     // /* @vite-ignore */ keeps Vite's import analyzer from failing
     // when the optional UI plugin isn't installed.
-    const uiPkg = '@revenuecat/purchases-ui-capacitor';
+    const uiPkg = '@revenuecat/purchases-capacitor-ui';
     const mod = await import(/* @vite-ignore */ uiPkg).catch(() => null);
     if (!mod) {
       // Plugin not installed — fall back to the platform store page

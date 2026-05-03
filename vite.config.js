@@ -16,6 +16,7 @@ export default defineConfig({
             // wrapper catches and treats as "feature unavailable".
             external: [
                 '@revenuecat/purchases-capacitor',
+                '@revenuecat/purchases-capacitor-ui',
                 '@capacitor/browser',
             ],
         },
