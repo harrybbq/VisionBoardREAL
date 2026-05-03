@@ -2808,6 +2808,248 @@ button:active:not(:disabled),
   .hub-footer { display: none !important; }
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile Hub Section
+   Single-column "operator console" layout used on phones. Replaces the
+   desktop HubSection / HubOsLayout when isMobile && activeSection==='hub'.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.m-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  color: var(--text);
+}
+
+/* ── Greeting hero ── */
+.m-hub-hero {
+  padding: 4px 0 8px;
+}
+.m-hub-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.m-hub-greet-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.m-hub-greet {
+  flex: 1;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 30px;
+  line-height: 1.05;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.m-hub-greet-part { font-weight: 400; }
+.m-hub-greet-name {
+  font-style: italic;
+  color: var(--em);
+  font-weight: 500;
+}
+.m-hub-clock {
+  font-family: var(--mono);
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  white-space: nowrap;
+}
+.m-hub-clock-h, .m-hub-clock-m {
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -1px;
+}
+.m-hub-clock-c {
+  font-size: 24px;
+  color: var(--text-muted);
+  margin: 0 1px;
+}
+.m-hub-clock-s {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 2px;
+  align-self: flex-end;
+  margin-bottom: 4px;
+}
+.m-hub-date {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Stats strip ── */
+.m-hub-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.m-stat {
+  padding: 14px 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card, rgba(255,255,255,0.04));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.m-stat-value {
+  font-family: var(--serif, Georgia, serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.m-stat-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.m-stat-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.m-stat-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ── Section markers ── */
+.m-hub-section { display: flex; flex-direction: column; gap: 10px; }
+.m-hub-section-header {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding: 0 2px;
+}
+.m-hub-empty {
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ── Tracker rows ── */
+.m-hub-trackers { display: flex; flex-direction: column; gap: 8px; }
+.m-tracker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 14px 14px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card, rgba(255,255,255,0.04));
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.05s;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.m-tracker-row:active { transform: scale(0.99); }
+.m-tracker-row.is-done { opacity: 0.85; }
+
+.m-tracker-check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.m-tracker-name {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.m-tracker-row.is-done .m-tracker-name {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.m-tracker-pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.m-tracker-pill.is-done {
+  border-color: var(--em);
+  color: var(--em);
+  background: rgba(var(--em-rgb), 0.08);
+}
+
+/* ── Coach card ── */
+.m-hub-coach {
+  padding: 14px 16px;
+  border: 1px solid var(--em);
+  border-radius: 10px;
+  background: rgba(var(--em-rgb), 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.m-hub-coach-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.m-hub-coach-badge {
+  background: var(--em);
+  color: var(--em-on, #fff);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.m-hub-coach-body {
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
 /* ── Camera scanner scan-line animation ── */
 @keyframes cam-scan {
   0%   { top: 25%; opacity: 0.6; }

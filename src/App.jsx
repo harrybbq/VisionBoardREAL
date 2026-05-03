@@ -9,6 +9,7 @@ import AuthScreen from './components/AuthScreen';
 import Nav from './components/Nav';
 import PageHeader from './components/PageHeader';
 import HubSection from './components/HubSection';
+import MobileHubSection from './components/mobile/MobileHubSection';
 import AchievementsSection from './components/AchievementsSection';
 import TrackSection from './components/TrackSection';
 import ShopSection from './components/ShopSection';
@@ -456,7 +457,17 @@ function Board({ userId, userEmail, onSignOut }) {
       <AnimatePresence mode="wait">
         {activeSection === 'hub' && (
           <motion.div key="hub" {...pageMotion}>
-            <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} onCoachAct={handleCoachAct} visionState={visionState} userId={userId} onUpgrade={() => handleOpenModal('paywall:friends')} />
+            {isMobile ? (
+              <MobileHubSection
+                S={S}
+                update={update}
+                visionState={visionState}
+                hasPro={hasPro}
+                navigate={navigate}
+              />
+            ) : (
+              <HubSection S={S} update={update} active onOpenModal={handleOpenModal} onOpenWaitlist={() => handleOpenModal('waitlistModal')} onNavigateSettings={() => navigate('settings')} onNavigateTrack={() => navigate('track')} onShowCoinToast={showCoinToast} onCoachAct={handleCoachAct} visionState={visionState} userId={userId} onUpgrade={() => handleOpenModal('paywall:friends')} />
+            )}
           </motion.div>
         )}
         {activeSection === 'achievements' && (
