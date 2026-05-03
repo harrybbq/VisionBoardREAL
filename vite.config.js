@@ -15,8 +15,12 @@ export default defineConfig({
             // the dynamic import resolves to a runtime error which our
             // wrapper catches and treats as "feature unavailable".
             external: [
-                '@revenuecat/purchases-capacitor',
-                '@revenuecat/purchases-capacitor-ui',
+                // Optional Capacitor plugins we dynamic-import. Listed
+                // here so Rollup doesn't fail the build when they
+                // aren't installed yet — the wrapper's try/catch turns
+                // the runtime resolution failure into a graceful
+                // "feature unavailable". RC packages used to be in
+                // this list; now installed so they bundle normally.
                 '@capacitor/browser',
             ],
         },
