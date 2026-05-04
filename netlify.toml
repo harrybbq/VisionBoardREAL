@@ -17,6 +17,23 @@
   # those should never appear in the bundle in the first place.
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_REVENUECAT_API_KEY_IOS,VITE_REVENUECAT_API_KEY_ANDROID"
 
+  # Smart detection scans for things that LOOK like secrets by
+  # pattern (long base64 strings, JWT shapes, keys with known
+  # provider prefixes). It fires false positives on the Supabase
+  # `sb_publishable_*` key format and on hashed JS bundle filenames
+  # — value-based scanning above is enough for our setup, so we
+  # turn smart detection off. Keep an eye on this if you add new
+  # hardcoded credentials anywhere; smart detection would catch them.
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+
+  # Belt-and-braces: tell the scanner to skip the source paths where
+  # third-party SDK code (and the .env.example file) contains strings
+  # that pattern-match secret-looking shapes but aren't real secrets.
+  # node_modules and dist are scanned by default; most false positives
+  # come from there. .env.example holds variable names with empty
+  # values, also harmless.
+  SECRETS_SCAN_OMIT_PATHS = ".env.example,node_modules/**"
+
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
