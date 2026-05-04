@@ -1,6 +1,37 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const supabase = createClient(
-  'https://mtbloqcvkvazmehvsaqk.supabase.co',
-  'sb_publishable_TbZBi2UF7atd2725dKyPGw_Mrz01n-6'
-);
+/**
+ * Supabase client.
+ *
+ * Reads the project URL + publishable (anon) key from Vite env vars
+ * so the source tree never holds the literal values. Required env:
+ *
+ *   VITE_SUPABASE_URL
+ *   VITE_SUPABASE_ANON_KEY
+ *
+ * Set these in:
+ *   - Local dev: .env.local (gitignored — see .env.example)
+ *   - Netlify:   Site settings → Environment variables
+ *
+ * The publishable key is safe to bundle into the client — it's gated
+ * by RLS on every table — but Netlify's secret scanner refuses to
+ * deploy if it finds the literal in source. netlify.toml passes the
+ * variable name through SECRETS_SCAN_OMIT_KEYS so the scanner knows
+ * the bundled value is intentional.
+ *
+ * If the env vars are missing at build time we throw eagerly rather
+ * than create a half-broken client — that produces a clear error in
+ * the build log instead of mysterious auth failures at runtime.
+ */
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    'Missing Supabase env vars. Set VITE_SUPABASE_URL and ' +
+    'VITE_SUPABASE_ANON_KEY in .env.local (dev) or Netlify env (prod).'
+  );
+}
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

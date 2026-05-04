@@ -5,6 +5,17 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # Netlify's secrets scanner (enabled by default since 2024) blocks
+  # deploys when it finds env-var values in the build output. That's
+  # the right behavior for server secrets, but VITE_* vars are
+  # designed to be bundled into the client — and Supabase publishable
+  # keys are explicitly safe to expose (they're gated by RLS on every
+  # table). Whitelist the keys whose presence in dist/ is intentional.
+  #
+  # Add any new VITE_* var here when you introduce one. NEVER add
+  # server-side secrets (SUPABASE_SERVICE_ROLE_KEY, FCM_*, etc.) —
+  # those should never appear in the bundle in the first place.
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_REVENUECAT_API_KEY_IOS,VITE_REVENUECAT_API_KEY_ANDROID"
 
 [[redirects]]
   from   = "/*"
