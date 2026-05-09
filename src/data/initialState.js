@@ -73,4 +73,18 @@ export const DEFAULT_STATE = {
     quietHours: { start: '', end: '' },
     dailyReminderAt: null,
   },
+  // ── Savings goals (FEATURE 4 Sprint 2) ────────────────────────────
+  // Named monetary goals + their contribution log. Lives in the same
+  // user_data JSON blob; NO Supabase migration. Privacy hard rule:
+  // amounts NEVER get published to public_stats and are redacted in
+  // the AI Coach snapshot (count + names only, never £).
+  //
+  // Shape per goal:
+  //   { id, name, icon, target, current, contributions: [...],
+  //     achievementId?, createdAt }
+  // Contribution: { id, amount, ts, note? }
+  // achievementId optional — when goal completes (current >= target),
+  // the linked achievement is auto-marked complete + its coin reward
+  // fires. Same pipeline as the Achievements board.
+  savings: [],
 };

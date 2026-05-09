@@ -284,6 +284,158 @@ function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete 
   );
 }
 
+// ── Add Savings Goal (F4 Sprint 2) ──
+function AddSavingsGoalModal({ openId, onClose, achievements, onAdd }) {
+  const [form, setForm] = useState({ name: '', icon: '💰', target: '', achievementId: '' });
+  function submit() {
+    const target = parseFloat(form.target);
+    if (!form.name.trim() || !target || target <= 0) return;
+    onAdd({
+      id: 'sv' + Date.now(),
+      name: form.name.trim(),
+      icon: form.icon || '💰',
+      target,
+      current: 0,
+      contributions: [],
+      achievementId: form.achievementId || null,
+      createdAt: new Date().toISOString(),
+    });
+    setForm({ name: '', icon: '💰', target: '', achievementId: '' });
+    onClose('addSavingsGoalModal');
+  }
+  const linkable = (achievements || []).filter(a => !a.completed);
+  return (
+    <Modal id="addSavingsGoalModal" openId={openId} onClose={onClose}>
+      <h3>New Savings Goal</h3>
+      <div className="fg"><label>Name</label><input type="text" placeholder="e.g. First Home" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Icon</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+          {['💰','🏠','🚗','💍','✈️','🎓','🏥','📱','🎮','💸'].map(e => (
+            <button key={e} type="button" onClick={() => setForm(f => ({ ...f, icon: e }))}
+              style={{ fontSize: '18px', padding: '4px', borderRadius: '7px', cursor: 'pointer', lineHeight: 1,
+                border: form.icon === e ? '2px solid var(--em)' : '2px solid transparent',
+                background: form.icon === e ? 'rgba(42,158,98,0.15)' : 'rgba(0,0,0,0.06)',
+              }}>{e}</button>
+          ))}
+        </div>
+      </div>
+      <div className="fg"><label>Target (£)</label><input type="number" min="1" step="any" placeholder="10000" value={form.target} onChange={e => setForm(f => ({ ...f, target: e.target.value }))} /></div>
+      {linkable.length > 0 && (
+        <div className="fg">
+          <label>Link to an achievement (optional)</label>
+          <select value={form.achievementId} onChange={e => setForm(f => ({ ...f, achievementId: e.target.value }))}>
+            <option value="">— none —</option>
+            {linkable.map(a => <option key={a.id} value={a.id}>{a.icon} {a.name}</option>)}
+          </select>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Linked achievement auto-completes when this goal hits target.
+          </div>
+        </div>
+      )}
+      <div className="modal-actions">
+        <button className="btn btn-ghost" onClick={() => onClose('addSavingsGoalModal')}>Cancel</button>
+        <button className="btn btn-primary" onClick={submit}>Create</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Add Contribution to a Savings Goal ──
+function AddContributionModal({ openId, onClose, savings, onAdd }) {
+  // openId format: 'addContributionModal:<savingsId>'
+  const isOpen = typeof openId === 'string' && openId.startsWith('addContributionModal:');
+  const goalId = isOpen ? openId.split(':')[1] : null;
+  const goal = goalId ? (savings || []).find(g => g.id === goalId) : null;
+  const [form, setForm] = useState({ amount: '', note: '' });
+  useEffect(() => { if (goalId) setForm({ amount: '', note: '' }); }, [goalId]);
+  if (!isOpen || !goal) return null;
+  function submit() {
+    const amount = parseFloat(form.amount);
+    if (!amount || amount === 0) return;
+    onAdd(goalId, { id: 'c' + Date.now(), amount, note: form.note.trim() || null, ts: new Date().toISOString() });
+    onClose(openId);
+  }
+  return (
+    <Modal id={openId} openId={openId} onClose={onClose}>
+      <h3>Add to {goal.name}</h3>
+      <div className="fg"><label>Amount (£) — negative to subtract</label><input type="number" step="any" placeholder="200" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} autoFocus /></div>
+      <div className="fg"><label>Note (optional)</label><input type="text" placeholder="e.g. Bonus, Tax refund" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} /></div>
+      <div className="modal-actions">
+        <button className="btn btn-ghost" onClick={() => onClose(openId)}>Cancel</button>
+        <button className="btn btn-primary" onClick={submit}>Add</button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── Edit Savings Goal ──
+function EditSavingsGoalModal({ openId, onClose, savings, achievements, onEdit, onDelete }) {
+  const isOpen = typeof openId === 'string' && openId.startsWith('editSavingsGoalModal:');
+  const goalId = isOpen ? openId.split(':')[1] : null;
+  const goal = goalId ? (savings || []).find(g => g.id === goalId) : null;
+  const [form, setForm] = useState({ name: '', icon: '💰', target: '', achievementId: '' });
+  useEffect(() => {
+    if (goal) setForm({
+      name: goal.name || '',
+      icon: goal.icon || '💰',
+      target: String(goal.target || ''),
+      achievementId: goal.achievementId || '',
+    });
+  }, [goalId]);
+  if (!isOpen || !goal) return null;
+  function submit() {
+    const target = parseFloat(form.target);
+    if (!form.name.trim() || !target || target <= 0) return;
+    onEdit(goalId, {
+      name: form.name.trim(),
+      icon: form.icon || '💰',
+      target,
+      achievementId: form.achievementId || null,
+    });
+    onClose(openId);
+  }
+  function handleDelete() {
+    if (!window.confirm('Delete this savings goal? Contribution history will be lost. This cannot be undone.')) return;
+    onDelete(goalId);
+    onClose(openId);
+  }
+  const linkable = (achievements || []).filter(a => !a.completed || a.id === goal.achievementId);
+  return (
+    <Modal id={openId} openId={openId} onClose={onClose}>
+      <h3>Edit Savings Goal</h3>
+      <div className="fg"><label>Name</label><input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Icon</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+          {['💰','🏠','🚗','💍','✈️','🎓','🏥','📱','🎮','💸'].map(e => (
+            <button key={e} type="button" onClick={() => setForm(f => ({ ...f, icon: e }))}
+              style={{ fontSize: '18px', padding: '4px', borderRadius: '7px', cursor: 'pointer', lineHeight: 1,
+                border: form.icon === e ? '2px solid var(--em)' : '2px solid transparent',
+                background: form.icon === e ? 'rgba(42,158,98,0.15)' : 'rgba(0,0,0,0.06)',
+              }}>{e}</button>
+          ))}
+        </div>
+      </div>
+      <div className="fg"><label>Target (£)</label><input type="number" min="1" step="any" value={form.target} onChange={e => setForm(f => ({ ...f, target: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Linked achievement</label>
+        <select value={form.achievementId} onChange={e => setForm(f => ({ ...f, achievementId: e.target.value }))}>
+          <option value="">— none —</option>
+          {linkable.map(a => <option key={a.id} value={a.id}>{a.icon} {a.name}</option>)}
+        </select>
+      </div>
+      <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+        <button className="btn btn-ghost" onClick={handleDelete} style={{ color: 'rgb(220,60,60)' }}>Delete</button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn btn-ghost" onClick={() => onClose(openId)}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Save</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ── Add Tracker ──
 function AddTrackerModal({ openId, onClose, onAdd }) {
   const [form, setForm] = useState({ name: '', type: 'boolean', unit: '', goal: '', color: '#1a7a4a', weeklyTarget: '', weeklyCoins: '' });
@@ -1062,6 +1214,63 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       ),
     }));
   }
+  // ── Savings goals (F4 Sprint 2) ──
+  function handleAddSavingsGoal(goal) {
+    update(prev => ({ ...prev, savings: [...(prev.savings || []), goal] }));
+  }
+  function handleEditSavingsGoal(id, patch) {
+    update(prev => ({
+      ...prev,
+      savings: (prev.savings || []).map(g => g.id === id ? { ...g, ...patch } : g),
+    }));
+  }
+  function handleDeleteSavingsGoal(id) {
+    update(prev => ({
+      ...prev,
+      savings: (prev.savings || []).filter(g => g.id !== id),
+    }));
+  }
+  function handleAddContribution(goalId, contribution) {
+    // Append contribution + recompute current. If the new total
+    // crosses the target AND a linked achievement exists AND it's
+    // not already completed, fire the achievement-complete pipeline
+    // so the user gets the same coin reward + vision check as
+    // completing it manually on the achievement board.
+    update(prev => {
+      const goals = prev.savings || [];
+      const goal = goals.find(g => g.id === goalId);
+      if (!goal) return prev;
+      const nextContribs = [contribution, ...(goal.contributions || [])];
+      const nextCurrent = nextContribs.reduce((sum, c) => sum + (c.amount || 0), 0);
+      const justHit = nextCurrent >= goal.target && goal.current < goal.target;
+
+      let next = {
+        ...prev,
+        savings: goals.map(g => g.id === goalId
+          ? { ...g, current: nextCurrent, contributions: nextContribs }
+          : g),
+      };
+
+      if (justHit && goal.achievementId) {
+        const linked = (prev.achievements || []).find(a => a.id === goal.achievementId);
+        if (linked && !linked.completed) {
+          next.achievements = (prev.achievements || []).map(a =>
+            a.id === goal.achievementId ? { ...a, completed: true } : a
+          );
+          // Fire the same coin-reward path as manual completion.
+          if (linked.coins && linked.coins > 0) {
+            next.coins = (prev.coins || 0) + linked.coins;
+            next.coinHistory = [
+              { type: 'earn', label: linked.name, amount: linked.coins, ts: Date.now() },
+              ...(prev.coinHistory || []),
+            ];
+          }
+        }
+      }
+      return next;
+    });
+  }
+
   function handleDeleteAchievement(id) {
     // Drop the achievement and any connections that touch it. Without
     // the connection sweep, orphaned edges would render with broken
@@ -1147,6 +1356,9 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       <CoinHistoryModal openId={effectiveOpen} onClose={onClose} coins={S.coins || 0} coinHistory={S.coinHistory || []} />
       <AddAchievementModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddAchievement} />
       <EditAchievementModal openId={effectiveOpen} onClose={onClose} achievements={S.achievements} onEdit={handleEditAchievement} onDelete={handleDeleteAchievement} />
+      <AddSavingsGoalModal openId={effectiveOpen} onClose={onClose} achievements={S.achievements} onAdd={handleAddSavingsGoal} />
+      <AddContributionModal openId={effectiveOpen} onClose={onClose} savings={S.savings} onAdd={handleAddContribution} />
+      <EditSavingsGoalModal openId={effectiveOpen} onClose={onClose} savings={S.savings} achievements={S.achievements} onEdit={handleEditSavingsGoal} onDelete={handleDeleteSavingsGoal} />
       <AddTrackerModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddTracker} />
       <MultiLogModal
         openId={effectiveOpen}

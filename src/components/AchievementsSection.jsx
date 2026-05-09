@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { fireAchievement } from '../utils/confetti';
 import SectionHelp from './SectionHelp';
+import SavingsList from './SavingsList';
 
 /**
  * Achievement Board — React-rendered canvas of goal nodes connected by
@@ -341,6 +342,10 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
   const connectingFrom = S.connectingFrom || null;
 
   const [zoom, setZoom] = useState(1);
+  // Tab toggle (F4 Sprint 2) — 'goals' = the achievement board canvas,
+  // 'savings' = monetary goals list. Sticky to component state so a
+  // refresh resets to goals (canvas is the dominant surface).
+  const [activeTab, setActiveTab] = useState('goals');
   // Tracks the live position of a node currently being dragged so the
   // SVG connections re-render without committing to global state on
   // every mousemove. AchNode commits position on mouseup; in between
@@ -476,17 +481,39 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           <span className="ach-hint-pill"><span className="ach-hint-key">✦</span> connect</span>
           <span className="ach-hint-pill"><span className="ach-hint-key">★</span> complete</span>
         </div>
-        <motion.button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => onOpenModal('addAchievementModal')}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-        >
-          + New
-        </motion.button>
+        {activeTab === 'goals' && (
+          <motion.button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => onOpenModal('addAchievementModal')}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          >
+            + New
+          </motion.button>
+        )}
       </div>
+
+      {/* Tab toggle — Goals (achievement board) vs Savings (monetary goals) */}
+      <div className="ach-tabs" role="tablist">
+        <button
+          role="tab"
+          aria-selected={activeTab === 'goals'}
+          className={`ach-tab${activeTab === 'goals' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('goals')}
+        >Goals</button>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'savings'}
+          className={`ach-tab${activeTab === 'savings' ? ' is-active' : ''}`}
+          onClick={() => setActiveTab('savings')}
+        >Savings</button>
+      </div>
+
+      {activeTab === 'savings' ? (
+        <SavingsList S={S} onOpenModal={onOpenModal} />
+      ) : (<>
 
       {/* Canvas — dot grid background, draggable nodes, SVG connections */}
       <div className="ach-canvas-wrap">
@@ -604,6 +631,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           </div>
         </div>
       </div>
+      </>)}
     </section>
   );
 }
