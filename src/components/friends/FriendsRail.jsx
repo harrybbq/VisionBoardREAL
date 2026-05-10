@@ -71,6 +71,7 @@ export default function FriendsRail({ userId, onUpgrade }) {
       handle: base.handle,
       level: base.level || 1,
       online: !!base.online,
+      avatar_url: base.avatar_url || null,
       streak: selectedStats?.current_streak || 0,
       streakHabit: selectedStats?.streak_habit || null,
       heatmap: selectedStats?.heatmap_days || [],

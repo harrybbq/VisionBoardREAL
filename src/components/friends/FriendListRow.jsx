@@ -36,9 +36,17 @@ export default function FriendListRow({ friend, selected, onClick }) {
       onClick={onClick}
     >
       <div className="fc-row-avatar-wrap">
-        <div className="fc-row-avatar" style={{ background: avatarColor(friend.name) }}>
-          {initials(friend.name)}
-        </div>
+        {friend.avatar_url ? (
+          <img
+            className="fc-row-avatar fc-row-avatar-img"
+            src={friend.avatar_url}
+            alt=""
+          />
+        ) : (
+          <div className="fc-row-avatar" style={{ background: avatarColor(friend.name) }}>
+            {initials(friend.name)}
+          </div>
+        )}
         {/* Online dot is reserved for a future presence layer — see
             future_ideas/README. We render the slot but leave it hidden
             until Realtime is wired up. Keeps card geometry stable. */}

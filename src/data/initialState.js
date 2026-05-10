@@ -95,6 +95,7 @@ export const DEFAULT_STATE = {
   // the value when a friend reads it. Toggling off a field clears
   // the value on the next debounced publish.
   privacy: {
+    shareAvatar:   true,  // profile photo (vs @handle initial)
     shareStreak:   true,  // current_streak + streak_habit
     shareHeatmap:  true,  // 91-day heatmap_days
     shareWins:     true,  // recent_wins (last 3 completed achievements)

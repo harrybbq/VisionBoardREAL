@@ -22,8 +22,44 @@ import { upsertOwnPublicStats, updateOwnProfile } from './queries';
  */
 
 const DAY_MS = 86_400_000;
+const AVATAR_TARGET_PX = 96; // square; friend list renders at 28-32px so 96 is sharp on retina
 
 function ymd(d) { return d.toISOString().slice(0, 10); }
+
+/**
+ * Resize the user's photo (a data URL, typically large) to a small
+ * JPEG suitable for storing in profiles.avatar_url. Targets ~6-12 KB
+ * so a 10-friend rail doesn't pull megabytes per refresh.
+ *
+ * Returns a Promise<string|null>. Null if no photo or if the browser
+ * can't render the source (e.g. malformed data URL).
+ */
+async function resizeAvatar(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string') return null;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const size = AVATAR_TARGET_PX;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        // Centre-crop to a square then scale into the target.
+        const srcMin = Math.min(img.width, img.height);
+        const sx = (img.width  - srcMin) / 2;
+        const sy = (img.height - srcMin) / 2;
+        ctx.drawImage(img, sx, sy, srcMin, srcMin, 0, 0, size, size);
+        // 0.72 quality keeps photos legible without bloating storage.
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
 
 /** Build the heatmap_days array friends will see — last 91 days,
  *  same shape as friendsMock so the renderer doesn't change. We
@@ -108,6 +144,14 @@ export function usePublishProfile(userId, S, hasPro, visionState) {
       recent_wins:    priv.shareWins    !== false ? recentWins(S)   : [],
     };
 
+    // Avatar — gates on shareAvatar AND the user actually having a
+    // photo set. The raw photo data URL is in S.profile.photo
+    // (large; not yet resized). We resize ONLY when the source has
+    // changed since the last publish, tracked via a hash of the
+    // first 64 chars of the data URL (cheap, stable enough).
+    const photoSrc = priv.shareAvatar !== false ? (S.profile?.photo || null) : null;
+    const photoSig = photoSrc ? photoSrc.slice(0, 64) : '';
+
     // Skip the network round-trip if the meaningful slice hasn't
     // changed — only `last_active_at` would differ on a no-op tick.
     // We compare a stable JSON form excluding last_active_at.
@@ -116,12 +160,18 @@ export function usePublishProfile(userId, S, hasPro, visionState) {
       s: payload.current_streak, sh: payload.streak_habit,
       h: payload.heatmap_days.map(x => x.intensity).join(''),
       w: payload.recent_wins.map(x => x.name).join('|'),
+      a: photoSig,
     });
     if (sig === lastPayloadRef.current && triedRef.current) return;
 
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       try {
+        // Resize avatar lazily inside the timer so the heavy canvas
+        // work happens after the debounce settles, not on every
+        // render. Returns null when shareAvatar is off or no photo.
+        const avatarUrl = photoSrc ? await resizeAvatar(photoSrc) : null;
+
         // Two rows in parallel — they're independent and the
         // friends rail tolerates either failing without the other.
         await Promise.all([
@@ -129,6 +179,7 @@ export function usePublishProfile(userId, S, hasPro, visionState) {
             display_name: payload.display_name,
             level: payload.level,
             last_active_at: payload.last_active_at,
+            avatar_url: avatarUrl,
           }),
           // Only publish stats if the user has a handle — without
           // one they're not visible to anyone, so there's nothing to

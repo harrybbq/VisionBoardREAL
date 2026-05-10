@@ -83,9 +83,17 @@ export default function FriendCard({
       {/* Header */}
       <div className="fc-header">
         <div className="fc-avatar-wrap">
-          <div className="fc-avatar" style={{ background: avatarColor(friend.name) }}>
-            {initials(friend.name)}
-          </div>
+          {friend.avatar_url ? (
+            <img
+              className="fc-avatar fc-avatar-img"
+              src={friend.avatar_url}
+              alt=""
+            />
+          ) : (
+            <div className="fc-avatar" style={{ background: avatarColor(friend.name) }}>
+              {initials(friend.name)}
+            </div>
+          )}
           {friend.online && <div className="fc-online-dot" />}
         </div>
         <div className="fc-identity">

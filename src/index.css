@@ -3960,6 +3960,7 @@ button:active:not(:disabled),
   color:#fff;
   border:1.5px solid var(--border);
 }
+.fc-row-avatar-img{object-fit:cover;display:block;background:transparent;}
 .fc-row-online-dot{
   position:absolute;bottom:0;right:0;
   width:8px;height:8px;border-radius:50%;
@@ -4008,6 +4009,7 @@ button:active:not(:disabled),
   color:#fff;
   border:2px solid rgba(255,255,255,.6);
 }
+.fc-avatar-img{object-fit:cover;display:block;background:transparent;}
 .fc-online-dot{
   position:absolute;bottom:1px;right:1px;
   width:11px;height:11px;border-radius:50%;

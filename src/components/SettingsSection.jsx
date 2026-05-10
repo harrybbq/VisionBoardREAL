@@ -118,6 +118,7 @@ export const OPTIONAL_PANELS = [
 // schema migration); usePublishProfile reads them and zeroes-out
 // hidden fields on the next debounced publish.
 const SHARE_TOGGLES = [
+  { id: 'shareAvatar',   label: 'Profile photo',         desc: 'Your uploaded photo. Off shows your @handle initial instead.' },
   { id: 'shareStreak',   label: 'Active habit streak',  desc: 'Days clean + habit name (e.g. "12d Alcohol").' },
   { id: 'shareHeatmap',  label: '91-day activity heatmap', desc: 'Coloured grid of days you logged anything.' },
   { id: 'shareWins',     label: 'Recent achievement wins', desc: 'Last 3 completed achievements with their icons.' },
