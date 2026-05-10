@@ -1,0 +1,105 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ * Pro `cream-pro` theme — opt-in via html[data-theme="cream-pro"].
+ *
+ * Refined cream variant for Pro users who want the warm parchment feel
+ * but with the "this person paid" visual signal. Same HubSection layout
+ * as free cream (no operator console), but with:
+ *
+ *   - Deeper, more saturated parchment with subtle gold undertone
+ *   - Stronger accent emphasis (em used in more places: card borders,
+ *     widget headers, micro-icons)
+ *   - Mono caps on widget headers (matches dark-os typographic feel)
+ *   - Slightly tighter shadows for a more sculpted look
+ *
+ * Anything not overridden here inherits from the default cream rules
+ * in index.css.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+html[data-theme="cream-pro"] {
+  /* Surfaces — richer parchment with gold undertone */
+  --bg-base:      #f7f1e3;
+  --bg-raised:    #faf5e9;
+  --bg-overlay:   #fbf7ec;
+  --surface:      #faf5e9;
+  --surface2:     #f4eddb;
+  --surface-deep: #ede4ce;
+  --cream:        #faf5e9;
+  --card:         rgba(255, 250, 240, 0.85);
+
+  /* Text — keep cream's near-black ink, slightly warmer */
+  --text:        #2a2622;
+  --text-mid:    #6a5f53;
+  --text-muted:  #8a7f73;
+
+  /* Borders — warmer tan than free cream, more sculpted */
+  --border:      #d8c89a;
+  --border-lt:   #e2d4a8;
+
+  /* Gold is the signature — pull it forward */
+  --gold:        #b8861a;
+  --gold-lt:     #dfb053;
+
+  /* Accent emphasis — wider use of em in surfaces */
+  --accent-line:    rgba(var(--em-rgb), 0.40);
+  --accent-line-mid: rgba(var(--em-rgb), 0.56);
+  --accent-glow:
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 2px 0 rgba(var(--em-rgb),.06),
+    0 8px 26px rgba(var(--em-rgb),.10);
+
+  background: var(--bg-base);
+  color-scheme: light;
+}
+
+html[data-theme="cream-pro"] body {
+  background: var(--bg-base);
+  color: var(--text);
+}
+
+/* Cards get a stronger sculpted shadow */
+html[data-theme="cream-pro"] .card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--accent-glow);
+}
+
+/* Widget headers — mono caps for the Pro feel without going full
+   operator-console. */
+html[data-theme="cream-pro"] .widget-header,
+html[data-theme="cream-pro"] .panel-title {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--em);
+}
+
+/* Section titles keep the serif but in deeper warm tone */
+html[data-theme="cream-pro"] .sec-title {
+  color: var(--text);
+}
+
+/* Sidebar nav — slightly deeper parchment so it sits as a distinct rail */
+html[data-theme="cream-pro"] nav#mainNav {
+  background: var(--surface2);
+  border-right: 1px solid var(--border);
+}
+
+html[data-theme="cream-pro"] #pageHeader {
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Hub footer gets the em accent line treatment */
+html[data-theme="cream-pro"] .hub-footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+/* Tracker cards / list rows — em-tinted hover */
+html[data-theme="cream-pro"] .quick-log-row:hover,
+html[data-theme="cream-pro"] .tracker-item:hover {
+  border-color: var(--em);
+  background: rgba(var(--em-rgb), 0.06);
+}

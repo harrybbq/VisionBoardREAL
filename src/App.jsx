@@ -117,10 +117,18 @@ function Board({ userId, userEmail, onSignOut }) {
   }, [S.colorScheme]);
 
   // Apply stored theme — Pro-gated (lifetime counts as Pro). If entitlement
-  // flips false we auto-revert to cream via applyTheme's internal guard,
-  // so a lapsed subscriber never gets stranded on the Pro-only surface.
+  // flips false we auto-revert via applyTheme's resolveEffectiveTheme, so
+  // a lapsed subscriber on dark-os falls to free `dark` (same mode), and
+  // one on cream-pro falls to free `cream`. The resolved id is also
+  // written back to S.theme on tier change so the saved preference stays
+  // accurate — otherwise refreshing would keep showing the lock.
   useEffect(() => {
-    applyTheme(S.theme || 'cream', { hasPro });
+    const saved = S.theme || 'cream';
+    const effective = applyTheme(saved, { hasPro });
+    if (effective !== saved) {
+      update(prev => ({ ...prev, theme: effective }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.theme, hasPro]);
 
   function showCoinToast(msg, isEarn, duration) {
@@ -610,7 +618,7 @@ function Board({ userId, userEmail, onSignOut }) {
           from Settings. Dark OS users get the terser voice variant. */}
       <TutorialOverlay
         visible={!S.tutorialCompleted}
-        theme={hasPro && S.theme === 'dark-os' ? 'dark' : 'cream'}
+        theme={(S.theme === 'dark-os' && hasPro) || S.theme === 'dark' ? 'dark' : 'cream'}
         onNavigate={navigate}
         onClose={() => update(prev => ({ ...prev, tutorialCompleted: true }))}
       />

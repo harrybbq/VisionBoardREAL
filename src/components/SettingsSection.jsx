@@ -23,31 +23,57 @@ function hexToRgb(hex) {
   return `${r},${g},${b}`;
 }
 
-// ── Theme modes (Dark OS is Pro-only) ────────────────────────────────────
+// ── Theme modes (4 themes — light/dark axis × free/Pro tier) ─────────────
+// Free users get cream + dark (basic). Pro users get cream-pro +
+// dark-os (existing operator console). All four are real themes,
+// not gates on the same theme — Pro users get a real visual upgrade
+// in BOTH light AND dark modes.
 export const THEMES = [
   {
-    id: 'cream', name: 'Cream', tagline: 'Warm parchment · default',
+    id: 'cream', name: 'Cream', tagline: 'Warm parchment · free',
+    mode: 'light', pro: false,
     swatch: 'linear-gradient(145deg,#f7f4ef 0%,#ede8e0 45%,#e0d8cc 100%)',
-    pro: false,
   },
   {
-    id: 'dark-os', name: 'Dark OS', tagline: 'Control-panel grid · Pro',
+    id: 'dark', name: 'Dark', tagline: 'Cream tones inverted · free',
+    mode: 'dark', pro: false,
+    swatch: 'linear-gradient(145deg,#2a2724 0%,#1d1b18 50%,#14120f 100%)',
+  },
+  {
+    id: 'cream-pro', name: 'Cream Pro', tagline: 'Refined accents · Pro',
+    mode: 'light', pro: true,
+    swatch: 'linear-gradient(145deg,#f9f6f0 0%,#ede4d4 45%,#cdb88c 100%)',
+  },
+  {
+    id: 'dark-os', name: 'Dark OS', tagline: 'Operator console · Pro',
+    mode: 'dark', pro: true,
     swatch: 'linear-gradient(145deg,#1f1f1c 0%,#131311 55%,#0a0a09 100%)',
-    pro: true,
   },
 ];
 
+// Migration rule for users who saved a theme they no longer qualify
+// for (e.g. Pro lapse). Always falls back to a same-mode free theme
+// rather than flipping light↔dark, so a Pro user demoted at night
+// doesn't get blinded by cream.
+function resolveEffectiveTheme(saved, hasPro) {
+  const t = THEMES.find(x => x.id === saved);
+  if (!t) return 'cream'; // unknown id → safest default
+  if (!t.pro || hasPro) return t.id;
+  // Pro theme but user is free — pick the same-mode free counterpart
+  return t.mode === 'dark' ? 'dark' : 'cream';
+}
+
 /**
- * Apply (or clear) the dark-os theme attribute on <html>.
+ * Apply (or clear) the theme attribute on <html>.
  * Called on boot from main.jsx and whenever the user toggles the theme.
- * If the user has no Pro entitlement (Pro sub OR Lifetime) we force cream
- * regardless of saved value.
+ * Cream is the default (no data-theme attribute); all other themes set
+ * data-theme="<id>" so CSS rules can scope on it.
  */
 export function applyTheme(theme, { hasPro = false } = {}) {
-  const effective = theme === 'dark-os' && hasPro ? 'dark-os' : 'cream';
+  const effective = resolveEffectiveTheme(theme || 'cream', hasPro);
   const r = document.documentElement;
-  if (effective === 'dark-os') r.setAttribute('data-theme', 'dark-os');
-  else r.removeAttribute('data-theme');
+  if (effective === 'cream') r.removeAttribute('data-theme');
+  else r.setAttribute('data-theme', effective);
   return effective;
 }
 
@@ -397,11 +423,12 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
           </div>
         </div>
 
-        {/* Theme mode (Dark OS is Pro-only) */}
+        {/* Theme mode — 4 themes: light/dark × free/Pro */}
         <div className="card" style={{ padding: '22px' }}>
-          <h3 style={{ margin: '0 0 4px' }}>Theme mode</h3>
+          <h3 style={{ margin: '0 0 4px' }}>Theme</h3>
           <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 18px', letterSpacing: '0.5px' }}>
-            Pick the overall surface treatment. Dark OS turns the hub into a customisable control-panel grid.
+            Cream and Dark are free. Cream Pro and Dark OS are Pro variants —
+            Dark OS turns the hub into a customisable control-panel grid.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
             {THEMES.map(t => {
