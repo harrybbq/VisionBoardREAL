@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import AddMobileWidgetModal from './mobile/AddMobileWidgetModal';
 
 function Modal({ id, openId, onClose, children, style }) {
   return (
@@ -1214,6 +1215,13 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       ),
     }));
   }
+  function handleAddMobileWidget(widget) {
+    update(prev => ({
+      ...prev,
+      mobileWidgets: [...(prev.mobileWidgets || []), widget],
+    }));
+  }
+
   // ── Savings goals (F4 Sprint 2) ──
   function handleAddSavingsGoal(goal) {
     update(prev => ({ ...prev, savings: [...(prev.savings || []), goal] }));
@@ -1359,6 +1367,12 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
       <AddSavingsGoalModal openId={effectiveOpen} onClose={onClose} achievements={S.achievements} onAdd={handleAddSavingsGoal} />
       <AddContributionModal openId={effectiveOpen} onClose={onClose} savings={S.savings} onAdd={handleAddContribution} />
       <EditSavingsGoalModal openId={effectiveOpen} onClose={onClose} savings={S.savings} achievements={S.achievements} onEdit={handleEditSavingsGoal} onDelete={handleDeleteSavingsGoal} />
+      <AddMobileWidgetModal
+        openId={effectiveOpen}
+        onClose={onClose}
+        existingTypes={(S.mobileWidgets || []).map(w => w.type)}
+        onAdd={handleAddMobileWidget}
+      />
       <AddTrackerModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddTracker} />
       <MultiLogModal
         openId={effectiveOpen}

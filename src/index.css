@@ -3438,6 +3438,193 @@ button:active:not(:disabled),
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   Mobile widget stack (below AI Coach on the mobile hub)
+   ────────────────────────────────────────────────────────────────────────── */
+.m-widget {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card, rgba(255,255,255,0.04));
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.m-widget-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(var(--em-rgb), 0.05);
+}
+.m-widget-icon {
+  font-size: 13px;
+  color: var(--em);
+  line-height: 1;
+  width: 16px;
+  text-align: center;
+}
+.m-widget-eyebrow {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.m-widget-remove {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 13px; line-height: 1;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.m-widget-remove:hover { color: var(--text); border-color: var(--text-muted); }
+.m-widget-body {
+  padding: 12px 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.m-widget-stub {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+.m-widget-stub-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--em);
+  font-weight: 700;
+}
+.m-widget-stub-detail {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.m-widget-empty {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 4px 0;
+}
+
+.m-widget-notepad {
+  width: 100%;
+  background: var(--bg-base, rgba(255,255,255,0.6));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  resize: vertical;
+  min-height: 100px;
+}
+.m-widget-notepad:focus {
+  outline: none;
+  border-color: var(--em);
+}
+
+.m-widget-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.m-widget-list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.m-widget-list-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.m-widget-list-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-widget-list-meta {
+  font-size: 10px;
+  color: var(--gold, #c8970a);
+  letterSpacing: 0.4px;
+  flex-shrink: 0;
+}
+.m-widget-list-amount {
+  font-weight: 700;
+  font-size: 11.5px;
+  min-width: 36px;
+  text-align: right;
+}
+.m-widget-list-amount.pos { color: var(--em); }
+.m-widget-list-amount.neg { color: rgb(220, 60, 60); }
+
+.m-widget-coins-balance {
+  font-family: var(--serif, Georgia, serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.m-widget-coins-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.m-widget-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-widget-add:hover {
+  color: var(--em);
+  border-color: var(--em);
+  background: rgba(var(--em-rgb), 0.04);
+}
+.m-widget-add-icon { font-size: 14px; }
+
+/* ──────────────────────────────────────────────────────────────────────────
    Mobile shared section primitives
    Header block + add-button pattern reused across MobileHubSection,
    MobileHabitsSection, and the mobile-tab variants of Shop / Track.

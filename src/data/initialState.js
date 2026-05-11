@@ -87,6 +87,23 @@ export const DEFAULT_STATE = {
   // the linked achievement is auto-marked complete + its coin reward
   // fires. Same pipeline as the Achievements board.
   savings: [],
+  // ── Mobile widget stack (FEATURE 5 follow-up) ────────────────────
+  // Vertical list rendered below the AI Coach on the mobile hub.
+  // Each entry: { id, type, ...config }. Order = render order.
+  //
+  // Widget types implemented today (work without external APIs):
+  //   - 'notepad'      — quick-jot text, mirrors S.notepadText
+  //   - 'recent-wins'  — last 3 completed achievements
+  //   - 'coin-history' — last 5 coin events
+  //
+  // Widget types stubbed (show "Requires X" CTA until wired):
+  //   - 'vitals'    → needs F4 Sprint 1 (HealthKit / Health Connect)
+  //   - 'calories'  → needs F4 Sprint 1
+  //   - 'mail'      → needs Gmail/Outlook OAuth (deferred — separate vertical)
+  //
+  // Free for all users — Pro differentiation on mobile lives here
+  // (more widgets unlocked) rather than via a separate layout.
+  mobileWidgets: [],
   // ── Friend-card privacy (FEATURE 1 follow-up) ────────────────────
   // Per-field toggles for what friends see on the profile card.
   // Defaults preserve existing behavior (everything visible).

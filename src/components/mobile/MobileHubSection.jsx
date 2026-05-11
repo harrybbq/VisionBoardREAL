@@ -23,6 +23,7 @@
 import { useState, useEffect } from 'react';
 import { getTodayStr } from '../../utils/helpers';
 import { recalcStreaks } from '../../utils/streaks';
+import MobileWidget from './MobileWidget';
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -56,7 +57,7 @@ function fmtDate(d) {
   return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
-export default function MobileHubSection({ S, update, visionState, hasPro, navigate }) {
+export default function MobileHubSection({ S, update, visionState, hasPro, navigate, onOpenModal }) {
   const now = useClock();
   const today = getTodayStr();
   const profileName = (S.profile?.name || '').trim();
@@ -191,6 +192,32 @@ export default function MobileHubSection({ S, update, visionState, hasPro, navig
           </div>
         </div>
       </section>
+
+      {/* Widget stack — vertical list of user-added widgets, each
+          removable via the × in its head. New widgets append below
+          the last. + button below opens the picker modal. */}
+      {(S.mobileWidgets || []).map(w => (
+        <MobileWidget
+          key={w.id}
+          widget={w}
+          S={S}
+          update={update}
+          onRemove={id => update(prev => ({
+            ...prev,
+            mobileWidgets: (prev.mobileWidgets || []).filter(x => x.id !== id),
+          }))}
+        />
+      ))}
+
+      <button
+        type="button"
+        className="m-widget-add"
+        onClick={() => onOpenModal?.('addMobileWidgetModal')}
+        aria-label="Add a widget below AI Coach"
+      >
+        <span className="m-widget-add-icon">＋</span>
+        <span className="m-widget-add-label">Add widget</span>
+      </button>
     </div>
     </section>
   );
