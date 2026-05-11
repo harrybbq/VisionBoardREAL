@@ -1,3 +1,5 @@
+import Logo from './Logo';
+
 export default function Nav({ activeSection, onNavigate, onSignOut }) {
   const tabs = [
     { id: 'hub', icon: '⌂', label: 'Hub' },
@@ -12,7 +14,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
   return (
     <nav id="mainNav">
       <div className="nav-logo">
-        <div className="nav-logo-icon">V</div>
+        <div className="nav-logo-icon"><Logo size={18} strokeWidth={8} c2={null} /></div>
         <div className="nav-logo-text">
           Vision Board<span className="nav-logo-sub">my space</span>
         </div>

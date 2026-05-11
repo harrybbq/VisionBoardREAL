@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import Logo from './Logo';
 
 /**
  * AuthScreen
@@ -117,7 +118,7 @@ export default function AuthScreen({ onOpenLegal }) {
           wordmark introduces the form rather than competing with
           the heading. */}
       <div style={S.logoWrap}>
-        <div style={S.logoMark}>V</div>
+        <div style={S.logoMark}><Logo size={28} strokeWidth={7} /></div>
         <div>
           <div style={S.logoTitle}>Vision Board</div>
           <div style={S.logoSub}>my space</div>

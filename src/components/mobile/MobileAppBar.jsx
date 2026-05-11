@@ -19,6 +19,7 @@
  *   matching the desktop PageHeader's behavior.
  */
 import { motion } from 'framer-motion';
+import Logo from '../Logo';
 
 const SECTION_LABELS = {
   hub: 'Hub',
@@ -50,7 +51,9 @@ export default function MobileAppBar({
         onClick={onNavigateSettings}
         aria-label="Open settings"
         title="Settings"
-      >V</button>
+      >
+        <Logo size={18} strokeWidth={8} />
+      </button>
       <div className="m-appbar-eyebrow" aria-live="polite">{label}</div>
       {onChangeBg && (
         <motion.button
