@@ -2,16 +2,16 @@ export const DEFAULT_STATE = {
   profile: { name: '', tagline: '', photo: null },
   links: [],
   achievements: [
-    { id: 'a1', name: 'Save £10,000', desc: 'Build emergency fund', icon: '💰', x: 40, y: 40, completed: false, coins: 100 },
-    { id: 'a2', name: 'Buy a House', desc: 'Get on the property ladder', icon: '🏠', x: 370, y: 40, completed: false, locked: true, coins: 500 },
-    { id: 'a3', name: 'Run 5K', desc: 'Complete a 5K run', icon: '🏃', x: 40, y: 210, completed: false, coins: 50 },
-    { id: 'a4', name: 'Run 10K', desc: 'Level up to 10K', icon: '🏅', x: 370, y: 210, completed: false, locked: true, coins: 80 },
+    { id: 'a1', name: 'Save £10,000', desc: 'Build emergency fund', icon: '💰', x: 40, y: 40, completed: false, coins: 100, category: 'finance' },
+    { id: 'a2', name: 'Buy a House', desc: 'Get on the property ladder', icon: '🏠', x: 370, y: 40, completed: false, locked: true, coins: 500, category: 'finance' },
+    { id: 'a3', name: 'Run 5K', desc: 'Complete a 5K run', icon: '🏃', x: 40, y: 210, completed: false, coins: 50, category: 'fitness' },
+    { id: 'a4', name: 'Run 10K', desc: 'Level up to 10K', icon: '🏅', x: 370, y: 210, completed: false, locked: true, coins: 80, category: 'fitness' },
   ],
   connections: [['a1', 'a2'], ['a3', 'a4']],
   trackers: [
-    { id: 't1', name: 'Gym Session', type: 'boolean', color: '#1a7a4a', weeklyTarget: 3, weeklyCoins: 15 },
-    { id: 't2', name: 'Protein Goal', type: 'boolean', color: '#2a9e62', weeklyTarget: 5, weeklyCoins: 10 },
-    { id: 't3', name: 'Amount Saved', type: 'number', unit: '£', goal: 500, color: '#c8970a' },
+    { id: 't1', name: 'Gym Session', type: 'boolean', color: '#1a7a4a', weeklyTarget: 3, weeklyCoins: 15, category: 'fitness' },
+    { id: 't2', name: 'Protein Goal', type: 'boolean', color: '#2a9e62', weeklyTarget: 5, weeklyCoins: 10, category: 'fitness' },
+    { id: 't3', name: 'Amount Saved', type: 'number', unit: '£', goal: 500, color: '#c8970a', category: 'finance' },
   ],
   logs: {},
   shopItems: [],
@@ -104,6 +104,27 @@ export const DEFAULT_STATE = {
   // Free for all users — Pro differentiation on mobile lives here
   // (more widgets unlocked) rather than via a separate layout.
   mobileWidgets: [],
+  // ── Ranked categories (FEATURE 5 Sprint 3) ───────────────────────
+  // Brain / Finance / Fitness / Social each 1-99, plus a 1-99 OVR
+  // composite. Cached here after each derive; canonical truth for
+  // friend display lives server-side (profiles.ratings, recomputed
+  // by netlify/functions/recompute-ratings). See feature_playbook.md
+  // F5 Sprint 3 for the full algorithm + anti-gaming rules.
+  //
+  // Last derived snapshot. Recomputed by src/lib/ratings/derive.js
+  // on a debounce after relevant state changes.
+  ratings: {
+    brain:   1,
+    finance: 1,
+    fitness: 1,
+    social:  1,
+    ovr:     1,
+    computedAt: null,
+  },
+  // Result of the most-recent IQ self-check (F5 Sprint 4). Optional;
+  // null means the user hasn't taken it. testVersion lets us migrate
+  // the test bank later without invalidating old scores silently.
+  brainScore: null, // { result: 0-160, ts, testVersion: 1 }
   // ── Friend-card privacy (FEATURE 1 follow-up) ────────────────────
   // Per-field toggles for what friends see on the profile card.
   // Defaults preserve existing behavior (everything visible).

@@ -36,6 +36,7 @@ import { useCapacitor, haptic } from './hooks/useCapacitor';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useVisions } from './lib/visions/useVisions';
 import { usePublishProfile } from './lib/friends/usePublishProfile';
+import { useRatings } from './hooks/useRatings';
 import BottomTabBar from './components/mobile/BottomTabBar';
 import MoreDrawer from './components/mobile/MoreDrawer';
 import MobileAppBar from './components/mobile/MobileAppBar';
@@ -159,6 +160,15 @@ function Board({ userId, userEmail, onSignOut }) {
   // Debounced inside the hook; safely no-ops if the social schema
   // hasn't been applied yet.
   usePublishProfile(userId, S, hasPro, visionState);
+
+  // Ranked categories (F5 Sprint 3). Local recompute updates S.ratings
+  // on a 1.5s debounce; server recompute fires the Netlify function on
+  // a 30s debounce to update profiles.ratings (friend-visible truth).
+  // friendCount comes from useFriends below — but to avoid a circular
+  // import we pass 0 here; the social-rating component reads friend
+  // count separately. TODO: thread real friendCount once F5 is fully
+  // wired into the friends rail.
+  useRatings(userId, S, update, 0);
 
   function navigate(id) { setActiveSection(id); }
   function handleOpenModal(id) {

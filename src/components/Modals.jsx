@@ -155,12 +155,67 @@ const PRESET_EMOJIS = [
   '🤝','📈','🍎','⚽','🎵','🧗','🦋','🌱','🔥','👑',
 ];
 
+// Ranked-category options (F5 Sprint 3). Stored on each achievement
+// and tracker; powers the per-category rating in src/lib/ratings.
+const CATEGORY_OPTIONS = [
+  { id: 'general', label: 'General',  desc: 'Not tied to a category — won\'t count toward ratings.' },
+  { id: 'brain',   label: 'Brain',    desc: 'Knowledge, cognition, learning.' },
+  { id: 'finance', label: 'Finance',  desc: 'Saving, earning, money management.' },
+  { id: 'fitness', label: 'Fitness',  desc: 'Movement, health, physical practice.' },
+  { id: 'social',  label: 'Social',   desc: 'Friends, connection, community.' },
+];
+
+function CategoryPicker({ value, onChange }) {
+  return (
+    <div className="fg">
+      <label>Category</label>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {CATEGORY_OPTIONS.map(c => {
+          const active = (value || 'general') === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onChange(c.id)}
+              title={c.desc}
+              style={{
+                padding: '6px 12px', borderRadius: 6,
+                fontFamily: 'var(--mono)', fontSize: 11,
+                letterSpacing: 0.6, fontWeight: 600,
+                cursor: 'pointer',
+                border: active ? '2px solid var(--em)' : '2px solid var(--border)',
+                background: active ? 'rgba(var(--em-rgb), 0.12)' : 'transparent',
+                color: active ? 'var(--em)' : 'var(--text)',
+                transition: 'all .12s',
+              }}
+            >{c.label}</button>
+          );
+        })}
+      </div>
+      <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 6 }}>
+        {(CATEGORY_OPTIONS.find(c => c.id === (value || 'general')) || {}).desc}
+      </div>
+    </div>
+  );
+}
+
 function AddAchievementModal({ openId, onClose, onAdd }) {
-  const [form, setForm] = useState({ name: '', desc: '', icon: '', coins: '' });
+  const [form, setForm] = useState({ name: '', desc: '', icon: '', coins: '', category: 'general' });
   function submit() {
     if (!form.name) return;
-    onAdd({ id: 'a' + Date.now(), name: form.name, desc: form.desc, icon: form.icon || '🏆', x: 40 + Math.random() * 360, y: 40 + Math.random() * 260, completed: false, coins: parseInt(form.coins) || 0 });
-    setForm({ name: '', desc: '', icon: '', coins: '' });
+    onAdd({
+      id: 'a' + Date.now(),
+      name: form.name,
+      desc: form.desc,
+      icon: form.icon || '🏆',
+      x: 40 + Math.random() * 360,
+      y: 40 + Math.random() * 260,
+      completed: false,
+      coins: parseInt(form.coins) || 0,
+      category: form.category || 'general',
+      createdAt: Date.now(),
+    });
+    setForm({ name: '', desc: '', icon: '', coins: '', category: 'general' });
     onClose('addAchievementModal');
   }
   return (
@@ -188,6 +243,7 @@ function AddAchievementModal({ openId, onClose, onAdd }) {
         <input type="text" placeholder="Or type a custom emoji…" maxLength={2} value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
       </div>
       <div className="fg"><label>⬡ Coin Reward on Completion</label><input type="number" placeholder="e.g. 50" min="0" value={form.coins} onChange={e => setForm(f => ({ ...f, coins: e.target.value }))} /></div>
+      <CategoryPicker value={form.category} onChange={v => setForm(f => ({ ...f, category: v }))} />
       <div className="modal-actions">
         <button className="btn btn-ghost" onClick={() => onClose('addAchievementModal')}>Cancel</button>
         <button className="btn btn-primary" onClick={submit}>Create</button>
@@ -204,7 +260,7 @@ function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete 
   const achId = isOpen ? openId.split(':')[1] : null;
   const ach = achId ? (achievements || []).find(a => a.id === achId) : null;
 
-  const [form, setForm] = useState({ name: '', desc: '', icon: '', coins: '' });
+  const [form, setForm] = useState({ name: '', desc: '', icon: '', coins: '', category: 'general' });
 
   // Sync form when the target achievement changes (i.e. modal opens
   // for a new id). Don't sync on every render — that wipes user edits.
@@ -215,6 +271,7 @@ function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete 
         desc: ach.desc || '',
         icon: ach.icon || '',
         coins: ach.coins != null ? String(ach.coins) : '',
+        category: ach.category || 'general',
       });
     }
   }, [achId]);
@@ -228,6 +285,7 @@ function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete 
       desc: form.desc.trim(),
       icon: form.icon || ach.icon || '🏆',
       coins: parseInt(form.coins) || 0,
+      category: form.category || 'general',
     });
     onClose(openId);
   }
@@ -263,6 +321,7 @@ function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete 
         <input type="text" placeholder="Or type a custom emoji…" maxLength={2} value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
       </div>
       <div className="fg"><label>⬡ Coin Reward on Completion</label><input type="number" min="0" value={form.coins} onChange={e => setForm(f => ({ ...f, coins: e.target.value }))} /></div>
+      <CategoryPicker value={form.category} onChange={v => setForm(f => ({ ...f, category: v }))} />
       {ach.completed && (
         <div style={{
           padding: '10px 12px', borderRadius: '8px', marginBottom: '12px',
@@ -439,7 +498,7 @@ function EditSavingsGoalModal({ openId, onClose, savings, achievements, onEdit, 
 
 // ── Add Tracker ──
 function AddTrackerModal({ openId, onClose, onAdd }) {
-  const [form, setForm] = useState({ name: '', type: 'boolean', unit: '', goal: '', color: '#1a7a4a', weeklyTarget: '', weeklyCoins: '' });
+  const [form, setForm] = useState({ name: '', type: 'boolean', unit: '', goal: '', color: '#1a7a4a', weeklyTarget: '', weeklyCoins: '', category: 'general' });
   const isNumber = form.type === 'number';
   function submit() {
     if (!form.name) return;
@@ -452,8 +511,9 @@ function AddTrackerModal({ openId, onClose, onAdd }) {
       color: form.color,
       weeklyTarget: parseInt(form.weeklyTarget) || null,
       weeklyCoins: parseInt(form.weeklyCoins) || null,
+      category: form.category || 'general',
     });
-    setForm({ name: '', type: 'boolean', unit: '', goal: '', color: '#1a7a4a', weeklyTarget: '', weeklyCoins: '' });
+    setForm({ name: '', type: 'boolean', unit: '', goal: '', color: '#1a7a4a', weeklyTarget: '', weeklyCoins: '', category: 'general' });
     onClose('addTrackerModal');
   }
   return (
@@ -477,6 +537,8 @@ function AddTrackerModal({ openId, onClose, onAdd }) {
         <div className="fg" style={{ marginBottom: 0 }}><label>⬡ Coins reward</label><input type="number" placeholder="e.g. 10" min="1" value={form.weeklyCoins} onChange={e => setForm(f => ({ ...f, weeklyCoins: e.target.value }))} /></div>
       </div>
       <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px' }}>Hit the weekly target to earn coins every week.</div>
+      <div style={{ borderTop: '1px solid var(--border-lt)', margin: '14px 0' }}></div>
+      <CategoryPicker value={form.category} onChange={v => setForm(f => ({ ...f, category: v }))} />
       <div className="modal-actions">
         <button className="btn btn-ghost" onClick={() => onClose('addTrackerModal')}>Cancel</button>
         <button className="btn btn-primary" onClick={submit}>Add</button>
@@ -1202,7 +1264,13 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
     update(prev => ({ ...prev, ytWidgets: [...(prev.ytWidgets || []), yt] }));
   }
   function handleAddAchievement(ach) {
-    update(prev => ({ ...prev, achievements: [...prev.achievements, ach] }));
+    // createdAt stamped server-time (Date.now() ms) so the rating
+    // engine's time-spacing rule (≥7 days created→completed) has a
+    // reliable signal. Existing achievements without createdAt are
+    // treated as legitimately old by derive.js — see playbook
+    // F5 Sprint 3 for the migration rule.
+    const withTimestamp = { ...ach, createdAt: ach.createdAt || Date.now() };
+    update(prev => ({ ...prev, achievements: [...prev.achievements, withTimestamp] }));
   }
   function handleEditAchievement(id, patch) {
     // Preserve x/y/completed/locked/coinAwarded — only swap user-editable

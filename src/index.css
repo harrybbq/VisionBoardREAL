@@ -3438,6 +3438,99 @@ button:active:not(:disabled),
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   Ratings panel (F5 Sprint 3) — OVR + 4 categories
+   ────────────────────────────────────────────────────────────────────────── */
+.ratings-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card, rgba(255,255,255,0.04));
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ratings-ovr {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.ratings-ovr-value {
+  font-family: var(--serif, Georgia, serif);
+  font-style: italic;
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+.ratings-ovr-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ratings-ovr-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ratings-ovr-tier {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.ratings-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.ratings-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ratings-tile:hover {
+  border-color: var(--em);
+  background: rgba(var(--em-rgb), 0.04);
+}
+.ratings-tile-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.ratings-tile-score {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ratings-tile-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ratings-panel-compact .ratings-ovr-value { font-size: 36px; }
+.ratings-panel-compact .ratings-tile { padding: 6px 4px; }
+.ratings-panel-compact .ratings-tile-score { font-size: 14px; }
+
+/* ──────────────────────────────────────────────────────────────────────────
    Mobile widget stack (below AI Coach on the mobile hub)
    ────────────────────────────────────────────────────────────────────────── */
 .m-widget {

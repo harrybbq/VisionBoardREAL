@@ -24,6 +24,7 @@ import { useState, useEffect } from 'react';
 import { getTodayStr } from '../../utils/helpers';
 import { recalcStreaks } from '../../utils/streaks';
 import MobileWidget from './MobileWidget';
+import RatingsPanel from '../RatingsPanel';
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -117,6 +118,9 @@ export default function MobileHubSection({ S, update, visionState, hasPro, navig
         </div>
         <div className="m-hub-date">{fmtDate(now)}</div>
       </section>
+
+      {/* Ratings panel (F5 Sprint 3) — OVR + 4 categories ──────── */}
+      <RatingsPanel S={S} />
 
       {/* Stats strip ───────────────────────────────────────────── */}
       <section className="m-hub-stats">
