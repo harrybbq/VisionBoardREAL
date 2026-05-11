@@ -9,7 +9,8 @@
  * essentials:
  *
  *   1. Greeting hero — date, time-of-day greeting, big clock
- *   2. Stats strip — coins / streak / level
+ *   2. Stats strip — coins / streak (level removed 2026-05-12; OVR
+ *      lives in the Ledger card above and is the headline number now)
  *   3. Today's trackers — vertical list with at-a-glance done state
  *   4. AI Coach brief — single line teaser (Pro)
  *
@@ -122,8 +123,11 @@ export default function MobileHubSection({ S, update, visionState, hasPro, navig
       {/* Ratings panel (F5 Sprint 3) — OVR + 4 categories ──────── */}
       <RatingsPanel S={S} />
 
-      {/* Stats strip ───────────────────────────────────────────── */}
-      <section className="m-hub-stats">
+      {/* Stats strip — coins + streak. Level was removed when OVR
+          became the headline number (RatingsPanel above shows OVR
+          + 4 categories). Two-column grid reads cleaner than a
+          single orphaned card. */}
+      <section className="m-hub-stats m-hub-stats-2col">
         <StatCard
           value={coins}
           label="COINS"
@@ -135,12 +139,6 @@ export default function MobileHubSection({ S, update, visionState, hasPro, navig
           label="STREAK"
           accent="var(--em)"
           pct={Math.min(100, streak * 3.3)}
-        />
-        <StatCard
-          value={level}
-          label="LEVEL"
-          accent="var(--em)"
-          pct={pctToNext}
         />
       </section>
 

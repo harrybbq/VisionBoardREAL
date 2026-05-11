@@ -3283,6 +3283,7 @@ button:active:not(:disabled),
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
+.m-hub-stats-2col { grid-template-columns: repeat(2, 1fr); }
 .m-stat {
   padding: 14px 12px 12px;
   border: 1px solid var(--border);
