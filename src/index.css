@@ -3602,6 +3602,76 @@ button:active:not(:disabled),
 .ratings-ledger-compact .ratings-ledger-row-label { font-size: 9.5px; letter-spacing: 1.2px; }
 .ratings-ledger-compact .ratings-ledger-row-score { font-size: 12.5px; }
 
+/* Profile rail is 144px wide — compact isn't tight enough. Strip the
+   index + icon columns, stack the OVR header, hide the F5·S3 tag. */
+.profile-col--with-rail .ratings-ledger {
+  padding: 10px 10px 12px;
+  gap: 8px;
+  border-radius: 8px;
+}
+.profile-col--with-rail .ratings-ledger-head {
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+.profile-col--with-rail .ratings-ledger-eyebrow { font-size: 8.5px; letter-spacing: 1.4px; }
+.profile-col--with-rail .ratings-ledger-tag { display: none; }
+/* Stack OVR row vertically so tier doesn't fight the value for space */
+.profile-col--with-rail .ratings-ledger-ovr-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.profile-col--with-rail .ratings-ledger-ovr-block { gap: 4px; }
+.profile-col--with-rail .ratings-ledger-ovr-label { font-size: 9px; letter-spacing: 1.2px; }
+.profile-col--with-rail .ratings-ledger-ovr-value { font-size: 28px; }
+.profile-col--with-rail .ratings-ledger-ovr-suffix { font-size: 10px; }
+.profile-col--with-rail .ratings-ledger-ovr-tier { font-size: 9px; letter-spacing: 1.2px; }
+/* Drop index + icon columns — just label + bar + score */
+.profile-col--with-rail .ratings-ledger-row {
+  grid-template-columns: 40px 1fr 22px;
+  gap: 6px;
+  padding: 3px 2px;
+}
+.profile-col--with-rail .ratings-ledger-row-idx,
+.profile-col--with-rail .ratings-ledger-row-icon { display: none; }
+.profile-col--with-rail .ratings-ledger-row-label {
+  font-size: 8.5px;
+  letter-spacing: 0.8px;
+}
+.profile-col--with-rail .ratings-ledger-row-track { height: 6px; background-size: 4px 6px; }
+.profile-col--with-rail .ratings-ledger-row-score { font-size: 11px; }
+
+/* QuickLog rows are designed for full-width mobile; tighten for the
+   144px profile rail so they don't overflow / split awkwardly. */
+.profile-col--with-rail .quick-log-row {
+  padding: 8px 10px;
+  gap: 8px;
+  border-radius: 8px;
+}
+.profile-col--with-rail .quick-log-row-name {
+  font-size: 11px;
+}
+.profile-col--with-rail .quick-log-row-pill {
+  font-size: 8px;
+  padding: 2px 5px;
+  letter-spacing: 0.3px;
+}
+.profile-col--with-rail .quick-log-row-check {
+  width: 18px; height: 18px;
+}
+.profile-col--with-rail .quick-log-row-stepper { gap: 3px; }
+.profile-col--with-rail .quick-log-row-stepper .step-btn {
+  width: 20px; height: 20px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+.profile-col--with-rail .quick-log-row-stepper .step-num { font-size: 11px; }
+.profile-col--with-rail .quick-log-row-stepper .step-unit { font-size: 8px; }
+.profile-col--with-rail .quick-log-row .streak-flame-badge {
+  font-size: 8px;
+  padding: 0 4px;
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    Mobile widget stack (below AI Coach on the mobile hub)
    ────────────────────────────────────────────────────────────────────────── */
