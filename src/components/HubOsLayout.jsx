@@ -181,8 +181,8 @@ export function OsVitalsPanel({ coins = 0, streak = 0, level = 1, ovr = 1 }) {
 // Rendering RatingsPanel directly means it sits in the grid as a
 // peer of other OsPanels. The compact variant matches the column
 // width without overflow.
-export function OsRatingsPanel({ S }) {
-  return <RatingsPanel S={S} compact />;
+export function OsRatingsPanel({ S, update }) {
+  return <RatingsPanel S={S} update={update} compact />;
 }
 
 // ── Panel: Quick Actions ──────────────────────────────────────────────────
@@ -533,7 +533,7 @@ export default function HubOsLayout({
             onSort={onSort}
             onNavigateSettings={onNavigateSettings}
           />
-          <OsRatingsPanel S={S} />
+          <OsRatingsPanel S={S} update={update} />
           <OsTrackersPanel trackers={S.trackers} logs={S.logs} />
           {/* Friends rail — same component as cream hub, retinted via
               dark-os overrides on the .fc-* classes in hub-dark.css. */}

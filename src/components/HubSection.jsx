@@ -98,7 +98,7 @@ function useWidgetDrag(canvasRef, S, update) {
 // after the action buttons — used by the cream layout to slot the
 // QuickLog trackers under "Sort". The `--with-rail` modifier widens
 // the column so the trackers stack vertically without being clipped.
-function ProfileCard({ profile, S, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings, visionState, children }) {
+function ProfileCard({ profile, S, update, onSaveName, onSaveTagline, onUploadPhoto, onAddWidget, onSortWidgets, onNavigateSettings, visionState, children }) {
   // OVR replaces the old Lvl badge (F5 Sprint 3). Read from S.ratings
   // — which is refreshed by useRatings on a 1.5s debounce. Falls back
   // to 1 if no rating computed yet (fresh user) so the chip never
@@ -153,7 +153,7 @@ function ProfileCard({ profile, S, onSaveName, onSaveTagline, onUploadPhoto, onA
 
       {/* Ratings breakdown — OVR + 4 category tiles + tap-to-explain
           modal. Compact variant matches the profile rail's width. */}
-      <RatingsPanel S={S} compact />
+      <RatingsPanel S={S} update={update} compact />
 
       <motion.button className="hub-action-btn add-widget" onClick={onAddWidget}
         whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
@@ -358,6 +358,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
         <ProfileCard
           profile={S.profile}
           S={S}
+          update={update}
           onSaveName={name => update(prev => ({ ...prev, profile: { ...prev.profile, name } }))}
           onSaveTagline={tagline => update(prev => ({ ...prev, profile: { ...prev.profile, tagline } }))}
           onUploadPhoto={handleUploadPhoto}

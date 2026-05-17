@@ -18,6 +18,7 @@
  */
 import { useState } from 'react';
 import { categoryBreakdown } from '../lib/ratings/derive';
+import BrainCheck, { isCooldownActive, daysUntilRetake } from './BrainCheck';
 
 const CATEGORIES = [
   { id: 'brain',   label: 'Brain',   icon: '◉' },
@@ -37,11 +38,12 @@ function tier(score) {
   return                  { label: 'Starting', color: 'var(--text-muted)',      key: 'starting' };
 }
 
-export default function RatingsPanel({ S, compact = false }) {
+export default function RatingsPanel({ S, update, compact = false }) {
   const r = S?.ratings || {};
   const ovr = r.ovr || 1;
   const ovrTier = tier(ovr);
   const [activeBreakdown, setActiveBreakdown] = useState(null);
+  const [brainCheckOpen, setBrainCheckOpen] = useState(false);
 
   return (
     <>
@@ -103,13 +105,32 @@ export default function RatingsPanel({ S, compact = false }) {
           S={S}
           category={activeBreakdown}
           onClose={() => setActiveBreakdown(null)}
+          onTakeBrainCheck={() => {
+            setActiveBreakdown(null);
+            setBrainCheckOpen(true);
+          }}
+        />
+      )}
+
+      {brainCheckOpen && update && (
+        <BrainCheck
+          S={S}
+          update={update}
+          onClose={() => setBrainCheckOpen(false)}
         />
       )}
     </>
   );
 }
 
-function BreakdownModal({ S, category, onClose }) {
+function BreakdownModal({ S, category, onClose, onTakeBrainCheck }) {
+  // Brain-only: surface a CTA to take the self-check, gated by the
+  // 30-day cooldown. Other categories don't have a single-action
+  // unlock — they grow via the user's normal activity.
+  const isBrain = category === 'brain';
+  const bs = S?.brainScore;
+  const cooldownActive = isBrain && isCooldownActive(bs);
+  const cooldownDaysLeft = isBrain ? daysUntilRetake(bs) : 0;
   const meta = CATEGORIES.find(c => c.id === category) || { label: category, icon: '·' };
   const score = (S?.ratings || {})[category] || 1;
   const t = tier(score);
@@ -173,6 +194,49 @@ function BreakdownModal({ S, category, onClose }) {
         }}>
           Friends see a server-recomputed copy of these ratings — editing your local data won't change what they see.
         </p>
+
+        {/* Brain self-check CTA — appears only on the Brain category */}
+        {isBrain && onTakeBrainCheck && (
+          <div style={{
+            marginTop: 12, padding: '10px 12px',
+            borderRadius: 8,
+            background: 'rgba(var(--em-rgb), 0.08)',
+            border: '1px solid rgba(var(--em-rgb), 0.32)',
+          }}>
+            <div style={{
+              fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1.2,
+              textTransform: 'uppercase', color: 'var(--em)', fontWeight: 700,
+              marginBottom: 4,
+            }}>Brain rating self-check</div>
+            <div style={{
+              fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-muted)',
+              lineHeight: 1.55, marginBottom: 10,
+            }}>
+              {cooldownActive
+                ? `Already taken — re-takeable in ${cooldownDaysLeft} day${cooldownDaysLeft === 1 ? '' : 's'}.`
+                : '16 short questions · 12-min cap · contributes ~6–18 points.'}
+            </div>
+            <button
+              type="button"
+              onClick={onTakeBrainCheck}
+              disabled={cooldownActive}
+              style={{
+                padding: '7px 12px', borderRadius: 6,
+                background: cooldownActive ? 'transparent' : 'var(--em)',
+                color: cooldownActive ? 'var(--text-muted)' : 'var(--em-on, #fff)',
+                border: cooldownActive ? '1px solid var(--border)' : '1px solid var(--em)',
+                fontFamily: 'var(--mono)', fontSize: 10,
+                letterSpacing: 1.2, textTransform: 'uppercase', fontWeight: 700,
+                cursor: cooldownActive ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {bs?.result
+                ? (cooldownActive ? `Locked · last result ${bs.result}` : `Retake (last: ${bs.result})`)
+                : 'Take the check'}
+            </button>
+          </div>
+        )}
+
         <div className="modal-actions">
           <button className="btn btn-primary" onClick={onClose}>Got it</button>
         </div>

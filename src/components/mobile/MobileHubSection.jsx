@@ -121,7 +121,7 @@ export default function MobileHubSection({ S, update, visionState, hasPro, navig
       </section>
 
       {/* Ratings panel (F5 Sprint 3) — OVR + 4 categories ──────── */}
-      <RatingsPanel S={S} />
+      <RatingsPanel S={S} update={update} />
 
       {/* Stats strip — coins + streak. Level was removed when OVR
           became the headline number (RatingsPanel above shows OVR

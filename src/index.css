@@ -126,6 +126,16 @@ body{
   border-color:var(--em);
   box-shadow:0 0 0 3px rgba(var(--em-rgb,26,122,74),0.15);
 }
+/* BrainCheck choice buttons — em-tinted hover */
+.brain-check-choice:hover{
+  border-color:var(--em) !important;
+  background:rgba(var(--em-rgb),0.06) !important;
+}
+.brain-check-choice:hover > span:first-child{
+  border-color:var(--em);
+  color:var(--em);
+}
+
 .auth-google:hover{
   border-color:#aaa;
   box-shadow:0 1px 3px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
