@@ -152,20 +152,24 @@ function savingsPoints(S) {
   return completionPct * 30 * (0.5 + 0.5 * scale);
 }
 
-// ── Brain: IQ test contribution ────────────────────────────────────────────
+// ── Self-check contributions ──────────────────────────────────────────────
+//
+// Each ranked category has an optional 16-question self-check (see
+// BrainCheck / FinanceCheck / FitnessCheck / SocialCheck). A score of
+// 100 (median) maps to ~12 points, 130 to ~18, 70 to ~6. Bounded so
+// a single test can't dominate the rating.
 
-/**
- * Brain score → rating points. A score of 100 (median) maps to ~12
- * points, 130 (gifted bucket) to ~18, 70 (low) to ~6. Stays bounded
- * so a single test can't dominate the rating.
- */
-function brainScorePoints(S) {
-  const bs = S.brainScore;
-  if (!bs || !bs.result) return 0;
+function selfCheckPoints(score) {
+  if (!score || !score.result) return 0;
   // Map [70, 130] → [6, 18] linearly, clamp outside.
-  const result = Math.max(70, Math.min(130, bs.result));
+  const result = Math.max(70, Math.min(130, score.result));
   return ((result - 70) / 60) * 12 + 6;
 }
+
+function brainScorePoints(S)   { return selfCheckPoints(S.brainScore); }
+function financeScorePoints(S) { return selfCheckPoints(S.financeScore); }
+function fitnessScorePoints(S) { return selfCheckPoints(S.fitnessScore); }
+function socialSelfCheckPoints(S) { return selfCheckPoints(S.socialScore); }
 
 // ── Social: friend count + days-active ─────────────────────────────────────
 
@@ -225,18 +229,21 @@ export function deriveRatings(S, ctx = {}) {
     visionPoints(S, 'brain');
 
   const financePts =
+    financeScorePoints(S) +
     savingsPoints(S) +
     trackerPoints(S, 'finance') * 1.0 +
     achievementPoints(S, 'finance') * 2.5 +
     visionPoints(S, 'finance');
 
   const fitnessPts =
+    fitnessScorePoints(S) +
     trackerPoints(S, 'fitness') * 1.2 +
     achievementPoints(S, 'fitness') * 2.5 +
     visionPoints(S, 'fitness');
     // Health-data contribution (steps/sleep/active-mins) waits on F4 Sprint 1.
 
   const socialPts =
+    socialSelfCheckPoints(S) +
     socialPoints(S, friendCount) +
     achievementPoints(S, 'social') * 2.5 +
     visionPoints(S, 'social');
@@ -269,6 +276,7 @@ export function categoryBreakdown(S, category, ctx = {}) {
       ];
     case 'finance':
       return [
+        { label: 'Finance self-check', points: financeScorePoints(S) },
         { label: 'Savings goals',    points: savingsPoints(S) },
         { label: 'Finance trackers', points: trackerPoints(S, 'finance') * 1.0 },
         { label: 'Finance achievements', points: achievementPoints(S, 'finance') * 2.5 },
@@ -276,6 +284,7 @@ export function categoryBreakdown(S, category, ctx = {}) {
       ];
     case 'fitness':
       return [
+        { label: 'Fitness self-check', points: fitnessScorePoints(S) },
         { label: 'Fitness trackers', points: trackerPoints(S, 'fitness') * 1.2 },
         { label: 'Fitness achievements', points: achievementPoints(S, 'fitness') * 2.5 },
         { label: 'Fitness visions',  points: visionPoints(S, 'fitness') },
@@ -283,6 +292,7 @@ export function categoryBreakdown(S, category, ctx = {}) {
       ];
     case 'social':
       return [
+        { label: 'Social self-check', points: socialSelfCheckPoints(S) },
         { label: 'Friends + activity', points: socialPoints(S, friendCount) },
         { label: 'Social achievements', points: achievementPoints(S, 'social') * 2.5 },
         { label: 'Social visions',   points: visionPoints(S, 'social') },

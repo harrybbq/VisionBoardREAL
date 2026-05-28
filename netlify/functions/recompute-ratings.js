@@ -126,12 +126,17 @@ function savingsPoints(state) {
   return completion * 30 * (0.5 + 0.5 * scale);
 }
 
-function brainScorePoints(state) {
-  const bs = state.brainScore;
-  if (!bs?.result) return 0;
-  const result = Math.max(70, Math.min(130, bs.result));
+// Self-check contribution helpers (Brain / Finance / Fitness / Social).
+// Each maps a [70, 130] result to [6, 18] rating points.
+function selfCheckPoints(score) {
+  if (!score?.result) return 0;
+  const result = Math.max(70, Math.min(130, score.result));
   return ((result - 70) / 60) * 12 + 6;
 }
+function brainScorePoints(state)        { return selfCheckPoints(state.brainScore); }
+function financeScorePoints(state)      { return selfCheckPoints(state.financeScore); }
+function fitnessScorePoints(state)      { return selfCheckPoints(state.fitnessScore); }
+function socialSelfCheckPoints(state)   { return selfCheckPoints(state.socialScore); }
 
 function socialPoints(state, friendCount = 0) {
   const friends = Math.min(friendCount, 20);
@@ -166,17 +171,20 @@ function deriveRatings(state, friendCount = 0) {
     visionPoints(state, 'brain');
 
   const financePts =
+    financeScorePoints(state) +
     savingsPoints(state) +
     trackerPoints(state, 'finance') * 1.0 +
     achievementPoints(state, 'finance') * 2.5 +
     visionPoints(state, 'finance');
 
   const fitnessPts =
+    fitnessScorePoints(state) +
     trackerPoints(state, 'fitness') * 1.2 +
     achievementPoints(state, 'fitness') * 2.5 +
     visionPoints(state, 'fitness');
 
   const socialPts =
+    socialSelfCheckPoints(state) +
     socialPoints(state, friendCount) +
     achievementPoints(state, 'social') * 2.5 +
     visionPoints(state, 'social');

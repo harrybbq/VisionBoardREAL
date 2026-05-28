@@ -1,5 +1,6 @@
 /**
- * RatingsPanel — F5 Sprint 3 surface (Ledger design, 2026-05-12).
+ * RatingsPanel — F5 Sprint 3 surface (Ledger design, 2026-05-12),
+ * extended in Sprint 5 with self-checks for all four categories.
  *
  * Terminal-flavoured monospace card. Dense, narrow-sidebar friendly,
  * the most data-dense of the candidate designs. Renders:
@@ -14,11 +15,17 @@
  * debounce). Friend-visible canonical truth lives on profiles.ratings
  * server-side — tampering with S.ratings only affects your own view.
  *
- * Tap any row → breakdown modal showing where the points came from.
+ * Tap any row → breakdown modal. Each modal carries a "Take the
+ * check" CTA wired to that category's self-check component, gated
+ * by the shared 30-day cooldown.
  */
 import { useState } from 'react';
 import { categoryBreakdown } from '../lib/ratings/derive';
-import BrainCheck, { isCooldownActive, daysUntilRetake } from './BrainCheck';
+import { isCooldownActive, daysUntilRetake } from './SelfCheck';
+import BrainCheck   from './BrainCheck';
+import FinanceCheck from './FinanceCheck';
+import FitnessCheck from './FitnessCheck';
+import SocialCheck  from './SocialCheck';
 
 const CATEGORIES = [
   { id: 'brain',   label: 'Brain',   icon: '◉' },
@@ -26,6 +33,36 @@ const CATEGORIES = [
   { id: 'fitness', label: 'Fitness', icon: '▲' },
   { id: 'social',  label: 'Social',  icon: '◌' },
 ];
+
+// Per-category self-check metadata. `stateKey` is where the score
+// object lives on the user's state; `Component` is the wrapper that
+// supplies its question bank to the generic SelfCheck engine.
+const SELF_CHECKS = {
+  brain: {
+    stateKey: 'brainScore',
+    Component: BrainCheck,
+    ctaTitle: 'Brain rating self-check',
+    blurb: '16 short reasoning questions · 12-min cap · contributes ~6–18 points.',
+  },
+  finance: {
+    stateKey: 'financeScore',
+    Component: FinanceCheck,
+    ctaTitle: 'Finance literacy self-check',
+    blurb: '16 short money-literacy questions · 12-min cap · contributes ~6–18 points.',
+  },
+  fitness: {
+    stateKey: 'fitnessScore',
+    Component: FitnessCheck,
+    ctaTitle: 'Fitness knowledge self-check',
+    blurb: '16 short exercise-science questions · 12-min cap · contributes ~6–18 points.',
+  },
+  social: {
+    stateKey: 'socialScore',
+    Component: SocialCheck,
+    ctaTitle: 'Social skills self-check',
+    blurb: '16 short interpersonal-skills questions · 12-min cap · contributes ~6–18 points.',
+  },
+};
 
 /**
  * Three-tier scale to match the Ledger mockup's right-side label.
@@ -43,7 +80,9 @@ export default function RatingsPanel({ S, update, compact = false }) {
   const ovr = r.ovr || 1;
   const ovrTier = tier(ovr);
   const [activeBreakdown, setActiveBreakdown] = useState(null);
-  const [brainCheckOpen, setBrainCheckOpen] = useState(false);
+  const [activeCheck, setActiveCheck] = useState(null);
+
+  const ActiveCheckCmp = activeCheck ? SELF_CHECKS[activeCheck]?.Component : null;
 
   return (
     <>
@@ -105,37 +144,36 @@ export default function RatingsPanel({ S, update, compact = false }) {
           S={S}
           category={activeBreakdown}
           onClose={() => setActiveBreakdown(null)}
-          onTakeBrainCheck={() => {
+          onTakeCheck={() => {
+            const next = activeBreakdown;
             setActiveBreakdown(null);
-            setBrainCheckOpen(true);
+            setActiveCheck(next);
           }}
         />
       )}
 
-      {brainCheckOpen && update && (
-        <BrainCheck
+      {ActiveCheckCmp && update && (
+        <ActiveCheckCmp
           S={S}
           update={update}
-          onClose={() => setBrainCheckOpen(false)}
+          onClose={() => setActiveCheck(null)}
         />
       )}
     </>
   );
 }
 
-function BreakdownModal({ S, category, onClose, onTakeBrainCheck }) {
-  // Brain-only: surface a CTA to take the self-check, gated by the
-  // 30-day cooldown. Other categories don't have a single-action
-  // unlock — they grow via the user's normal activity.
-  const isBrain = category === 'brain';
-  const bs = S?.brainScore;
-  const cooldownActive = isBrain && isCooldownActive(bs);
-  const cooldownDaysLeft = isBrain ? daysUntilRetake(bs) : 0;
+function BreakdownModal({ S, category, onClose, onTakeCheck }) {
   const meta = CATEGORIES.find(c => c.id === category) || { label: category, icon: '·' };
   const score = (S?.ratings || {})[category] || 1;
   const t = tier(score);
   const rows = categoryBreakdown(S, category);
   const totalPoints = rows.reduce((sum, r) => sum + (r.points || 0), 0);
+
+  const checkCfg = SELF_CHECKS[category];
+  const lastResult = checkCfg ? S?.[checkCfg.stateKey] : null;
+  const cooldownActive = isCooldownActive(lastResult);
+  const cooldownDaysLeft = daysUntilRetake(lastResult);
 
   return (
     <div
@@ -195,8 +233,7 @@ function BreakdownModal({ S, category, onClose, onTakeBrainCheck }) {
           Friends see a server-recomputed copy of these ratings — editing your local data won't change what they see.
         </p>
 
-        {/* Brain self-check CTA — appears only on the Brain category */}
-        {isBrain && onTakeBrainCheck && (
+        {checkCfg && onTakeCheck && (
           <div style={{
             marginTop: 12, padding: '10px 12px',
             borderRadius: 8,
@@ -207,18 +244,18 @@ function BreakdownModal({ S, category, onClose, onTakeBrainCheck }) {
               fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1.2,
               textTransform: 'uppercase', color: 'var(--em)', fontWeight: 700,
               marginBottom: 4,
-            }}>Brain rating self-check</div>
+            }}>{checkCfg.ctaTitle}</div>
             <div style={{
               fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-muted)',
               lineHeight: 1.55, marginBottom: 10,
             }}>
               {cooldownActive
                 ? `Already taken — re-takeable in ${cooldownDaysLeft} day${cooldownDaysLeft === 1 ? '' : 's'}.`
-                : '16 short questions · 12-min cap · contributes ~6–18 points.'}
+                : checkCfg.blurb}
             </div>
             <button
               type="button"
-              onClick={onTakeBrainCheck}
+              onClick={onTakeCheck}
               disabled={cooldownActive}
               style={{
                 padding: '7px 12px', borderRadius: 6,
@@ -230,8 +267,8 @@ function BreakdownModal({ S, category, onClose, onTakeBrainCheck }) {
                 cursor: cooldownActive ? 'not-allowed' : 'pointer',
               }}
             >
-              {bs?.result
-                ? (cooldownActive ? `Locked · last result ${bs.result}` : `Retake (last: ${bs.result})`)
+              {lastResult?.result
+                ? (cooldownActive ? `Locked · last result ${lastResult.result}` : `Retake (last: ${lastResult.result})`)
                 : 'Take the check'}
             </button>
           </div>
