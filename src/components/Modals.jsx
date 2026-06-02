@@ -346,7 +346,7 @@ function EditAchievementModal({ openId, onClose, achievements, onEdit, onDelete 
 
 // ── Add Savings Goal (F4 Sprint 2) ──
 function AddSavingsGoalModal({ openId, onClose, achievements, onAdd }) {
-  const [form, setForm] = useState({ name: '', icon: '💰', target: '', achievementId: '' });
+  const [form, setForm] = useState({ name: '', icon: '💰', target: '', achievementId: '', targetDate: '', image: null });
   function submit() {
     const target = parseFloat(form.target);
     if (!form.name.trim() || !target || target <= 0) return;
@@ -358,9 +358,11 @@ function AddSavingsGoalModal({ openId, onClose, achievements, onAdd }) {
       current: 0,
       contributions: [],
       achievementId: form.achievementId || null,
+      targetDate: form.targetDate || null,
+      image: form.image || null,
       createdAt: new Date().toISOString(),
     });
-    setForm({ name: '', icon: '💰', target: '', achievementId: '' });
+    setForm({ name: '', icon: '💰', target: '', achievementId: '', targetDate: '', image: null });
     onClose('addSavingsGoalModal');
   }
   const linkable = (achievements || []).filter(a => !a.completed);
@@ -381,6 +383,17 @@ function AddSavingsGoalModal({ openId, onClose, achievements, onAdd }) {
         </div>
       </div>
       <div className="fg"><label>Target (£)</label><input type="number" min="1" step="any" placeholder="10000" value={form.target} onChange={e => setForm(f => ({ ...f, target: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Target date (optional)</label>
+        <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} />
+        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+          Lets the card show a monthly contribution target.
+        </div>
+      </div>
+      <SavingsImagePicker
+        image={form.image}
+        onChange={img => setForm(f => ({ ...f, image: img }))}
+      />
       {linkable.length > 0 && (
         <div className="fg">
           <label>Link to an achievement (optional)</label>
@@ -398,6 +411,69 @@ function AddSavingsGoalModal({ openId, onClose, achievements, onAdd }) {
         <button className="btn btn-primary" onClick={submit}>Create</button>
       </div>
     </Modal>
+  );
+}
+
+/**
+ * Image picker for savings goals. Resizes client-side to 600px on the
+ * long edge as JPEG @ 0.78 so we don't blow up the user_data JSON blob.
+ * Typical output: 30-60 KB. The original file is never persisted.
+ */
+function SavingsImagePicker({ image, onChange }) {
+  const inputId = 'savingsImageInput';
+  function pick() { document.getElementById(inputId)?.click(); }
+  function onFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 600;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        onChange(canvas.toDataURL('image/jpeg', 0.78));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  return (
+    <div className="fg">
+      <label>Photo (optional)</label>
+      <input id={inputId} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFile} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div
+          onClick={pick}
+          style={{
+            width: 64, height: 64, borderRadius: 10, cursor: 'pointer',
+            border: '1px dashed var(--border)',
+            background: image
+              ? `center/cover no-repeat url(${image})`
+              : 'linear-gradient(135deg, rgba(var(--em-rgb),.18), rgba(var(--em-rgb),.06))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22, color: 'var(--em)', overflow: 'hidden',
+          }}
+          title="Click to choose a photo"
+        >{!image && '🖼'}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <button type="button" className="btn btn-ghost" onClick={pick} style={{ padding: '6px 12px' }}>
+            {image ? 'Change photo' : 'Choose photo'}
+          </button>
+          {image && (
+            <button type="button" className="btn btn-ghost" onClick={() => onChange(null)} style={{ padding: '4px 12px', color: 'rgb(220,60,60)', fontSize: 12 }}>
+              Remove
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -434,13 +510,15 @@ function EditSavingsGoalModal({ openId, onClose, savings, achievements, onEdit, 
   const isOpen = typeof openId === 'string' && openId.startsWith('editSavingsGoalModal:');
   const goalId = isOpen ? openId.split(':')[1] : null;
   const goal = goalId ? (savings || []).find(g => g.id === goalId) : null;
-  const [form, setForm] = useState({ name: '', icon: '💰', target: '', achievementId: '' });
+  const [form, setForm] = useState({ name: '', icon: '💰', target: '', achievementId: '', targetDate: '', image: null });
   useEffect(() => {
     if (goal) setForm({
       name: goal.name || '',
       icon: goal.icon || '💰',
       target: String(goal.target || ''),
       achievementId: goal.achievementId || '',
+      targetDate: goal.targetDate || '',
+      image: goal.image || null,
     });
   }, [goalId]);
   if (!isOpen || !goal) return null;
@@ -452,6 +530,8 @@ function EditSavingsGoalModal({ openId, onClose, savings, achievements, onEdit, 
       icon: form.icon || '💰',
       target,
       achievementId: form.achievementId || null,
+      targetDate: form.targetDate || null,
+      image: form.image || null,
     });
     onClose(openId);
   }
@@ -478,6 +558,14 @@ function EditSavingsGoalModal({ openId, onClose, savings, achievements, onEdit, 
         </div>
       </div>
       <div className="fg"><label>Target (£)</label><input type="number" min="1" step="any" value={form.target} onChange={e => setForm(f => ({ ...f, target: e.target.value }))} /></div>
+      <div className="fg">
+        <label>Target date (optional)</label>
+        <input type="date" value={form.targetDate} onChange={e => setForm(f => ({ ...f, targetDate: e.target.value }))} />
+      </div>
+      <SavingsImagePicker
+        image={form.image}
+        onChange={img => setForm(f => ({ ...f, image: img }))}
+      />
       <div className="fg">
         <label>Linked achievement</label>
         <select value={form.achievementId} onChange={e => setForm(f => ({ ...f, achievementId: e.target.value }))}>

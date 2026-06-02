@@ -871,9 +871,9 @@ nav:hover .nav-tab-label{opacity:1;}
 .savings-wrap{display:flex;flex-direction:column;gap:14px;}
 .savings-toolbar{display:flex;justify-content:flex-end;}
 .savings-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:14px;
+  /* Wide horizontal cards stack vertically — one per row at every
+     viewport. The card itself handles internal layout. */
+  display:flex;flex-direction:column;gap:14px;
 }
 .savings-empty{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -887,72 +887,177 @@ nav:hover .nav-tab-label{opacity:1;}
   line-height:1.6;max-width:340px;margin:0 0 8px;
 }
 
+/* ── Redesigned card (F4 Sprint 3) ────────────────────────────────
+   Two-column grid: photo on the left (140px square in most viewports,
+   shrinks on narrow phones), content on the right. Theme-aware
+   throughout — uses --bg-raised + --border so cream/dark and free/Pro
+   all render the right surface tones. */
 .savings-card{
-  display:flex;flex-direction:column;gap:10px;
-  padding:16px;border-radius:12px;
-  background:var(--card,rgba(255,255,255,0.04));
+  display:grid;
+  grid-template-columns:140px 1fr;
+  gap:16px;
+  padding:14px;
+  border-radius:18px;
+  background:var(--bg-raised, #fff);
   border:1px solid var(--border);
-  transition:border-color .15s;
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 8px 22px rgba(28,26,23,.05);
+  transition:border-color .15s, box-shadow .15s;
+}
+.savings-card:hover{
+  border-color:var(--accent-line, var(--border));
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 12px 28px rgba(28,26,23,.08);
 }
 .savings-card.is-done{
   border-color:var(--gold,#c8970a);
-  background:rgba(200,151,10,0.06);
+  background:linear-gradient(180deg, rgba(200,151,10,0.05) 0%, var(--bg-raised, #fff) 90%);
 }
-.savings-card-head{display:flex;align-items:flex-start;gap:10px;}
-.savings-card-icon{font-size:22px;line-height:1;flex-shrink:0;}
+
+.savings-card-photo{
+  width:140px;height:140px;
+  border-radius:14px;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  /* Default (no image) — gradient that picks up the theme accent. */
+  background-color:transparent;
+  background-image:linear-gradient(135deg, rgba(var(--em-rgb),.20), rgba(var(--em-rgb),.06));
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+  border:1px solid rgba(var(--em-rgb),.10);
+}
+.savings-card-photo-emoji{
+  font-size:54px;line-height:1;
+  /* Slight drop shadow so the emoji reads cleanly on the gradient. */
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.08));
+}
+
+.savings-card-body{
+  display:flex;flex-direction:column;gap:8px;
+  min-width:0;
+}
+.savings-card-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:12px;
+}
 .savings-card-title-block{flex:1;min-width:0;}
+.savings-card-name-row{
+  display:flex;align-items:center;gap:8px;min-width:0;
+}
+.savings-card-inline-icon{
+  /* Shown only when there's a photo — the icon doubles as a chip so
+     the goal's emoji isn't lost behind the image. Hidden otherwise
+     since the emoji is the placeholder centerpiece. */
+  font-size:18px;line-height:1;flex-shrink:0;
+}
 .savings-card-name{
-  font-family:var(--serif,Georgia,serif);font-style:italic;
-  font-size:18px;font-weight:500;color:var(--text);
+  font-family:var(--display);font-weight:700;
+  font-size:18px;color:var(--text);
   letter-spacing:-.3px;line-height:1.2;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  min-width:0;
+}
+.savings-card-date{
+  font-family:var(--mono);font-size:11px;
+  color:var(--text-muted);letter-spacing:.5px;
+  margin-top:4px;font-variant-numeric:tabular-nums;
 }
 .savings-card-link{
-  display:inline-block;margin-top:3px;
+  display:inline-block;margin-top:4px;
   font-family:var(--mono);font-size:9px;letter-spacing:1px;
   text-transform:uppercase;color:var(--em);
 }
-.savings-card-edit{
-  background:transparent;border:none;
-  font-size:18px;line-height:1;color:var(--text-muted);
-  padding:4px 8px;border-radius:6px;cursor:pointer;
-}
-.savings-card-edit:hover{color:var(--text);background:var(--border);}
 
-.savings-card-amounts{
-  display:flex;align-items:baseline;gap:6px;
+.savings-card-pct-btn{
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+  background:transparent;border:none;cursor:pointer;
+  padding:4px 4px;border-radius:6px;
+  transition:background .12s, color .12s;
+}
+.savings-card-pct-btn:hover{background:rgba(var(--em-rgb),.06);}
+.savings-card-pct{
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  color:var(--text-muted);
+  font-variant-numeric:tabular-nums;letter-spacing:.3px;
+}
+.savings-card-arrow{
+  font-size:16px;line-height:1;color:var(--text);
   font-family:var(--mono);
 }
-.savings-card-current{
-  font-size:22px;font-weight:700;color:var(--text);
-  font-variant-numeric:tabular-nums;
-}
-.savings-card-target{font-size:13px;color:var(--text-muted);}
-.savings-card-pct{margin-left:auto;font-size:11px;color:var(--em);font-weight:700;}
 .savings-card.is-done .savings-card-pct{color:var(--gold,#c8970a);}
 
 .savings-card-bar{
-  height:6px;background:var(--border);border-radius:3px;overflow:hidden;
+  height:8px;background:var(--border);border-radius:5px;overflow:hidden;
 }
 .savings-card-bar-fill{
-  height:100%;background:var(--em);border-radius:3px;
+  height:100%;background:var(--em);border-radius:5px;
   transition:width .4s ease;
 }
 .savings-card.is-done .savings-card-bar-fill{background:var(--gold,#c8970a);}
 
-.savings-card-actions{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+/* Bottom row: £current — monthly chip — £target. The chip lives in the
+   middle column and stays compact; flanking amounts grow. */
+.savings-card-bottom{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:10px;
+  margin-top:2px;
 }
+.savings-card-current,
+.savings-card-target-amount{
+  font-family:var(--display);font-size:17px;font-weight:700;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;letter-spacing:-.2px;
+}
+.savings-card-target-amount{text-align:right;}
+.savings-card-monthly{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6px 14px;border-radius:10px;
+  background:rgba(var(--em-rgb),.08);
+  border:1px solid rgba(var(--em-rgb),.16);
+  min-width:90px;
+  cursor:help;
+}
+.savings-card-monthly-amount{
+  font-family:var(--display);font-size:14px;font-weight:700;
+  color:var(--text);font-variant-numeric:tabular-nums;
+  line-height:1.1;letter-spacing:-.2px;
+}
+.savings-card-monthly-label{
+  font-family:var(--mono);font-size:9px;letter-spacing:.8px;
+  color:var(--text-muted);margin-top:1px;
+}
+/* When there's no target date the chip slot becomes the + Add button. */
 .savings-card-contribute{
   font-family:var(--mono);font-size:10px;letter-spacing:1px;
   text-transform:uppercase;font-weight:700;
-  padding:6px 12px;border-radius:6px;
+  padding:7px 14px;border-radius:8px;
   background:var(--em);color:var(--em-on,#fff);border:none;cursor:pointer;
+  transition:filter .12s;
 }
-.savings-card-count{
-  font-family:var(--mono);font-size:10px;letter-spacing:.4px;
-  color:var(--text-muted);
+.savings-card-contribute:hover{filter:brightness(1.08);}
+
+/* Footer row: quick-add + contributions toggle. Quiet by design — the
+   bottom row above is the visual climax of the card. */
+.savings-card-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:4px;
 }
+.savings-card-quickadd{
+  background:transparent;border:1px solid var(--border);
+  font-family:var(--mono);font-size:10px;letter-spacing:.8px;
+  text-transform:uppercase;font-weight:700;color:var(--em);
+  padding:6px 12px;border-radius:7px;cursor:pointer;
+  transition:background .12s, border-color .12s;
+}
+.savings-card-quickadd:hover{
+  background:rgba(var(--em-rgb),.08);border-color:rgba(var(--em-rgb),.32);
+}
+.savings-card-toggle{
+  background:transparent;border:none;
+  font-family:var(--mono);font-size:10px;letter-spacing:.6px;
+  color:var(--text-muted);cursor:pointer;padding:6px 0;
+  margin-left:auto;
+}
+.savings-card-toggle:hover:not(:disabled){color:var(--text);}
+.savings-card-toggle:disabled{cursor:default;opacity:.6;}
 
 .savings-card-contribs{
   list-style:none;margin:0;padding:8px 0 0;
@@ -968,12 +1073,19 @@ nav:hover .nav-tab-label{opacity:1;}
 .savings-contrib-amount.is-neg{color:rgb(220,60,60);}
 .savings-contrib-note{flex:1;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .savings-contrib-date{margin-left:auto;color:var(--text-muted);font-size:10px;}
-.savings-contrib-toggle button{
-  background:transparent;border:none;color:var(--text-muted);
-  font-family:var(--mono);font-size:10px;letter-spacing:.6px;
-  cursor:pointer;padding:4px 0;
+
+/* Narrow viewports: stack the photo on top, keep the card readable. */
+@media (max-width: 560px){
+  .savings-card{
+    grid-template-columns:1fr;
+    padding:12px;
+  }
+  .savings-card-photo{
+    width:100%;height:160px;
+  }
+  .savings-card-current,
+  .savings-card-target-amount{font-size:15px;}
 }
-.savings-contrib-toggle button:hover{color:var(--text);}
 .ach-btn-delete{ background:#c84040; color:#fff; }
 
 /* Empty state */
