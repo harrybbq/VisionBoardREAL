@@ -6,8 +6,11 @@
  * the mobile widget stack — no typing required.
  *
  * Single source of truth for BOTH surfaces:
- *   - desktop  → AddLinkModal "My Apps" row (src/components/Modals.jsx)
+ *   - desktop  → AddLinkModal "Our Apps" row (src/components/Modals.jsx)
  *   - mobile   → MobileWidget brand cards + picker
+ *
+ * Planned: gate these behind Pro (bonus tools for subscribers). Not
+ * gated yet — see the `pro` flag note below when wiring that up.
  *
  * To add another app later: append one entry here. A preset with a
  * null `url` renders as a disabled "deploy first" slot until a URL is

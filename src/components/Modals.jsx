@@ -43,14 +43,15 @@ function AddLinkModal({ openId, onClose, onSwitchModal, onAddNotepad, onAddApp }
         </button>
       </div>
 
-      {/* My Apps — one-click presets for the user's own apps. A preset
-          with no URL yet (not deployed) renders disabled with its
-          deploy hint, so the slot exists without a dead link. */}
+      {/* Our Apps — one-click presets for our own apps (planned as Pro
+          bonus tools). A preset with no URL yet (not deployed) renders
+          disabled with its deploy hint, so the slot exists without a
+          dead link. */}
       <div style={{
         fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1.6,
         textTransform: 'uppercase', color: 'var(--text-muted)',
         margin: '14px 0 8px',
-      }}>My Apps</div>
+      }}>Our Apps</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         {APP_PRESETS.map(preset => {
           const disabled = !preset.url;
