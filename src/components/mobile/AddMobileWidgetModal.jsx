@@ -15,6 +15,10 @@ const PICKER_ORDER = [
   'notepad',
   'recent-wins',
   'coin-history',
+  // F4 Sprint 4 — mobile parity for the desktop hub widgets.
+  'github',
+  'linkedin',
+  'youtube',
   'vitals',
   'calories',
   'mail',
@@ -68,7 +72,16 @@ export default function AddMobileWidgetModal({ openId, onClose, existingTypes, o
                   transition: 'all .15s',
                 }}
               >
-                <span style={{ fontSize: 18, lineHeight: 1, width: 24, textAlign: 'center' }}>
+                <span
+                  style={{
+                    width: 28, height: 28, borderRadius: 7,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, lineHeight: 1, flexShrink: 0,
+                    background: meta.accent ? meta.accent + '1a' : 'rgba(var(--em-rgb),0.10)',
+                    border: '1px solid ' + (meta.accent ? meta.accent + '55' : 'var(--border)'),
+                    color: meta.accent || 'var(--em)',
+                  }}
+                >
                   {meta.icon}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>

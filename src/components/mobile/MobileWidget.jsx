@@ -30,6 +30,28 @@ const WIDGET_META = {
     eyebrow: 'COINS',
     icon: '⬡',
   },
+  // F4 Sprint 4 — mobile parity for the desktop hub widgets.
+  // These are read-only summaries of what the user has configured on
+  // desktop (S.links, S.ghCache, S.ytWidgets). No new API calls fire
+  // from mobile so they can't introduce a fresh failure mode.
+  'github': {
+    label: 'GitHub',
+    eyebrow: 'GITHUB',
+    icon: '◉',
+    accent: '#1c1a17',
+  },
+  'linkedin': {
+    label: 'LinkedIn',
+    eyebrow: 'LINK',
+    icon: 'in',
+    accent: '#4d9ec4',
+  },
+  'youtube': {
+    label: 'YouTube',
+    eyebrow: 'YOUTUBE',
+    icon: '▶',
+    accent: '#cf5b52',
+  },
   'vitals': {
     label: 'Vitals',
     eyebrow: 'HEALTH',
@@ -53,10 +75,19 @@ const WIDGET_META = {
 export default function MobileWidget({ widget, S, update, onRemove }) {
   const meta = WIDGET_META[widget.type] || { label: widget.type, eyebrow: '?', icon: '·' };
 
+  // Brand-tinted icon chip when the type carries an `accent` (the new
+  // GitHub / LinkedIn / YouTube widgets). Falls back to the default
+  // em-accent for the original three.
+  const chipStyle = meta.accent ? {
+    color: meta.accent,
+    background: meta.accent + '1a',
+    borderColor: meta.accent + '55',
+  } : undefined;
+
   return (
     <div className="m-widget">
       <div className="m-widget-head">
-        <span className="m-widget-icon">{meta.icon}</span>
+        <span className="m-widget-icon m-widget-chip" style={chipStyle}>{meta.icon}</span>
         <span className="m-widget-eyebrow">// {meta.eyebrow}</span>
         <button
           type="button"
@@ -86,6 +117,9 @@ function renderBody(widget, meta, S, update) {
     case 'notepad':     return <NotepadBody S={S} update={update} />;
     case 'recent-wins': return <RecentWinsBody S={S} />;
     case 'coin-history':return <CoinHistoryBody S={S} />;
+    case 'github':      return <GithubBody S={S} meta={meta} />;
+    case 'linkedin':    return <LinkedinBody S={S} meta={meta} />;
+    case 'youtube':     return <YoutubeBody S={S} meta={meta} />;
     default:            return <div className="m-widget-stub-label">Unknown widget type.</div>;
   }
 }
@@ -157,6 +191,112 @@ function CoinHistoryBody({ S }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+// ── Brand-link widgets (mobile parity for desktop hub) ──
+//
+// Each one reads from existing state — we don't fetch on mobile, just
+// surface what's already cached/configured on the desktop hub. That
+// keeps the mobile widgets zero-failure (nothing new to go wrong).
+// Setup happens on desktop; mobile mirrors it for at-a-glance use.
+
+function BrandCard({ title, host, openHref, accent, info }) {
+  return (
+    <div className="m-widget-brand">
+      <div className="m-widget-brand-head">
+        <div className="m-widget-brand-title">{title}</div>
+        <div className="m-widget-brand-host">{host}</div>
+      </div>
+      {info && <div className="m-widget-brand-info">{info}</div>}
+      {openHref && (
+        <a
+          className="m-widget-brand-open"
+          href={openHref}
+          target="_blank"
+          rel="noreferrer"
+          style={accent ? { color: accent, borderColor: accent + '55' } : undefined}
+        >Open ↗</a>
+      )}
+    </div>
+  );
+}
+
+function GithubBody({ S, meta }) {
+  // First link with a ghUser; falls back to a setup hint.
+  const ghLink = (S.links || []).find(l => l.ghUser);
+  if (!ghLink) {
+    return (
+      <div className="m-widget-empty">
+        Add a GitHub link on the desktop hub to surface stats here.
+      </div>
+    );
+  }
+  const cached = (S.ghCache || {})[ghLink.ghUser];
+  return (
+    <BrandCard
+      title="GitHub"
+      host={`github.com/${ghLink.ghUser}`}
+      openHref={ghLink.url}
+      accent={meta.accent}
+      info={cached?.user ? (
+        <div className="m-widget-stat-row">
+          <div className="m-widget-stat"><div className="m-widget-stat-val">{cached.user.public_repos}</div><div className="m-widget-stat-lbl">Repos</div></div>
+          <div className="m-widget-stat"><div className="m-widget-stat-val">{cached.user.followers}</div><div className="m-widget-stat-lbl">Followers</div></div>
+          <div className="m-widget-stat"><div className="m-widget-stat-val">{cached.user.following}</div><div className="m-widget-stat-lbl">Following</div></div>
+        </div>
+      ) : (
+        <div className="m-widget-empty">No stats cached yet — open the desktop hub once to populate.</div>
+      )}
+    />
+  );
+}
+
+function LinkedinBody({ S, meta }) {
+  // First link whose host contains "linkedin"; setup hint otherwise.
+  const link = (S.links || []).find(l => /linkedin\.com/i.test(l.url || ''));
+  if (!link) {
+    return (
+      <div className="m-widget-empty">
+        Add a LinkedIn link on the desktop hub to surface it here.
+      </div>
+    );
+  }
+  const host = link.url.replace(/^https?:\/\//, '').split('/').slice(0, 2).join('/');
+  return (
+    <BrandCard
+      title={link.name || 'LinkedIn'}
+      host={host}
+      openHref={link.url}
+      accent={meta.accent}
+      info={link.notes ? <div className="m-widget-brand-note">{link.notes}</div> : null}
+    />
+  );
+}
+
+function YoutubeBody({ S, meta }) {
+  const yt = (S.ytWidgets || [])[0];
+  if (!yt) {
+    return (
+      <div className="m-widget-empty">
+        Add a YouTube widget on the desktop hub to surface subscriptions here.
+      </div>
+    );
+  }
+  const channelCount = (yt.channels || []).length;
+  return (
+    <BrandCard
+      title="Subscriptions"
+      host={`${channelCount} channel${channelCount === 1 ? '' : 's'} tracked`}
+      openHref="https://www.youtube.com/feed/subscriptions"
+      accent={meta.accent}
+      info={channelCount > 0 ? (
+        <div className="m-widget-brand-note">
+          {(yt.channels || []).slice(0, 4).map(ch => '@' + String(ch).replace(/^@/, '')).join(' · ')}
+          {channelCount > 4 && ` · +${channelCount - 4}`}
+        </div>
+      ) : null}
+    />
   );
 }
 

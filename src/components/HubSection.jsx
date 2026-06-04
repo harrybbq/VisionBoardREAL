@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { adjustColour, timeAgo } from '../utils/helpers';
+import { timeAgo } from '../utils/helpers';
 import AiCoachWidget from './AiCoachWidget';
 import CoachBriefPanel from './CoachBriefPanel';
 import QuickLog from './QuickLog';
@@ -226,15 +226,15 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
       island.className = 'card link-island';
       island.id = 'island-' + link.id;
 
+      // Tinted icon chip uses the link's brand colour as the accent ring;
+      // the card surface itself stays neutral so it reads as a sibling
+      // of the surrounding OS panels rather than a poster.
       const c = link.color || '#1a7a4a';
-      island.style.cssText = [
-        `background:linear-gradient(145deg,${c}ee 0%,${c}cc 100%)`,
-        `border:1px solid ${c}`,
-        `border-top:4px solid ${adjustColour(c, 30)}`,
-        `box-shadow:0 6px 28px ${c}55,0 1px 0 rgba(255,255,255,.18) inset`,
-      ].join(';');
 
       const isGH = !!link.ghUser;
+      const eyebrow = isGH ? 'WIDGET · GITHUB' : 'WIDGET · LINK';
+      const host = link.url.replace(/^https?:\/\//, '').split('/')[0];
+      const handle = isGH ? '@' + link.ghUser : host;
       const bodyHtml = isGH
         ? `<div class="link-island-body"><div class="gh-skeleton" id="gh-body-${link.id}"><div class="sk-stats"><div class="sk-stat"></div><div class="sk-stat"></div><div class="sk-stat"></div></div><div class="sk-repo"></div><div class="sk-repo"></div><div class="sk-repo"></div></div></div>`
         : (link.notes ? `<div class="link-island-body"><div class="link-island-notes">${link.notes}</div></div>` : '');
@@ -242,13 +242,19 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
       island.innerHTML = `
         <div class="widget-drag-handle" data-drag="${link.id}"><span></span></div>
         <div class="link-island-header">
-          <div class="link-island-icon" style="background:rgba(var(--em-rgb),.10);color:var(--em);font-size:${isGH ? '16px' : '22px'};font-weight:700;border:1px solid var(--accent-line-soft);">${link.icon}</div>
+          <div class="link-island-icon" style="background:${c}1a;border-color:${c}55;color:${c};">${link.icon}</div>
           <div class="link-island-info">
-            <div class="link-island-name">${link.name}</div>
-            <div class="link-island-url">${link.url.replace(/^https?:\/\//, '').split('/')[0]}</div>
+            <span class="link-island-name">${eyebrow}</span>
+            <span class="link-island-url">${handle}</span>
+          </div>
+        </div>
+        <div class="link-island-brand">
+          <div class="link-island-brand-info">
+            <div class="link-island-brand-title">${link.name}</div>
+            <div class="link-island-brand-host">${host}</div>
           </div>
           <div class="link-island-actions">
-            <a class="link-open-btn" href="${link.url}" target="_blank">Open ↗</a>
+            <a class="link-open-btn" href="${link.url}" target="_blank" style="color:${c};">Open ↗</a>
             <button class="link-del-btn" data-del-link="${link.id}">✕</button>
           </div>
         </div>
@@ -285,22 +291,32 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
       const island = document.createElement('div');
       island.className = 'card link-island';
       island.id = 'yt-island-' + yt.id;
-      island.style.cssText = 'background:linear-gradient(145deg,#0f0a0a 0%,#1e0606 100%);border:1px solid #b00;border-top:4px solid #ff1f1f;box-shadow:0 6px 28px rgba(180,0,0,.4),0 1px 0 rgba(255,255,255,.08) inset;overflow:hidden;';
+
+      // YouTube widget uses the shared surface; brand red is demoted to
+      // the icon chip + Open ↗ pill tint rather than flooding the card.
+      const YT_BRAND = '#cf5b52';
+      const channelCount = yt.channels ? yt.channels.length : 0;
 
       island.innerHTML = `
         <div class="widget-drag-handle" data-drag="${yt.id}"><span></span></div>
-        <div class="link-island-header" style="padding:12px 16px 10px;">
-          <div class="link-island-icon" style="background:rgba(255,0,0,.18);color:#ff3333;font-size:18px;">▶</div>
+        <div class="link-island-header">
+          <div class="link-island-icon" style="background:${YT_BRAND}1a;border-color:${YT_BRAND}55;color:${YT_BRAND};font-size:11px;">▶</div>
           <div class="link-island-info">
-            <div class="link-island-name">Subscriptions Feed</div>
-            <div class="link-island-url" id="yt-sub-${yt.id}">Loading ${yt.channels ? yt.channels.length : 0} channel${yt.channels && yt.channels.length !== 1 ? 's' : ''}…</div>
+            <span class="link-island-name">WIDGET · YOUTUBE</span>
+            <span class="link-island-url" id="yt-sub-${yt.id}">${channelCount} CH</span>
+          </div>
+        </div>
+        <div class="link-island-brand">
+          <div class="link-island-brand-info">
+            <div class="link-island-brand-title">Subscriptions</div>
+            <div class="link-island-brand-host">youtube.com/feed/subscriptions</div>
           </div>
           <div class="link-island-actions">
-            <a class="link-open-btn" href="https://www.youtube.com/feed/subscriptions" target="_blank" style="background:rgba(255,30,30,.65);color:#fff;border:none;font-size:10px;">Open YT ↗</a>
+            <a class="link-open-btn" href="https://www.youtube.com/feed/subscriptions" target="_blank" style="color:${YT_BRAND};">Open ↗</a>
             <button class="link-del-btn" data-del-yt="${yt.id}">✕</button>
           </div>
         </div>
-        <div id="yt-body-${yt.id}" style="padding:0 0 10px;"><div class="yt-skeleton">${[0,1,2,3].map(() => `<div class="yt-skeleton-card"><div class="sk-thumb"></div><div class="sk-info"><div class="skeleton-line" style="width:90%;height:11px;border-radius:4px;"></div><div class="skeleton-line" style="width:60%;height:10px;margin-top:5px;border-radius:4px;"></div><div class="skeleton-line" style="width:40%;height:9px;margin-top:5px;border-radius:4px;"></div></div></div>`).join('')}</div></div>
+        <div class="link-island-body" id="yt-body-${yt.id}"><div class="yt-skeleton">${[0,1,2,3].map(() => `<div class="yt-skeleton-card"><div class="sk-thumb"></div><div class="sk-info"><div class="skeleton-line" style="width:90%;height:10px;"></div><div class="skeleton-line" style="width:55%;height:9px;margin-top:4px;"></div></div></div>`).join('')}</div></div>
       `;
 
       island.querySelector('[data-del-yt]')?.addEventListener('click', e => {
@@ -417,23 +433,25 @@ async function loadGHIsland(link, cache, update) {
       <div class="gh-repo-name">${r.name}</div>
       <div class="gh-repo-desc">${r.description || 'No description'}</div>
       <div class="gh-repo-meta">
-        <span>⭐ ${r.stargazers_count}</span>
-        <span>${r.language || ''}</span>
-        <span>🍴 ${r.forks_count}</span>
+        ${r.language ? `<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:7px;height:7px;border-radius:7px;background:var(--gold,#c8970a);display:inline-block;"></span>${r.language}</span>` : ''}
+        <span>★ ${r.stargazers_count}</span>
+        <span>⑂ ${r.forks_count}</span>
       </div>
     </a>`).join('');
 
   bodyEl.outerHTML = `
-    <div class="gh-username-form" style="padding:12px 18px 0;">
-      <input id="gh-input-${link.id}" placeholder="Change username..." style="flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;font-family:var(--mono);outline:none;" value="${link.ghUser}">
-      <button class="btn btn-primary btn-sm" data-gh-go="${link.id}">Go</button>
+    <div class="link-island-body" id="gh-body-${link.id}">
+      <div class="gh-username-form">
+        <input id="gh-input-${link.id}" placeholder="Change username…" value="${link.ghUser}">
+        <button class="btn btn-primary btn-sm" data-gh-go="${link.id}">Go</button>
+      </div>
+      <div class="gh-stats">
+        <div class="gh-stat"><div class="gh-stat-val">${user.public_repos}</div><div class="gh-stat-lbl">Repos</div></div>
+        <div class="gh-stat"><div class="gh-stat-val">${user.followers}</div><div class="gh-stat-lbl">Followers</div></div>
+        <div class="gh-stat"><div class="gh-stat-val">${user.following}</div><div class="gh-stat-lbl">Following</div></div>
+      </div>
+      <div class="gh-repos">${reposHtml}</div>
     </div>
-    <div class="gh-stats" style="padding:0 18px;">
-      <div class="gh-stat"><div class="gh-stat-val">${user.public_repos}</div><div class="gh-stat-lbl">Repos</div></div>
-      <div class="gh-stat"><div class="gh-stat-val">${user.followers}</div><div class="gh-stat-lbl">Followers</div></div>
-      <div class="gh-stat"><div class="gh-stat-val">${user.following}</div><div class="gh-stat-lbl">Following</div></div>
-    </div>
-    <div class="gh-repos" style="padding:0 18px 16px;margin-top:10px;">${reposHtml}</div>
   `;
 
   // Wire up "Go" button to change GitHub user
@@ -514,15 +532,14 @@ async function loadYouTubeFeed(yt) {
         <img class="yt-thumb" src="${v.vidThumb}" alt="" loading="lazy">
         <div class="yt-video-info">
           <div class="yt-video-title">${v.title}</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
-            ${v.thumb ? `<img src="${v.thumb}" style="width:14px;height:14px;border-radius:50%;flex-shrink:0;" alt="">` : ''}
-            <span class="yt-video-channel">${v.channel}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${v.thumb ? `<img src="${v.thumb}" style="width:12px;height:12px;border-radius:50%;flex-shrink:0;" alt="">` : ''}
+            <span class="yt-video-channel">${v.channel} · ${v.pubRelative}</span>
           </div>
-          <div class="yt-video-date">${v.pubRelative}</div>
         </div>
       </a>`).join('');
 
-    bodyEl.innerHTML = `<div class="yt-island-body"><div class="yt-video-list">${rows}</div></div>`;
+    bodyEl.innerHTML = `<div class="yt-video-list">${rows}</div>`;
   } catch (err) {
     bodyEl.innerHTML = `<div class="yt-error">⚠ ${err.message}</div>`;
   }
@@ -552,8 +569,8 @@ function renderNotepadInCanvas(canvas, S, update, hasPositions) {
     <div class="notepad-island">
       <div class="widget-drag-handle" id="notepadDragHandle"><span></span></div>
       <div class="notepad-header">
-        <span class="notepad-header-icon">📝</span>
-        <span class="notepad-header-title">Today's Notes</span>
+        <span class="notepad-header-icon">✎</span>
+        <span class="notepad-header-title">NOTEPAD</span>
         <span class="notepad-date">${dateLabel}</span>
         <button class="notepad-clear-btn" id="notepadClearBtn">Clear</button>
         <button class="link-del-btn" id="notepadDelBtn" style="margin-left:4px;">✕</button>

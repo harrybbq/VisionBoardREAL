@@ -526,58 +526,177 @@ nav:hover .nav-tab-label{opacity:1;}
   min-width:0;
   max-width:none;
 }
+/* ── Hub widgets (redesigned F4 Sprint 4) ─────────────────────────
+   All widget surfaces (link / GitHub / YouTube / notepad) now share
+   one visual language: surface bg + hairline border + mono `// NAME`
+   eyebrow + tinted icon chip. Brand colour is demoted to the chip's
+   tint — never a saturated fill — so the row reads as a sibling of
+   the OS panels rather than a foreign poster. Themed via tokens so
+   cream/dark × free/Pro all render the right surface tones. */
 .link-island{
   padding:0;overflow:hidden;
-  transition:box-shadow .22s, opacity .18s;
-  border-top:3px solid transparent; /* coloured accent — set inline */
+  background:var(--bg-raised, #fff);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 4px 16px rgba(28,26,23,.06);
+  transition:box-shadow .22s, opacity .18s, border-color .15s;
 }
-.link-island:hover{box-shadow:0 10px 36px rgba(0,0,0,.22),0 1px 0 rgba(255,255,255,.3) inset;}
-.link-island.dragging-active{opacity:.85;box-shadow:0 18px 48px rgba(0,0,0,.32);transform:scale(1.02);}
-/* Drag handle bar */
+.link-island:hover{
+  border-color:var(--accent-line, var(--border));
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 8px 22px rgba(28,26,23,.09);
+}
+.link-island.dragging-active{opacity:.88;box-shadow:0 18px 48px rgba(0,0,0,.18);transform:scale(1.02);}
+
+/* Drag handle — quiet pill across the top, hairline divider below. */
 .widget-drag-handle{
-  height:22px;
+  height:18px;
   display:flex;align-items:center;justify-content:center;
   cursor:grab;
-  background:rgba(var(--em-rgb),.05);
+  background:transparent;
   border-bottom:1px solid var(--accent-line-soft);
-  border-radius:var(--radius-md) var(--radius-md) 0 0;
+  border-radius:10px 10px 0 0;
   gap:3px;
 }
 .widget-drag-handle:active{cursor:grabbing;}
 .widget-drag-handle span{
-  display:block;width:28px;height:3px;border-radius:2px;
-  background:rgba(var(--em-rgb),.30);
+  display:block;width:26px;height:3px;border-radius:2px;
+  background:var(--border);
 }
-.link-island-header{display:flex;align-items:center;gap:14px;padding:16px 18px 14px;}
-.link-island-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;font-weight:700;}
-.link-island-info{flex:1;min-width:0;}
-.link-island-name{font-weight:700;font-size:15px;color:var(--text);margin-bottom:1px;}
-.link-island-url{font-family:var(--mono);font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Eyebrow row: tinted icon chip + `// NAME` + meta slot on the right.
+   Mirrors .os-panel-head — gives the canvas widgets a sibling rhythm
+   with the surrounding panels. */
+.link-island-header{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px 8px;
+  border-bottom:1px solid var(--border);
+}
+.link-island-icon{
+  width:22px;height:22px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;line-height:1;flex-shrink:0;font-weight:700;
+  background:rgba(var(--em-rgb),.10);
+  border:1px solid var(--border);
+  color:var(--em);
+}
+.link-island-info{
+  flex:1;min-width:0;display:flex;align-items:center;gap:8px;
+}
+.link-island-name{
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--text-muted);font-weight:500;
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.link-island-name::before{
+  content:'//';color:var(--em);opacity:.85;letter-spacing:0;
+}
+.link-island-url{
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text-muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-left:auto;
+}
 .link-island-actions{display:flex;gap:6px;align-items:center;}
-.link-open-btn{padding:5px 12px;border-radius:7px;background:var(--em);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--body);text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:background .18s;}
-.link-open-btn:hover{background:var(--em-mid);}
-.link-del-btn{width:26px;height:26px;border-radius:50%;background:rgba(180,40,40,.1);border:none;color:#b92020;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;}
-.link-del-btn:hover{background:rgba(180,40,40,.2);}
-.link-island-body{padding:0 18px 16px;border-top:1px solid var(--accent-line-soft);}
+
+/* Brand row: italic display title + monospaced host + hairline pill.
+   The .link-open-btn was a solid green button; it's now a quiet pill
+   tinted by the accent so the rhythm matches the chip + eyebrow. */
+.link-island-brand{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 12px 10px;
+}
+.link-island-brand-info{flex:1;min-width:0;}
+.link-island-brand-title{
+  font-family:var(--display);font-style:italic;font-weight:700;
+  font-size:16px;color:var(--text);line-height:1.1;
+}
+.link-island-brand-host{
+  font-family:var(--mono);font-size:10px;color:var(--text-muted);
+  margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.link-open-btn{
+  padding:5px 10px;border-radius:6px;
+  background:transparent;color:var(--em);
+  border:1px solid var(--accent-line, var(--border));
+  font-family:var(--mono);font-size:9px;letter-spacing:1.2px;
+  font-weight:700;text-transform:uppercase;cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+  transition:background .15s, border-color .15s;
+}
+.link-open-btn:hover{
+  background:rgba(var(--em-rgb),.08);
+  border-color:rgba(var(--em-rgb),.32);
+}
+.link-del-btn{
+  width:24px;height:24px;border-radius:6px;
+  background:transparent;
+  border:1px solid var(--accent-line, var(--border));
+  color:var(--text-muted);
+  font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.link-del-btn:hover{
+  background:rgba(180,40,40,.08);
+  color:#b92020;border-color:rgba(180,40,40,.32);
+}
+
+.link-island-body{
+  padding:11px 12px 12px;
+  border-top:1px solid var(--accent-line-soft);
+}
 
 /* GitHub island body */
-.gh-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:12px;}
-.gh-stat{background:rgba(var(--em-rgb),.06);border:1px solid var(--accent-line-soft);border-radius:10px;padding:10px 8px;text-align:center;}
-.gh-stat-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);}
-.gh-stat-lbl{font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px;}
-.gh-repos{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;}
-.gh-repo{background:rgba(var(--em-rgb),.04);border:1px solid var(--accent-line-soft);border-radius:9px;padding:9px 12px;cursor:pointer;transition:all .18s;text-decoration:none;display:block;}
-.gh-repo:hover{border-color:var(--accent-line);background:rgba(var(--em-rgb),.08);}
-.gh-repo-name{font-weight:600;font-size:12px;color:var(--text);}
-.gh-repo-desc{font-size:11px;color:var(--text-mid);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.gh-repo-meta{display:flex;gap:10px;margin-top:4px;font-family:var(--mono);font-size:10px;color:var(--text-muted);}
+.gh-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:0;}
+.gh-stat{
+  background:rgba(var(--em-rgb),.05);
+  border:1px solid var(--accent-line-soft);
+  border-radius:8px;padding:9px 6px;text-align:center;
+}
+.gh-stat-val{
+  font-family:var(--mono);font-size:17px;font-weight:500;color:var(--text);
+  font-variant-numeric:tabular-nums;line-height:1;
+}
+.gh-stat-lbl{
+  font-size:8.5px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--text-muted);font-family:var(--mono);margin-top:5px;
+}
+.gh-repos{margin-top:9px;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;}
+.gh-repo{
+  background:rgba(var(--em-rgb),.04);
+  border:1px solid var(--accent-line-soft);
+  border-radius:8px;padding:9px 11px;cursor:pointer;
+  transition:border-color .15s, background .15s;
+  text-decoration:none;display:block;
+}
+.gh-repo:hover{
+  border-color:var(--accent-line, var(--border));
+  background:rgba(var(--em-rgb),.07);
+}
+.gh-repo-name{font-family:var(--sans);font-weight:600;font-size:12.5px;color:var(--text);}
+.gh-repo-desc{
+  font-family:var(--sans);font-size:11px;color:var(--text-muted);
+  margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.gh-repo-meta{
+  display:flex;align-items:center;gap:12px;margin-top:7px;
+  font-family:var(--mono);font-size:9.5px;color:var(--text-muted);
+}
 .gh-loading{font-family:var(--mono);font-size:11px;color:var(--text-muted);padding:12px 0;text-align:center;}
-.gh-username-form{display:flex;gap:8px;padding-top:12px;}
-.gh-username-form input{flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;outline:none;font-family:var(--body);}
+.gh-username-form{display:flex;gap:8px;padding:0 0 10px;}
+.gh-username-form input{
+  flex:1;background:var(--bg-base, #fff);
+  border:1px solid var(--border);border-radius:6px;
+  padding:7px 11px;font-size:12px;font-family:var(--mono);outline:none;
+  color:var(--text);
+}
 .gh-username-form input:focus{border-color:var(--em);}
 
 /* Generic link body */
-.link-island-notes{padding-top:12px;font-size:12px;color:var(--text-mid);line-height:1.5;}
+.link-island-notes{font-family:var(--sans);font-size:11.5px;color:var(--text-mid);line-height:1.55;}
 
 /* Add link tile — kept for renderLinks trailing tile */
 .add-link-tile{display:none;}
@@ -1743,56 +1862,89 @@ nav:hover .nav-tab-label{opacity:1;}
 }
 
 /* ── NOTEPAD WIDGET ── */
+/* Notepad — same surface language as the link/GitHub/YouTube cards.
+   Previously a dark glassy treatment that read as a foreign poster on
+   the cream hub; now a sibling of the other widgets, with a gold-tinted
+   icon chip in the header for identity. */
 .notepad-island{
-  background:rgba(255,255,255,0.13);
-  border:1px solid rgba(255,255,255,0.28);
-  border-radius:18px;
-  backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);
-  box-shadow:0 4px 24px rgba(0,0,0,.10),0 1px 0 rgba(255,255,255,.35) inset;
-  border-top:4px solid var(--em-mid);
+  background:var(--bg-raised, #fff);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 1px 0 rgba(255,255,255,.55) inset, 0 4px 16px rgba(28,26,23,.06);
   overflow:hidden;
-  transition:box-shadow .22s;
+  transition:box-shadow .22s, border-color .15s;
   display:flex;flex-direction:column;
 }
-.notepad-island:hover{box-shadow:0 10px 36px rgba(0,0,0,.22),0 1px 0 rgba(255,255,255,.3) inset;}
+.notepad-island:hover{
+  border-color:var(--accent-line, var(--border));
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 8px 22px rgba(28,26,23,.09);
+}
 .notepad-header{
   display:flex;align-items:center;gap:10px;
-  padding:13px 18px 11px;
-  border-bottom:1px solid rgba(255,255,255,.18);
+  padding:9px 12px 8px;
+  border-bottom:1px solid var(--border);
   flex-shrink:0;
 }
-.notepad-header-icon{font-size:16px;opacity:.85;}
-.notepad-header-title{font-weight:700;font-size:14px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.3);flex:1;}
-.notepad-date{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55);letter-spacing:.5px;}
-.notepad-clear-btn{
-  background:rgba(255,255,255,.12);border:none;border-radius:6px;
-  padding:3px 9px;font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.55);
-  cursor:pointer;transition:all .18s;letter-spacing:.5px;
+.notepad-header-icon{
+  width:22px;height:22px;border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;line-height:1;font-weight:700;
+  background:rgba(200,151,10,.10);
+  border:1px solid var(--border);
+  color:var(--gold, #c8970a);
 }
-.notepad-clear-btn:hover{background:rgba(255,255,255,.22);color:#fff;}
+.notepad-header-title{
+  flex:1;min-width:0;
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--text-muted);font-weight:500;
+  display:flex;align-items:center;gap:6px;
+}
+.notepad-header-title::before{
+  content:'//';color:var(--gold, #c8970a);opacity:.85;letter-spacing:0;
+}
+.notepad-date{
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--text-muted);
+}
+.notepad-clear-btn{
+  background:transparent;
+  border:1px solid var(--accent-line, var(--border));
+  border-radius:6px;
+  padding:4px 9px;font-family:var(--mono);font-size:9px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--text-muted);
+  cursor:pointer;transition:background .15s, color .15s, border-color .15s;
+}
+.notepad-clear-btn:hover{
+  background:rgba(var(--em-rgb),.06);
+  color:var(--text);border-color:var(--accent-line);
+}
 .notepad-textarea{
   width:100%;flex:1;min-height:160px;
   background:transparent;border:none;outline:none;resize:none;
-  padding:14px 18px;
+  padding:12px 14px;
   font-size:13px;line-height:1.65;
-  color:rgba(255,255,255,.88);
+  color:var(--text);
   font-family:var(--body);
-  caret-color:#4dc485;
+  caret-color:var(--em);
 }
-.notepad-textarea::placeholder{color:rgba(255,255,255,.28);font-style:italic;}
+.notepad-textarea::placeholder{color:var(--text-muted);opacity:.7;font-style:italic;}
 .notepad-footer{
-  padding:8px 18px;
-  border-top:1px solid rgba(255,255,255,.1);
+  padding:8px 12px;
+  border-top:1px solid var(--accent-line-soft);
   display:flex;align-items:center;justify-content:space-between;
   flex-shrink:0;
 }
 .notepad-saved-indicator{
-  font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);
-  letter-spacing:.5px;transition:color .3s;
+  font-family:var(--mono);font-size:9px;color:var(--text-muted);
+  letter-spacing:.8px;transition:color .3s;
+  text-transform:uppercase;
 }
-.notepad-saved-indicator.saved{color:var(--em-light);}
-.notepad-char-count{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);}
+.notepad-saved-indicator.saved{color:var(--em);}
+.notepad-char-count{
+  font-family:var(--mono);font-size:9px;color:var(--text-muted);
+  letter-spacing:.5px;
+}
 /* Notepad wrapper — wider by default, freely resizable */
 .notepad-wrapper{
   position:absolute;
@@ -1813,34 +1965,81 @@ nav:hover .nav-tab-label{opacity:1;}
 }
 
 /* ── YOUTUBE WIDGET ── */
-.yt-island-body{padding:10px 14px 14px;}
-.yt-channel-form{display:flex;gap:8px;padding:10px 14px 6px;}
-.yt-channel-form input{flex:1;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:7px 11px;font-size:12px;font-family:var(--mono);color:#fff;outline:none;}
-.yt-channel-form input::placeholder{color:rgba(255,255,255,.4);}
-.yt-channel-form input:focus{border-color:rgba(255,255,255,.55);}
+/* YouTube body — surface-tone treatment matching the link/GitHub
+   widgets. Brand red is demoted to the date label only; everything
+   else uses theme tokens so it sits naturally in cream and dark. */
+.yt-island-body{padding:10px 12px 12px;}
+.yt-channel-form{display:flex;gap:8px;padding:0 0 8px;}
+.yt-channel-form input{
+  flex:1;background:var(--bg-base, #fff);
+  border:1px solid var(--border);border-radius:6px;
+  padding:7px 11px;font-size:12px;font-family:var(--mono);
+  color:var(--text);outline:none;
+}
+.yt-channel-form input::placeholder{color:var(--text-muted);opacity:.7;}
+.yt-channel-form input:focus{border-color:var(--em);}
 .yt-channel-form button{flex-shrink:0;}
-.yt-video-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding-right:2px;}
+.yt-video-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;padding-right:2px;}
 .yt-video-list::-webkit-scrollbar{width:4px;}
-.yt-video-list::-webkit-scrollbar-track{background:rgba(255,255,255,.08);border-radius:2px;}
-.yt-video-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:2px;}
-.yt-video-card{display:flex;gap:10px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .18s;text-decoration:none;}
-.yt-video-card:hover{background:rgba(0,0,0,.38);border-color:rgba(255,50,50,.5);transform:translateX(2px);}
-.yt-thumb{width:90px;min-width:90px;height:56px;object-fit:cover;background:#111;}
-.yt-video-info{padding:6px 10px 6px 2px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;}
-.yt-video-title{font-size:11px;font-weight:600;color:#fff;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.yt-video-channel{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.yt-video-date{font-family:var(--mono);font-size:9px;color:rgba(255,50,50,.75);}
-.yt-channel-info{display:flex;align-items:center;gap:10px;padding:8px 14px 10px;border-bottom:1px solid rgba(255,255,255,.12);}
-.yt-channel-thumb{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#222;flex-shrink:0;}
-.yt-channel-name{font-weight:700;font-size:13px;color:#fff;}
-.yt-channel-subs{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.5);}
-.yt-api-note{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45);padding:10px 14px 4px;line-height:1.5;}
-.yt-api-input-wrap{padding:4px 14px 10px;}
-.yt-api-input-wrap input{width:100%;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 10px;font-size:11px;font-family:var(--mono);color:#fff;outline:none;}
-.yt-api-input-wrap input:focus{border-color:rgba(255,50,50,.6);}
-.yt-api-input-wrap input::placeholder{color:rgba(255,255,255,.3);}
-.yt-loading{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.5);padding:14px;text-align:center;}
-.yt-error{font-family:var(--mono);font-size:11px;color:rgba(255,100,100,.8);padding:10px 14px;line-height:1.5;}
+.yt-video-list::-webkit-scrollbar-track{background:transparent;}
+.yt-video-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.yt-video-card{
+  display:flex;gap:10px;align-items:center;
+  background:rgba(var(--em-rgb),.04);
+  border:1px solid var(--accent-line-soft);
+  border-radius:8px;overflow:hidden;cursor:pointer;
+  transition:border-color .15s, background .15s;
+  text-decoration:none;
+}
+.yt-video-card:hover{
+  background:rgba(var(--em-rgb),.07);
+  border-color:var(--accent-line, var(--border));
+}
+.yt-thumb{
+  width:64px;min-width:64px;height:38px;
+  object-fit:cover;background:var(--bg-base);
+  border-right:1px solid var(--border);
+}
+.yt-video-info{
+  padding:6px 10px 6px 2px;flex:1;min-width:0;
+  display:flex;flex-direction:column;justify-content:center;gap:3px;
+}
+.yt-video-title{
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  color:var(--text);line-height:1.3;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.yt-video-channel{
+  font-family:var(--mono);font-size:9.5px;color:var(--text-muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.yt-video-date{font-family:var(--mono);font-size:9px;color:var(--text-muted);}
+.yt-channel-info{
+  display:flex;align-items:center;gap:10px;
+  padding:0 0 10px;border-bottom:1px solid var(--accent-line-soft);
+  margin-bottom:10px;
+}
+.yt-channel-thumb{
+  width:28px;height:28px;border-radius:50%;
+  object-fit:cover;background:var(--bg-base);flex-shrink:0;
+}
+.yt-channel-name{font-family:var(--sans);font-weight:600;font-size:12.5px;color:var(--text);}
+.yt-channel-subs{font-family:var(--mono);font-size:9.5px;color:var(--text-muted);}
+.yt-api-note{
+  font-family:var(--mono);font-size:10px;color:var(--text-muted);
+  padding:0 0 8px;line-height:1.55;
+}
+.yt-api-input-wrap{padding:0 0 8px;}
+.yt-api-input-wrap input{
+  width:100%;background:var(--bg-base, #fff);
+  border:1px solid var(--border);border-radius:6px;
+  padding:7px 11px;font-size:11px;font-family:var(--mono);
+  color:var(--text);outline:none;
+}
+.yt-api-input-wrap input:focus{border-color:var(--em);}
+.yt-api-input-wrap input::placeholder{color:var(--text-muted);opacity:.7;}
+.yt-loading{font-family:var(--mono);font-size:11px;color:var(--text-muted);padding:14px;text-align:center;}
+.yt-error{font-family:var(--mono);font-size:11px;color:#b92020;padding:10px 0;line-height:1.5;}
 
 /* ── COIN SYSTEM ── */
 #coinWallet{
@@ -1911,16 +2110,28 @@ nav:hover .nav-tab-label{opacity:1;}
 .coin-hist-amount.neg{color:#b91c1c;}
 
 /* ── SKELETON SCREENS ── */
+/* Surface-tone skeletons — pulse a subtle accent tint so they read on
+   cream / dark equally well (previously used rgba(255,255,255,…) which
+   was invisible on the cream surface). */
 @keyframes skeletonPulse{0%,100%{opacity:.55}50%{opacity:.25}}
-.skeleton-line,.skeleton-block{background:rgba(255,255,255,.18);border-radius:5px;animation:skeletonPulse 1.6s ease-in-out infinite;}
-.gh-skeleton{padding:12px 18px 16px;}
-.gh-skeleton .sk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.gh-skeleton .sk-stat{height:44px;background:rgba(255,255,255,.14);border-radius:8px;animation:skeletonPulse 1.6s ease-in-out infinite;}
-.gh-skeleton .sk-repo{height:56px;background:rgba(255,255,255,.12);border-radius:8px;animation:skeletonPulse 1.6s ease-in-out infinite;margin-bottom:8px;}
+.skeleton-line,.skeleton-block{background:rgba(var(--em-rgb),.14);border-radius:5px;animation:skeletonPulse 1.6s ease-in-out infinite;}
+.gh-skeleton{padding:11px 12px 12px;}
+.gh-skeleton .sk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px;}
+.gh-skeleton .sk-stat{height:42px;background:rgba(var(--em-rgb),.10);border-radius:8px;animation:skeletonPulse 1.6s ease-in-out infinite;}
+.gh-skeleton .sk-repo{height:50px;background:rgba(var(--em-rgb),.08);border-radius:8px;animation:skeletonPulse 1.6s ease-in-out infinite;margin-bottom:6px;}
 .gh-skeleton .sk-repo:last-child{margin-bottom:0;}
-.yt-skeleton{padding:8px 14px 12px;display:flex;flex-direction:column;gap:10px;}
-.yt-skeleton-card{display:flex;gap:10px;align-items:flex-start;}
-.yt-skeleton-card .sk-thumb{width:100px;height:60px;border-radius:6px;flex-shrink:0;background:rgba(255,255,255,.14);animation:skeletonPulse 1.6s ease-in-out infinite;}
+.yt-skeleton{padding:0;display:flex;flex-direction:column;gap:6px;}
+.yt-skeleton-card{
+  display:flex;gap:10px;align-items:center;
+  background:rgba(var(--em-rgb),.04);
+  border:1px solid var(--accent-line-soft);
+  border-radius:8px;padding:6px;
+}
+.yt-skeleton-card .sk-thumb{
+  width:64px;height:38px;border-radius:5px;flex-shrink:0;
+  background:rgba(var(--em-rgb),.10);
+  animation:skeletonPulse 1.6s ease-in-out infinite;
+}
 .yt-skeleton-card .sk-info{flex:1;display:flex;flex-direction:column;gap:5px;}
 
 /* ── SCROLL REVEAL (Framer Motion whileInView) ── */
@@ -4055,6 +4266,70 @@ button:active:not(:disabled),
   background: rgba(var(--em-rgb), 0.04);
 }
 .m-widget-add-icon { font-size: 14px; }
+
+/* ── Mobile widget — brand chip + brand-link cards (F4 Sprint 4) ──
+   .m-widget-chip turns the icon glyph into a tinted square that picks
+   up `style="color/background/border-color"` from the JS so each
+   brand can supply its own accent without new CSS classes. The body
+   primitives below are reused by GitHub / LinkedIn / YouTube mobile
+   widgets — read-only summaries of the desktop hub configuration. */
+.m-widget-chip {
+  width: 20px; height: 20px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  background: rgba(var(--em-rgb), 0.10);
+  border: 1px solid var(--border);
+  color: var(--em);
+}
+.m-widget-brand {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 4px 0;
+}
+.m-widget-brand-head {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.m-widget-brand-title {
+  font-family: var(--display); font-style: italic; font-weight: 700;
+  font-size: 16px; color: var(--text); line-height: 1.1;
+}
+.m-widget-brand-host {
+  font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.m-widget-brand-info {
+  font-family: var(--sans); font-size: 12px; color: var(--text-mid);
+  line-height: 1.5;
+}
+.m-widget-brand-note {
+  font-family: var(--sans); font-size: 12px; color: var(--text-mid);
+  line-height: 1.5;
+}
+.m-widget-brand-open {
+  align-self: flex-start;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1.2px;
+  text-transform: uppercase; font-weight: 700;
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--em);
+  text-decoration: none;
+}
+.m-widget-stat-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.m-widget-stat {
+  background: rgba(var(--em-rgb), 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 6px; text-align: center;
+}
+.m-widget-stat-val {
+  font-family: var(--mono); font-size: 16px; font-weight: 500;
+  color: var(--text); font-variant-numeric: tabular-nums; line-height: 1;
+}
+.m-widget-stat-lbl {
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-muted); margin-top: 5px;
+}
 
 /* ──────────────────────────────────────────────────────────────────────────
    Mobile shared section primitives
