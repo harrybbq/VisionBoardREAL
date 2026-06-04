@@ -16,11 +16,14 @@ import CoachBriefPanel from './CoachBriefPanel';
 import QuickLog from './QuickLog';
 import FriendsRail from './friends/FriendsRail';
 import RatingsPanel from './RatingsPanel';
+import { useHubModuleMenu, moduleIdFromLabel } from './HubModuleMenu';
 
 // ── Panel primitive ──────────────────────────────────────────────────────
+// Each panel tags itself with data-hub-module (derived from its label)
+// so the right-click transparency menu can target it. See HubModuleMenu.
 function OsPanel({ label, right, children, bodyClass = '', innerPadding = true }) {
   return (
-    <div className="os-panel">
+    <div className="os-panel" data-hub-module={moduleIdFromLabel(label)} data-hub-module-label={label}>
       <div className="os-panel-label">
         <span className="os-panel-label-text">{label}</span>
         {right ? <span className="os-panel-label-right">{right}</span> : null}
@@ -280,7 +283,7 @@ export function OsTrackersPanel({ trackers, logs }) {
 // The actual imperative rendering is mounted by the parent via a ref. We
 // just provide the panel shell and let the parent stuff the canvas into it.
 export const OsWidgetsPanel = ({ canvasRef }) => (
-  <div className="os-panel os-widgets">
+  <div className="os-panel os-widgets" data-hub-module="widgets" data-hub-module-label="Widgets">
     <div className="os-panel-label">
       <span className="os-panel-label-text">Widgets</span>
       <span className="os-panel-label-right">Canvas</span>
@@ -542,8 +545,14 @@ export default function HubOsLayout({
   const streak = S.currentStreak || 0;
   const level = Math.max(1, Math.floor(coins / 500) + 1);
 
+  // Right-click any panel → toggle its background transparency.
+  const moduleMenu = useHubModuleMenu({
+    S, update,
+    syncKey: `${S.links?.length || 0}:${S.ytWidgets?.length || 0}`,
+  });
+
   return (
-    <div className="hub-os">
+    <div className="hub-os" ref={moduleMenu.rootRef} onContextMenu={moduleMenu.onContextMenu}>
       {/* ── TOP ROW ── */}
       <div className="hub-os-top">
         <OsProfilePanel
@@ -609,6 +618,8 @@ export default function HubOsLayout({
       <div className="hub-os-bottom">
         <OsActivityPanel S={S} />
       </div>
+
+      {moduleMenu.menuNode}
     </div>
   );
 }

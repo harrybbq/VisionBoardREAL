@@ -1,22 +1,25 @@
 /**
  * HubModuleMenu — right-click context menu for hub modules.
  *
- * Right-clicking a hub module (Widgets, Friends, Profile, Ratings,
- * Trackers) opens a small menu with a toggle switch that makes the
- * module's background transparent — the same barely-there treatment
- * the Ratings Ledger uses, so the page shows through.
+ * Right-clicking a hub module opens a small menu with a toggle switch
+ * that makes the module's background transparent — the same barely-
+ * there treatment the Ratings Ledger uses, so the page shows through.
  *
- * The preference is stored per module in S.moduleTransparency and
- * applied via a `data-transparent` attribute on the module element
- * (see useModuleTransparency below + the [data-transparent] rules in
- * index.css). The modules themselves don't need to know about this —
- * we find them by their stable class names, so no prop threading.
+ * Two ways a module is recognised (checked in this order):
+ *   1. `data-hub-module="<id>"` (+ optional `data-hub-module-label`)
+ *      — used by the OS operator-console panels (OsPanel tags itself).
+ *   2. A class selector in MODULE_DEFS — used by the cream hub's
+ *      modules and the shared Ratings / Friends panels.
  *
- * MODULE_DEFS is the registry: { id, label, selector }. Add a row to
- * extend the menu to another module.
+ * The preference is stored per id in S.moduleTransparency and applied
+ * via a `data-transparent` attribute on the module element (see the
+ * [data-transparent] rules in index.css / hub-dark.css). Both layouts
+ * drive this through the shared useHubModuleMenu() hook below.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+// Cream-hub + shared modules, matched by class name (no markup change
+// needed in the child components).
 export const MODULE_DEFS = [
   { id: 'widgets',  label: 'Widgets',  selector: '.hub-canvas-panel' },
   { id: 'ratings',  label: 'Ratings',  selector: '.ratings-ledger' },
@@ -25,38 +28,95 @@ export const MODULE_DEFS = [
   { id: 'friends',  label: 'Friends',  selector: '.fc-panel' },
 ];
 
-/**
- * Resolve a right-click target to the module it belongs to. Returns
- * { id, label, el } or null if the click wasn't inside a known module.
- */
+/** Resolve a right-click to the module it belongs to. Attribute-tagged
+ *  modules win over class-matched ones (handles the OS case where a
+ *  panel wraps a class-matched child). Returns { id, label, el } or
+ *  null when the click wasn't inside a known module. */
 export function resolveModuleFromEvent(e, rootEl) {
+  const within = el => el && (!rootEl || rootEl.contains(el));
+
+  const attrEl = e.target.closest('[data-hub-module]');
+  if (within(attrEl)) {
+    return {
+      id: attrEl.dataset.hubModule,
+      label: attrEl.dataset.hubModuleLabel || attrEl.dataset.hubModule,
+      el: attrEl,
+    };
+  }
   for (const def of MODULE_DEFS) {
     const el = e.target.closest(def.selector);
-    if (el && (!rootEl || rootEl.contains(el))) {
-      return { id: def.id, label: def.label, el };
-    }
+    if (within(el)) return { id: def.id, label: def.label, el };
   }
   return null;
 }
 
-/**
- * Effect hook: keeps every module's `data-transparent` attribute in
- * sync with S.moduleTransparency. Re-applies whenever the map changes
- * or `syncKey` bumps (e.g. after the imperative widget canvas
- * re-renders and could otherwise miss the attribute).
- */
+/** Effect: keep every module's `data-transparent` attribute in sync
+ *  with S.moduleTransparency. Re-applies when the map changes or
+ *  `syncKey` bumps (e.g. after the imperative widget canvas re-renders
+ *  and could otherwise miss the attribute). */
 export function useModuleTransparency(rootRef, transparency, syncKey) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    const t = transparency || {};
+    const apply = (el, id) => {
+      if (!id) return;
+      if (t[id]) el.setAttribute('data-transparent', 'true');
+      else el.removeAttribute('data-transparent');
+    };
+    root.querySelectorAll('[data-hub-module]').forEach(el => apply(el, el.dataset.hubModule));
     for (const def of MODULE_DEFS) {
-      const on = !!(transparency || {})[def.id];
       root.querySelectorAll(def.selector).forEach(el => {
-        if (on) el.setAttribute('data-transparent', 'true');
-        else el.removeAttribute('data-transparent');
+        if (el.hasAttribute('data-hub-module')) return; // already handled above
+        apply(el, def.id);
       });
     }
   }, [rootRef, transparency, syncKey]);
+}
+
+/**
+ * Shared wiring for both hub layouts. Returns:
+ *   rootRef        — attach to the hub container
+ *   onContextMenu  — attach to the same container
+ *   menuNode       — render anywhere inside the layout
+ */
+export function useHubModuleMenu({ S, update, syncKey }) {
+  const rootRef = useRef(null);
+  const [menu, setMenu] = useState(null);
+  const transparency = S.moduleTransparency || {};
+
+  useModuleTransparency(rootRef, transparency, syncKey);
+
+  function onContextMenu(e) {
+    const hit = resolveModuleFromEvent(e, rootRef.current);
+    if (!hit) return; // not over a module — let the native menu show
+    e.preventDefault();
+    setMenu({ id: hit.id, label: hit.label, x: e.clientX, y: e.clientY });
+  }
+
+  function onToggle(id) {
+    update(prev => {
+      const cur = prev.moduleTransparency || {};
+      return { ...prev, moduleTransparency: { ...cur, [id]: !cur[id] } };
+    });
+    setMenu(null);
+  }
+
+  const menuNode = (
+    <HubModuleMenu
+      menu={menu}
+      transparency={transparency}
+      onToggle={onToggle}
+      onClose={() => setMenu(null)}
+    />
+  );
+
+  return { rootRef, onContextMenu, menuNode };
+}
+
+/** Slugify an OsPanel label into a stable module id. */
+export function moduleIdFromLabel(label) {
+  return String(label || 'panel').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 export default function HubModuleMenu({ menu, transparency, onToggle, onClose }) {
@@ -91,7 +151,6 @@ export default function HubModuleMenu({ menu, transparency, onToggle, onClose })
     <div
       className="hub-module-menu"
       style={{ left, top }}
-      // Keep clicks inside from bubbling to the document close handler.
       onPointerDown={e => e.stopPropagation()}
       role="menu"
     >

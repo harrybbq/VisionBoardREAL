@@ -259,6 +259,15 @@ html[data-hub-os] .os-panel {
   flex-direction: column;
   min-height: 0;
 }
+/* Right-click → "Transparent background": drop the panel fill so the
+   page shows through. Border + label divider stay, like the Ratings
+   Ledger. Covers the Widgets panel (.os-widgets is also an .os-panel). */
+html[data-hub-os] .os-panel[data-transparent="true"],
+html[data-hub-os] .os-panel[data-transparent="true"] .os-panel-label,
+html[data-hub-os] .os-panel[data-transparent="true"] .os-panel-body {
+  background: transparent !important;
+  box-shadow: none !important;
+}
 
 html[data-hub-os] .os-panel-label {
   font-family: var(--mono);
