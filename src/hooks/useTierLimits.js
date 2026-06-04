@@ -3,8 +3,13 @@ import { useSubscriptionContext } from '../context/SubscriptionContext';
 /**
  * Free-tier caps. Pro and Lifetime have no caps.
  *
- * Each cap is { limit, label } where label is shown in the paywall
- * modal so the user understands exactly what they're hitting.
+ * Numeric caps are { limit, label } where label is shown in the
+ * paywall modal so the user understands exactly what they're hitting.
+ *
+ * Feature gates are { feature: true, label, sub } — used when the thing
+ * being gated is a whole Pro-only feature rather than a count limit.
+ * The paywall renders `sub` instead of the "you've reached your limit
+ * of N label" copy.
  */
 export const FREE_CAPS = {
   links:        { limit: 3,  label: 'link widgets' },
@@ -13,6 +18,13 @@ export const FREE_CAPS = {
   holidays:     { limit: 1,  label: 'holiday' },
   shopItems:    { limit: 50, label: 'shopping items' },
   trackers:     { limit: 5,  label: 'trackers' },
+  // Feature gate — the "Our Apps" widget presets (FloorplanStudio,
+  // TubeLube, …) are a Pro bonus.
+  ourApps: {
+    feature: true,
+    label: 'Our Apps',
+    sub: 'Our Apps are a Pro bonus — add FloorplanStudio, TubeLube and more straight to your hub. Upgrade to unlock them, plus proactive coach nudges, the AI daily brief, and every cap removed.',
+  },
 };
 
 /**

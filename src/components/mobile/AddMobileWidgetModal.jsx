@@ -11,6 +11,11 @@
  */
 import { WIDGET_META } from './MobileWidget';
 import { APP_PRESETS } from '../../data/appPresets';
+import { useSubscriptionContext } from '../../context/SubscriptionContext';
+
+// App-preset widget types (FloorplanStudio / TubeLube / …) — a Pro
+// bonus, so they're locked for free users in the picker below.
+const APP_PRESET_TYPES = new Set(APP_PRESETS.map(p => p.id));
 
 const PICKER_ORDER = [
   'notepad',
@@ -27,12 +32,19 @@ const PICKER_ORDER = [
   'mail',
 ];
 
-export default function AddMobileWidgetModal({ openId, onClose, existingTypes, onAdd }) {
+export default function AddMobileWidgetModal({ openId, onClose, existingTypes, onAdd, onUpgrade }) {
+  const { hasPro } = useSubscriptionContext();
   const isOpen = openId === 'addMobileWidgetModal';
   if (!isOpen) return null;
   const existing = new Set(existingTypes || []);
 
   function pick(type) {
+    // Our Apps presets are a Pro bonus — route free users to the paywall.
+    if (APP_PRESET_TYPES.has(type) && !hasPro) {
+      onClose('addMobileWidgetModal');
+      onUpgrade?.();
+      return;
+    }
     onAdd({ id: 'w' + Date.now(), type });
     onClose('addMobileWidgetModal');
   }
@@ -58,6 +70,9 @@ export default function AddMobileWidgetModal({ openId, onClose, existingTypes, o
             if (!meta) return null;
             const alreadyAdded = existing.has(type);
             const stub = !!meta.requires;
+            // Our Apps presets are a Pro bonus — locked for free users,
+            // but still tappable (routes to the paywall via pick()).
+            const proLocked = APP_PRESET_TYPES.has(type) && !hasPro;
             return (
               <button
                 key={type}
@@ -71,7 +86,7 @@ export default function AddMobileWidgetModal({ openId, onClose, existingTypes, o
                   background: alreadyAdded ? 'transparent' : 'var(--card, rgba(255,255,255,0.04))',
                   color: 'var(--text)', textAlign: 'left',
                   cursor: alreadyAdded ? 'not-allowed' : 'pointer',
-                  opacity: alreadyAdded ? 0.5 : 1,
+                  opacity: alreadyAdded ? 0.5 : proLocked ? 0.75 : 1,
                   transition: 'all .15s',
                 }}
               >
@@ -89,10 +104,18 @@ export default function AddMobileWidgetModal({ openId, onClose, existingTypes, o
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{
-                    display: 'block',
+                    display: 'flex', alignItems: 'center', gap: 6,
                     fontFamily: 'var(--sans)', fontSize: 13.5, fontWeight: 600,
                   }}>
                     {meta.label}
+                    {proLocked && (
+                      <span style={{
+                        fontFamily: 'var(--mono)', fontSize: 8, fontWeight: 700,
+                        letterSpacing: 1, padding: '1px 5px', borderRadius: 4,
+                        background: 'rgba(200,151,10,.14)', color: 'var(--gold, #c8970a)',
+                        border: '1px solid rgba(200,151,10,.30)',
+                      }}>PRO</span>
+                    )}
                   </span>
                   <span style={{
                     display: 'block',
@@ -101,6 +124,7 @@ export default function AddMobileWidgetModal({ openId, onClose, existingTypes, o
                     marginTop: 2,
                   }}>
                     {alreadyAdded ? 'Already added'
+                      : proLocked ? 'Pro bonus — tap to upgrade'
                       : stub ? 'Coming soon'
                       : 'Available now'}
                   </span>

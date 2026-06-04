@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import AddMobileWidgetModal from './mobile/AddMobileWidgetModal';
 import { APP_PRESETS, appPresetToLink } from '../data/appPresets';
+import { useSubscriptionContext } from '../context/SubscriptionContext';
 
 function Modal({ id, openId, onClose, children, style }) {
   return (
@@ -19,6 +20,13 @@ function Modal({ id, openId, onClose, children, style }) {
 
 // ── Add Widget picker ──
 function AddLinkModal({ openId, onClose, onSwitchModal, onAddNotepad, onAddApp }) {
+  // Our Apps presets are a Pro bonus. Free users see them locked with
+  // a PRO badge; clicking routes to the paywall instead of adding.
+  const { hasPro } = useSubscriptionContext();
+  function openPaywall() {
+    onClose('addLinkModal');
+    onSwitchModal('paywall:ourApps');
+  }
   return (
     <Modal id="addLinkModal" openId={openId} onClose={onClose}>
       <h3>Add Widget</h3>
@@ -43,31 +51,61 @@ function AddLinkModal({ openId, onClose, onSwitchModal, onAddNotepad, onAddApp }
         </button>
       </div>
 
-      {/* Our Apps — one-click presets for our own apps (planned as Pro
-          bonus tools). A preset with no URL yet (not deployed) renders
-          disabled with its deploy hint, so the slot exists without a
-          dead link. */}
+      {/* Our Apps — one-click presets for our own apps, a Pro bonus.
+          Free users see them locked (PRO badge → paywall). For Pro
+          users, a preset with no URL yet (not deployed) renders
+          disabled with its deploy hint instead. */}
       <div style={{
-        fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1.6,
-        textTransform: 'uppercase', color: 'var(--text-muted)',
+        display: 'flex', alignItems: 'center', gap: 8,
         margin: '14px 0 8px',
-      }}>Our Apps</div>
+      }}>
+        <span style={{
+          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1.6,
+          textTransform: 'uppercase', color: 'var(--text-muted)',
+        }}>Our Apps</span>
+        <span style={{
+          fontFamily: 'var(--mono)', fontSize: 8.5, fontWeight: 700,
+          letterSpacing: 1, padding: '1px 6px', borderRadius: 4,
+          background: 'rgba(200,151,10,.14)', color: 'var(--gold, #c8970a)',
+          border: '1px solid rgba(200,151,10,.30)',
+        }}>PRO</span>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         {APP_PRESETS.map(preset => {
-          const disabled = !preset.url;
+          // For Pro users: enabled unless the app isn't deployed yet.
+          // For free users: always locked (clicking opens the paywall).
+          const notDeployed = !preset.url;
+          const locked = !hasPro;
+          const dim = locked || notDeployed;
+          const title = locked
+            ? `${preset.name} is a Pro bonus — upgrade to add it`
+            : notDeployed ? preset.requires : `Add ${preset.name} to your hub`;
           return (
             <button
               key={preset.id}
               className="btn btn-ghost"
-              disabled={disabled}
-              title={disabled ? preset.requires : `Add ${preset.name} to your hub`}
+              // Locked tiles stay clickable (→ paywall); only an
+              // undeployed app for a Pro user is truly disabled.
+              disabled={!locked && notDeployed}
+              title={title}
               style={{
                 padding: '16px', display: 'flex', flexDirection: 'column',
                 alignItems: 'center', gap: '6px', borderRadius: '12px', height: 'auto',
-                opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer',
+                position: 'relative',
+                opacity: dim ? 0.6 : 1,
+                cursor: (!locked && notDeployed) ? 'not-allowed' : 'pointer',
               }}
-              onClick={() => { if (!disabled) onAddApp(preset); }}
+              onClick={() => {
+                if (locked) { openPaywall(); return; }
+                if (!notDeployed) onAddApp(preset);
+              }}
             >
+              {locked && (
+                <span style={{
+                  position: 'absolute', top: 8, right: 8,
+                  fontSize: 11, lineHeight: 1, color: 'var(--gold, #c8970a)',
+                }}>🔒</span>
+              )}
               <span style={{
                 width: 36, height: 36, borderRadius: 9,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -77,7 +115,7 @@ function AddLinkModal({ openId, onClose, onSwitchModal, onAddNotepad, onAddApp }
               }}>{preset.icon}</span>
               <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>{preset.name}</span>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center' }}>
-                {disabled ? 'Deploy first to enable' : preset.tagline}
+                {locked ? 'Pro bonus tool' : notDeployed ? 'Deploy first to enable' : preset.tagline}
               </span>
             </button>
           );
@@ -1572,6 +1610,7 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
         onClose={onClose}
         existingTypes={(S.mobileWidgets || []).map(w => w.type)}
         onAdd={handleAddMobileWidget}
+        onUpgrade={() => onOpen('paywall:ourApps')}
       />
       <AddTrackerModal openId={effectiveOpen} onClose={onClose} onAdd={handleAddTracker} />
       <MultiLogModal

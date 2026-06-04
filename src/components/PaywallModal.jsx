@@ -129,13 +129,17 @@ export default function PaywallModal({ openId, onClose, onUpgrade, onShowToast }
               <h3 className="paywall-hero-title">
                 {hasPro
                   ? "You're already on Pro"
-                  : "Your coach watches your patterns and nudges you when it sees a slip."}
+                  : cap.feature
+                    ? `${cap.label} — a Pro bonus.`
+                    : "Your coach watches your patterns and nudges you when it sees a slip."}
               </h3>
               <p className="paywall-hero-sub">
                 {hasPro
                   ? 'Manage your subscription below.'
-                  : `You've reached your free limit of ${cap.limit} ${cap.label}. ` +
-                    'Unlock proactive nudges, the AI daily brief, and remove every cap.'}
+                  : cap.feature
+                    ? cap.sub
+                    : `You've reached your free limit of ${cap.limit} ${cap.label}. ` +
+                      'Unlock proactive nudges, the AI daily brief, and remove every cap.'}
               </p>
             </div>
 
