@@ -44,7 +44,7 @@ export default function PageHeader({ activeSection, coins, onOpenCoinHistory, pr
   return (
     <div id="pageHeader">
       <span id="pageHeader-title">
-        <span className="header-title-full">Vision Board</span>
+        <span className="header-title-full">Vantage</span>
         <span className="header-title-short" style={{ display: 'inline-flex', alignItems: 'center' }}>
           <Logo size={16} strokeWidth={8} c2={null} />
         </span>

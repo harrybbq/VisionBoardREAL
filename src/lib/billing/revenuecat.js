@@ -187,7 +187,11 @@ export function deriveTierFromEntitlements(entitlements) {
   if (entitlements.pro_lifetime?.isActive) return 'lifetime';
   if (entitlements.lifetime?.isActive) return 'lifetime';
   if (entitlements.pro?.isActive) return 'pro';
+  // Display-string entitlement IDs seen in the RC dashboard. Both the
+  // legacy 'VisionBoard Pro' and the rebranded 'Vantage Pro' are
+  // accepted so a dashboard rename doesn't break Pro detection.
   if (entitlements['VisionBoard Pro']?.isActive) return 'pro';
+  if (entitlements['Vantage Pro']?.isActive) return 'pro';
   return 'free';
 }
 
@@ -211,7 +215,7 @@ export function derivePlanFromEntitlements(entitlements) {
   if (!entitlements) return null;
   const lifetime = entitlements.pro_lifetime || entitlements.lifetime;
   if (lifetime?.isActive) return 'lifetime';
-  const pro = entitlements.pro || entitlements['VisionBoard Pro'];
+  const pro = entitlements.pro || entitlements['VisionBoard Pro'] || entitlements['Vantage Pro'];
   if (!pro?.isActive) return null;
   const product = (pro.productIdentifier || '').toLowerCase();
   if (product.includes('year') || product.includes('annual')) return 'annual';

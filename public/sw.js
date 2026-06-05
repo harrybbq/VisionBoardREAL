@@ -1,4 +1,4 @@
-// Vision Board Service Worker
+// Vantage Service Worker
 //
 // Strategy:
 //   - Hashed Vite assets (JS / CSS) → cache-first (safe: hashed filenames

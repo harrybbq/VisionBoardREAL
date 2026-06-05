@@ -31,7 +31,7 @@ function PrivacyPolicyContent() {
   return (
     <>
       <Section title="1. Who We Are">
-        <P>Vision Board ("the App", "we", "us") is a personal productivity and goal-tracking application. For questions about this policy, contact us via the in-app settings or the email address used when you registered.</P>
+        <P>Vantage ("the App", "we", "us") is a personal productivity and goal-tracking application. For questions about this policy, contact us via the in-app settings or the email address used when you registered.</P>
         <P>We are the data controller for personal data processed through this App. This policy applies to all users based in the United Kingdom and European Economic Area.</P>
       </Section>
 
@@ -83,14 +83,14 @@ function PrivacyPolicyContent() {
 
       <Section title="7. Third-Party Sign-In (Google &amp; Apple)">
         <P>You can choose to sign in with Google or Apple instead of creating a password. This is optional — email and password sign-in works without either.</P>
-        <P><strong>If you sign in with Google</strong>, Google shares with us: your email address, your display name, your Google profile picture, and a unique Google account identifier. We use these solely to create and authenticate your VisionBoard account. <strong>We do not request access to your Gmail, Google Drive, Google Calendar, or any other Google services</strong>; only the basic profile data needed to sign you in.</P>
+        <P><strong>If you sign in with Google</strong>, Google shares with us: your email address, your display name, your Google profile picture, and a unique Google account identifier. We use these solely to create and authenticate your Vantage account. <strong>We do not request access to your Gmail, Google Drive, Google Calendar, or any other Google services</strong>; only the basic profile data needed to sign you in.</P>
         <P><strong>If you sign in with Apple</strong>, Apple shares with us: your email address (or a private relay address if you choose to hide it), your name (only on first sign-in), and a unique Apple identifier. We use these in the same way as the Google data above.</P>
         <P><strong>Revoking access:</strong></P>
         <Ul items={[
-          'For Google: visit your Google Account → Security → Third-party apps and remove VisionBoard.',
-          'For Apple: System Settings → Apple ID → Sign in with Apple → VisionBoard → Stop using.',
+          'For Google: visit your Google Account → Security → Third-party apps and remove Vantage.',
+          'For Apple: System Settings → Apple ID → Sign in with Apple → Vantage → Stop using.',
         ]} />
-        <P>Revoking provider access doesn\'t delete your VisionBoard data. To remove your data from our servers, use Settings → Subscription → Delete account inside the App.</P>
+        <P>Revoking provider access doesn\'t delete your Vantage data. To remove your data from our servers, use Settings → Subscription → Delete account inside the App.</P>
       </Section>
 
       <Section title="8. Cookies &amp; Local Storage">
@@ -135,7 +135,7 @@ function TermsContent() {
   return (
     <>
       <Section title="1. The Service">
-        <P>Vision Board is a personal productivity app that lets you track goals, habits, achievements, a wish-list, and holidays. It is provided free of charge. We reserve the right to introduce paid features in the future; any such changes will be communicated clearly before taking effect.</P>
+        <P>Vantage is a personal productivity app that lets you track goals, habits, achievements, a wish-list, and holidays. It is provided free of charge. We reserve the right to introduce paid features in the future; any such changes will be communicated clearly before taking effect.</P>
       </Section>
 
       <Section title="2. Eligibility">
@@ -148,7 +148,7 @@ function TermsContent() {
           'You must not share your account with others.',
           'You are responsible for all activity that takes place under your account.',
           'You must provide a valid email address.',
-          'If you sign in via a third-party provider (Google or Apple), you are bound by that provider\'s terms in addition to these. Loss of access to your provider account may mean loss of access to your VisionBoard account — keep a recovery method enabled with the provider.',
+          'If you sign in via a third-party provider (Google or Apple), you are bound by that provider\'s terms in addition to these. Loss of access to your provider account may mean loss of access to your Vantage account — keep a recovery method enabled with the provider.',
         ]} />
       </Section>
 
@@ -182,7 +182,7 @@ function TermsContent() {
       </Section>
 
       <Section title="8. Intellectual Property">
-        <P>The Vision Board name, logo, and underlying code are our intellectual property. Nothing in these terms grants you any rights in them.</P>
+        <P>The Vantage name, logo, and underlying code are our intellectual property. Nothing in these terms grants you any rights in them.</P>
       </Section>
 
       <Section title="9. Disclaimers">
@@ -235,7 +235,7 @@ export default function LegalPage({ page, onClose }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
           <div>
             <div style={{ fontFamily: 'var(--mono, DM Mono, monospace)', fontSize: '10px', letterSpacing: '2px', color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', marginBottom: '4px' }}>
-              Vision Board
+              Vantage
             </div>
             <h1 style={{ fontFamily: 'var(--serif, Playfair Display, serif)', fontSize: '26px', fontWeight: 700, color: '#fff', margin: 0 }}>
               {isPrivacy ? 'Privacy Policy' : 'Terms of Service'}

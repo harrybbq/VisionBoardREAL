@@ -125,7 +125,7 @@ export default function PaywallModal({ openId, onClose, onUpgrade, onShowToast }
           >
             <div className="paywall-hero">
               <div className="paywall-hero-icon">◐</div>
-              <div className="paywall-hero-eyebrow">VisionBoard Pro</div>
+              <div className="paywall-hero-eyebrow">Vantage Pro</div>
               <h3 className="paywall-hero-title">
                 {hasPro
                   ? "You're already on Pro"

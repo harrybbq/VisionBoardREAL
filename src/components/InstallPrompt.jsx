@@ -76,7 +76,7 @@ export default function InstallPrompt() {
         {/* App icon */}
         <img
           src="/icon-192.png"
-          alt="Vision Board"
+          alt="Vantage"
           style={{ width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0 }}
         />
 
@@ -89,7 +89,7 @@ export default function InstallPrompt() {
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,.65)', lineHeight: 1.6 }}>
               Tap <strong style={{ color: '#fff' }}>Share</strong>{' '}
               <span style={{ fontSize: '14px' }}>⎙</span>{' '}
-              then <strong style={{ color: '#fff' }}>"Add to Home Screen"</strong> to install Vision Board.
+              then <strong style={{ color: '#fff' }}>"Add to Home Screen"</strong> to install Vantage.
             </div>
           ) : (
             <div style={{ fontSize: '12px', color: 'rgba(255,255,255,.65)', lineHeight: 1.6 }}>

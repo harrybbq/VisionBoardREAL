@@ -16,7 +16,7 @@ export default function Nav({ activeSection, onNavigate, onSignOut }) {
       <div className="nav-logo">
         <div className="nav-logo-icon"><Logo size={18} strokeWidth={8} c2={null} /></div>
         <div className="nav-logo-text">
-          Vision Board
+          Vantage
         </div>
       </div>
       <div className="nav-tabs">

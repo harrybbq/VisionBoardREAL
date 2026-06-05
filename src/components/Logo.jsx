@@ -1,5 +1,5 @@
 /**
- * VisionBoard Logo — Mono (V-Monogram).
+ * Vantage Logo — Mono (V-Monogram).
  *
  * Italic Playfair display "V" with a small gold serif bar
  * underneath. Premium / editorial feel. Picked over the Check

@@ -427,7 +427,7 @@ function Board({ userId, userEmail, onSignOut }) {
               {isSeenBefore
                 ? 'If Try Again keeps failing, your row may have been deleted server-side. ' +
                   'Choose Start fresh ONLY if you accept losing whatever was in the cloud.'
-                : 'If you\'ve never set up a Vision Board on this account before, choose Start fresh. ' +
+                : 'If you\'ve never set up Vantage on this account before, choose Start fresh. ' +
                   'Otherwise — please don\'t proceed and contact support; your data may be recoverable.'}
             </p>
           )}

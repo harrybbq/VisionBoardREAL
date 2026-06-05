@@ -345,14 +345,14 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
   function handleExportData() {
     const exportData = {
       exportedAt: new Date().toISOString(),
-      appVersion: 'VisionBoard v1',
+      appVersion: 'Vantage v1',
       data: S,
     };
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `visionboard-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `vantage-export-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -662,7 +662,7 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
         <div className="card" style={{ padding: '22px' }}>
           <h3 style={{ margin: '0 0 4px' }}>Your Data</h3>
           <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
-            Download a copy of all your Vision Board data as a JSON file. This satisfies your right to data portability under UK GDPR.
+            Download a copy of all your Vantage data as a JSON file. This satisfies your right to data portability under UK GDPR.
           </p>
           <button
             onClick={handleExportData}

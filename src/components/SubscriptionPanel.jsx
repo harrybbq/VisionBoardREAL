@@ -63,7 +63,7 @@ export default function SubscriptionPanel() {
 
   async function handleManage() {
     const ok = await openManageSubscription();
-    if (!ok) flash('info', 'Open the App Store or Play Store and find VisionBoard under Subscriptions.');
+    if (!ok) flash('info', 'Open the App Store or Play Store and find Vantage under Subscriptions.');
   }
 
   // Customer Center is RevenueCat's prebuilt sheet — view active sub,

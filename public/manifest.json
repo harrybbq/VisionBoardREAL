@@ -1,6 +1,6 @@
 {
-  "name": "Vision Board",
-  "short_name": "VisionBoard",
+  "name": "Vantage",
+  "short_name": "Vantage",
   "description": "Your personal goal-tracking and vision board app.",
   "start_url": "/",
   "scope": "/",

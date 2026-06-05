@@ -35,14 +35,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 const STEPS_CREAM = [
   {
     id: 'welcome', label: 'Welcome', icon: '✦',
-    title: 'Welcome to VisionBoard',
+    title: 'Welcome to Vantage',
     body: 'A quick 30-second tour. You can skip any time — it lives in Settings if you want to replay it later.',
     target: null, placement: 'center',
   },
   {
     id: 'hub', label: 'Hub',
     title: 'Your hub',
-    body: 'Home base. VisionBoard is your personal life dashboard — goals, habits, nutrition, holidays, and rewards in one place. The Hub is the landing view: pin useful links, add widgets, jot quick notes, and see your daily log at a glance.',
+    body: 'Home base. Vantage is your personal life dashboard — goals, habits, nutrition, holidays, and rewards in one place. The Hub is the landing view: pin useful links, add widgets, jot quick notes, and see your daily log at a glance.',
     target: 'hub', placement: 'bottom', arrowDir: 'up',
     navTo: 'hub',
   },
@@ -101,7 +101,7 @@ const STEPS_DARK = [
   {
     id: 'hub', label: 'hub',
     title: 'the hub',
-    body: 'Home base. VisionBoard is a personal life dashboard — goals, habits, nutrition, holidays, rewards. Hub is the landing view: widget canvas, linked resources, daily log.',
+    body: 'Home base. Vantage is a personal life dashboard — goals, habits, nutrition, holidays, rewards. Hub is the landing view: widget canvas, linked resources, daily log.',
     target: 'hub', placement: 'bottom', arrowDir: 'up',
     navTo: 'hub',
   },

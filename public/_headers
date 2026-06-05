@@ -1,4 +1,4 @@
-# Vision Board — Netlify response headers
+# Vantage — Netlify response headers
 
 # Service worker: must be served from root scope with correct MIME type
 /sw.js

@@ -1,4 +1,4 @@
-# Vision Board
+# Vantage
 
 Personal goal-tracking, habit logging, and vision board app.
 Built with **React 18 + Vite**, backed by **Supabase**, packaged for native mobile with **Capacitor 7**.
@@ -50,7 +50,7 @@ The `public/_headers` file configures MIME types and security headers.
 ### App configuration
 
 - **App ID:** `com.visionboard.app`
-- **App Name:** `Vision Board`
+- **App Name:** `Vantage`
 - **Config file:** `capacitor.config.ts`
 
 ### Build and sync commands
