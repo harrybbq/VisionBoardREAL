@@ -18,6 +18,10 @@ export const DEFAULT_STATE = {
   shopCategories: [],
   shopFilter: 'all',
   widgetPositions: {},
+  // Per-section background images (data URLs), keyed by section id.
+  // Synced in state so they follow the account across devices (migrated
+  // from the old device-local localStorage('vb4_bg')).
+  backgrounds: {},
   // Per-widget custom sizes { [widgetId]: { w, h } } set by dragging a
   // widget's resize grip. Cleared by the "Sort" action alongside
   // widgetPositions.

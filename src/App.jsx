@@ -50,12 +50,38 @@ const pageMotion = {
   transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
 };
 
-// ── Background helpers (device-local, not synced) ─────────────────────────
-function loadBgs() {
-  try { return JSON.parse(localStorage.getItem('vb4_bg') || '{}'); } catch { return {}; }
+// ── Background helpers ────────────────────────────────────────────────────
+// Backgrounds used to live in localStorage (device-local), which meant they
+// didn't follow the account between mobile and desktop. They now live in the
+// synced state (S.backgrounds). These helpers only handle the one-time
+// migration off the old localStorage key.
+const LEGACY_BG_KEY = 'vb4_bg';
+function loadLegacyBgs() {
+  try { return JSON.parse(localStorage.getItem(LEGACY_BG_KEY) || '{}'); } catch { return {}; }
 }
-function saveBgs(bgs) {
-  localStorage.setItem('vb4_bg', JSON.stringify(bgs));
+
+/**
+ * Downscale a base64/data-URL image to a sane size so syncing it in the
+ * state blob doesn't bloat every save. Max 1600px on the long edge,
+ * JPEG @ 0.72. Resolves to a data URL (or the original on failure).
+ */
+function compressImageDataUrl(dataUrl, max = 1600, quality = 0.72) {
+  return new Promise(resolve => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    } catch { resolve(dataUrl); }
+  });
 }
 
 // Maps add-modal IDs to the free-tier cap key + a fn that counts current items
@@ -81,7 +107,9 @@ function Board({ userId, userEmail, onSignOut }) {
   const [coinToast, setCoinToast] = useState({ message: '', type: '', visible: false });
   const [localDataExists, setLocalDataExists] = useState(() => hasLocalStorageData());
   const [noBanner, setNoBanner] = useState(() => localStorage.getItem('vb4_no_banner') === '1');
-  const [backgrounds, setBackgrounds] = useState(() => loadBgs());
+  // Backgrounds now live in synced state (S.backgrounds) so they follow
+  // the account across devices. See the migration effect below.
+  const backgrounds = S.backgrounds || {};
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [legalPage, setLegalPage] = useState(null);
@@ -116,6 +144,30 @@ function Board({ userId, userEmail, onSignOut }) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S.colorScheme]);
+
+  // One-time migration: backgrounds used to be stored device-locally in
+  // localStorage('vb4_bg'). Move any found into the synced state so they
+  // follow the account, then clear the legacy key. Won't clobber if the
+  // account already has synced backgrounds.
+  const bgMigratedRef = useRef(false);
+  useEffect(() => {
+    if (loading || bgMigratedRef.current) return;
+    bgMigratedRef.current = true;
+    const legacy = loadLegacyBgs();
+    const keys = Object.keys(legacy);
+    if (!keys.length) return;
+    if (Object.keys(S.backgrounds || {}).length > 0) {
+      try { localStorage.removeItem(LEGACY_BG_KEY); } catch {}
+      return;
+    }
+    (async () => {
+      const out = {};
+      for (const k of keys) out[k] = await compressImageDataUrl(legacy[k]);
+      update(prev => ({ ...prev, backgrounds: { ...(prev.backgrounds || {}), ...out } }));
+      try { localStorage.removeItem(LEGACY_BG_KEY); } catch {}
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Apply stored theme — Pro-gated (lifetime counts as Pro). If entitlement
   // flips false we auto-revert via applyTheme's resolveEffectiveTheme, so
@@ -265,21 +317,28 @@ function Board({ userId, userEmail, onSignOut }) {
   function handleBgFileChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const section = activeSection;
     const reader = new FileReader();
-    reader.onload = ev => {
-      const bgs = { ...backgrounds, [activeSection]: ev.target.result };
-      setBackgrounds(bgs);
-      saveBgs(bgs);
+    reader.onload = async ev => {
+      // Compress before storing — backgrounds sync in the state blob now,
+      // so a raw multi-MB upload would bloat every save.
+      const compressed = await compressImageDataUrl(ev.target.result);
+      update(prev => ({
+        ...prev,
+        backgrounds: { ...(prev.backgrounds || {}), [section]: compressed },
+      }));
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   }
 
   function handleRemoveBg() {
-    const bgs = { ...backgrounds };
-    delete bgs[activeSection];
-    setBackgrounds(bgs);
-    saveBgs(bgs);
+    const section = activeSection;
+    update(prev => {
+      const bgs = { ...(prev.backgrounds || {}) };
+      delete bgs[section];
+      return { ...prev, backgrounds: bgs };
+    });
   }
 
   // Escape key to cancel connect

@@ -220,6 +220,10 @@ function slimForBackup(state) {
   if (Array.isArray(s.savings)) {
     s.savings = s.savings.map(g => (g && g.image ? { ...g, image: null } : g));
   }
+  // Drop heavy background images from the local backup so a board with
+  // several can't blow the ~5 MB localStorage quota (data is recovered;
+  // backgrounds are re-addable, same trade-off as photos).
+  if (s.backgrounds) s.backgrounds = {};
   return s;
 }
 
