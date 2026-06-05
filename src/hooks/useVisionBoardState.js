@@ -311,6 +311,10 @@ export function useVisionBoardState(userId) {
   const loadingRef = useRef(true);
   const lastGoodMeaningfulRef = useRef(false);
   const allowEmptyRef = useRef(false);
+  // True while a local edit is pending its debounced save — focus-refresh
+  // skips while dirty so it never clobbers unsaved work.
+  const dirtyRef = useRef(false);
+  const lastRefreshRef = useRef(0);
 
   useEffect(() => {
     if (!userId) return;
@@ -435,6 +439,53 @@ export function useVisionBoardState(userId) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, reloadKey]);
 
+  // ── Refresh on focus ────────────────────────────────────────────────
+  // The app loads state once at login and never re-syncs, so a device
+  // left in the background shows a stale snapshot — most visibly a habit
+  // timer that's reset on another device (e.g. desktop 10h, phone 1d).
+  // When the tab/app regains focus we re-pull the cloud copy and adopt
+  // it, UNLESS the user has unsaved local edits (dirty), we're mid-load,
+  // or parked on a load error — so this can never clobber local work.
+  // Read-only: it calls loadFromCloud and only adopts a clean `loaded`
+  // result; empty/ambiguous results are ignored (kept on screen).
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    async function refresh() {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (dirtyRef.current || loadingRef.current || loadError) return;
+      // Throttle — at most once per 8s, so rapid focus toggles don't hammer.
+      const now = Date.now();
+      if (now - lastRefreshRef.current < 8000) return;
+      lastRefreshRef.current = now;
+
+      let result;
+      try {
+        result = await loadFromCloud(userId);
+      } catch {
+        return; // network blip — keep what's on screen
+      }
+      if (cancelled || dirtyRef.current) return; // user started editing meanwhile
+      if (result.kind === 'loaded') {
+        markUserSeen(userId);
+        if (hasMeaningfulData(result.state)) lastGoodMeaningfulRef.current = true;
+        setS(result.state);
+        writeBackup(userId, result.state);
+      }
+    }
+
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, loadError]);
+
   const update = useCallback((updater) => {
     setS(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
@@ -442,6 +493,10 @@ export function useVisionBoardState(userId) {
       // Once this user is known to have real data, remember it so the
       // save guard below can refuse a regression to factory defaults.
       if (hasMeaningfulData(next)) lastGoodMeaningfulRef.current = true;
+
+      // Mark unsaved — blocks focus-refresh from overwriting in-flight
+      // local edits. Cleared once the debounced save lands.
+      dirtyRef.current = true;
 
       // Debounce cloud saves — 1.5 s after last change.
       clearTimeout(saveTimer.current);
@@ -480,6 +535,7 @@ export function useVisionBoardState(userId) {
         saveToCloud(uid, next)
           .then(() => {
             // Successful write is a new known-good snapshot.
+            dirtyRef.current = false;
             if (hasMeaningfulData(next)) writeBackup(uid, next);
           })
           .catch(err => {
