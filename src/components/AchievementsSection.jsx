@@ -370,6 +370,34 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
   const connectingFrom = S.connectingFrom || null;
 
   const [zoom, setZoom] = useState(1);
+
+  // Right-click the board → menu to toggle the section background's
+  // transparency and light/dark mode. Persisted on S so it survives
+  // reloads; applies only to the achievement canvas background.
+  const [boardMenu, setBoardMenu] = useState(null); // { x, y } | null
+  const achTransparent = !!S.achBoardTransparent;
+  const achDark = !!S.achBoardDark;
+  function handleBoardContextMenu(e) {
+    e.preventDefault();
+    setBoardMenu({ x: e.clientX, y: e.clientY });
+  }
+  useEffect(() => {
+    if (!boardMenu) return;
+    const close = () => setBoardMenu(null);
+    const onKey = e => { if (e.key === 'Escape') setBoardMenu(null); };
+    const t = setTimeout(() => {
+      document.addEventListener('pointerdown', close);
+      document.addEventListener('scroll', close, true);
+      document.addEventListener('keydown', onKey);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('scroll', close, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [boardMenu]);
+
   // Pinch-to-zoom on touch devices. zoomRef lets the (bind-once) touch
   // effect read the current zoom without re-binding every change.
   const canvasWrapRef = useRef(null);
@@ -600,7 +628,12 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
       {/* Canvas — dot grid background, draggable nodes, SVG connections.
           touchAction pan-x/pan-y lets single-finger scroll the canvas
           while our handler owns two-finger pinch-zoom. */}
-      <div className="ach-canvas-wrap" ref={canvasWrapRef} style={{ touchAction: 'pan-x pan-y' }}>
+      <div
+        className={`ach-canvas-wrap${achTransparent ? ' is-transparent' : ''}${achDark ? ' is-dark' : ''}`}
+        ref={canvasWrapRef}
+        style={{ touchAction: 'pan-x pan-y' }}
+        onContextMenu={handleBoardContextMenu}
+      >
         <div
           className="ach-canvas-inner"
           style={{
@@ -717,6 +750,44 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           </div>
         </div>
       </div>
+
+      {boardMenu && (
+        <div
+          className="hub-module-menu"
+          style={{
+            left: Math.min(boardMenu.x, window.innerWidth - 248),
+            top: Math.min(boardMenu.y, window.innerHeight - 130),
+          }}
+          onPointerDown={e => e.stopPropagation()}
+          role="menu"
+        >
+          <div className="hub-module-menu-head">Achievement Board</div>
+          <button
+            type="button"
+            className="hub-module-menu-row"
+            onClick={() => update(prev => ({ ...prev, achBoardTransparent: !prev.achBoardTransparent }))}
+            role="menuitemcheckbox"
+            aria-checked={achTransparent}
+          >
+            <span className="hub-module-menu-label">Transparent background</span>
+            <span className={`hub-switch${achTransparent ? ' is-on' : ''}`} aria-hidden="true">
+              <span className="hub-switch-knob" />
+            </span>
+          </button>
+          <button
+            type="button"
+            className="hub-module-menu-row"
+            onClick={() => update(prev => ({ ...prev, achBoardDark: !prev.achBoardDark }))}
+            role="menuitemcheckbox"
+            aria-checked={achDark}
+          >
+            <span className="hub-module-menu-label">Dark background</span>
+            <span className={`hub-switch${achDark ? ' is-on' : ''}`} aria-hidden="true">
+              <span className="hub-switch-knob" />
+            </span>
+          </button>
+        </div>
+      )}
       </>)}
     </section>
   );

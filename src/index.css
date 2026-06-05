@@ -575,12 +575,26 @@ nav:hover .nav-tab-label{opacity:1;}
   max-width:360px;
   width:320px;
   user-select:none;
+  /* Flex column so the inner .link-island stretches to whatever height
+     the user drags the wrapper to (vertical resize). Without this the
+     card kept its natural height and the resized box showed empty space
+     below the drag grip. */
+  display:flex;
+  flex-direction:column;
+}
+.widget-wrapper > .link-island{
+  flex:1 1 auto;
+  min-height:0;
 }
 .widget-wrapper.snapping{
   position:static;
   width:auto;
   min-width:0;
   max-width:none;
+  /* In the grid (snapping) layout, never stretch to the tallest sibling
+     in the row — each widget keeps its natural height (this is what made
+     every widget match GitHub's height after Sort). */
+  align-self:start;
 }
 /* ── Hub widgets (redesigned F4 Sprint 4) ─────────────────────────
    All widget surfaces (link / GitHub / YouTube / notepad) now share
@@ -879,6 +893,20 @@ nav:hover .nav-tab-label{opacity:1;}
   background-size:24px 24px;
   background-position:0 0;
   box-shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 4px 18px rgba(28,26,23,.04);
+}
+/* Right-click board toggles (per-section, not the whole theme). */
+.ach-canvas-wrap.is-dark{
+  --ach-canvas-bg:#15141a;
+  --ach-grid-line:rgba(255,255,255,.08);
+  background:var(--ach-canvas-bg);
+  background-image:radial-gradient(circle, var(--ach-grid-line) 1px, transparent 1px);
+  border-color:#2a2832;
+  box-shadow:0 4px 18px rgba(0,0,0,.25);
+}
+.ach-canvas-wrap.is-transparent{
+  background:transparent;
+  background-image:radial-gradient(circle, var(--ach-grid-line) 1px, transparent 1px);
+  box-shadow:none;
 }
 .ach-canvas-inner{
   position:relative;
@@ -3861,7 +3889,10 @@ button:active:not(:disabled),
 .ratings-ledger {
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--card, rgba(255,255,255,0.04));
+  /* Solid by default for consistency with the other modules; the
+     right-click "Transparent background" toggle switches it to
+     transparent via .ratings-ledger[data-transparent="true"]. */
+  background: var(--bg-raised, #fff);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;

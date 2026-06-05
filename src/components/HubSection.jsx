@@ -256,7 +256,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
     if (hasPositions) {
       canvas.style.cssText = 'position:relative;flex:1;min-height:calc(100vh - 180px);display:block;';
     } else {
-      canvas.style.cssText = 'flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-content:start;';
+      canvas.style.cssText = 'flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-content:start;align-items:start;';
     }
 
     // Links

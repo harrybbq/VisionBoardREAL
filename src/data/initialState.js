@@ -149,4 +149,8 @@ export const DEFAULT_STATE = {
   // Friends). { [moduleId]: true } makes that module's surface
   // transparent so the page shows through, like the Ratings Ledger.
   moduleTransparency: {},
+  // Achievement board background toggles (right-click the board). Affect
+  // only that section's canvas background, not the global theme.
+  achBoardTransparent: false,
+  achBoardDark: false,
 };
