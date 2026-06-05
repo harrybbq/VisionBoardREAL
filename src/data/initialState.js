@@ -152,5 +152,7 @@ export const DEFAULT_STATE = {
   // Achievement board background toggles (right-click the board). Affect
   // only that section's canvas background, not the global theme.
   achBoardTransparent: false,
-  achBoardDark: false,
+  // "Use the opposite of the current theme's default board background"
+  // — on a light theme that's a dark board, on a dark theme a light one.
+  achBoardInvert: false,
 };

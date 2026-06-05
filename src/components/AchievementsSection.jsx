@@ -57,12 +57,23 @@ function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey, onRem
   const y1 = from.y + NODE_HEAD_OFFSET;
   const x2 = to.x + NODE_W / 2;
   const y2 = to.y + NODE_HEAD_OFFSET;
-  const mx = (x1 + x2) / 2;
-  const d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+  // Direction-aware control points: horizontal tangents when the nodes
+  // are mostly side-by-side, vertical tangents when stacked. Gives a
+  // natural S-curve in both orientations (the old version always used
+  // horizontal tangents, which looked kinked for vertical links).
+  const dx = x2 - x1, dy = y2 - y1;
+  let c1x, c1y, c2x, c2y;
+  if (Math.abs(dy) > Math.abs(dx)) {
+    const my = (y1 + y2) / 2;
+    c1x = x1; c1y = my; c2x = x2; c2y = my;
+  } else {
+    const mx = (x1 + x2) / 2;
+    c1x = mx; c1y = y1; c2x = mx; c2y = y2;
+  }
+  const d = `M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`;
 
   // approximate path length for the fill-sweep dasharray trick
-  const dx = x2 - x1, dy = y2 - y1;
-  const approxLen = Math.sqrt(dx * dx + dy * dy) * 1.2;
+  const approxLen = Math.sqrt(dx * dx + dy * dy) * 1.25;
 
   const bothDone = fromCompleted && toCompleted;
   const parentDone = fromCompleted && !toCompleted;
@@ -78,7 +89,9 @@ function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey, onRem
   }, [fromCompleted]);
 
   const arrowAt = (color, opacity = 0.9) => {
-    const ang = Math.atan2(y2 - y1, x2 - x1);
+    // Angle from the curve's actual end tangent (P3 − C2) so the
+    // arrowhead lines up with the bezier instead of the straight chord.
+    const ang = Math.atan2(y2 - c2y, x2 - c2x);
     const ah = 9;
     const pts = [
       [x2, y2],
@@ -159,9 +172,12 @@ function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey, onRem
 function AchNode({
   ach, conns, allAchs,
   connectingFrom, zoom = 1,
-  onDragCommit,
+  onDragCommit, onDragMove,
   onComplete, onConnect, onDelete, onEdit,
 }) {
+  // rAF-coalesced live-move reporting so connection lines follow the
+  // node smoothly during a drag (committed to state only on release).
+  const rafRef = useRef(0);
   // Drag deltas are screen pixels; the canvas is CSS-scaled by `zoom`,
   // so divide by it to keep the node under the finger/cursor. Ref so
   // the bound move handler always sees the current zoom.
@@ -235,13 +251,18 @@ function AchNode({
       nodeRef.current.style.left = nx + 'px';
       nodeRef.current.style.top = ny + 'px';
     }
-    // Note: we update DOM directly mid-drag and only commit to React
-    // state on mouseup. Connection lines re-render via the parent's
-    // own draggingPos hint — see AchievementsSection.
+    // Report the live position (one update per frame) so the parent's
+    // drag hint moves the connection endpoints with the node. The node
+    // itself moves via direct DOM above; we only commit to state on up.
+    if (onDragMove) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => onDragMove(ach.id, posRef.current.x, posRef.current.y));
+    }
   }
   function endDrag() {
     if (!dragging.current) return;
     dragging.current = false;
+    cancelAnimationFrame(rafRef.current);
     if (moved.current) {
       onDragCommit(ach.id, posRef.current.x, posRef.current.y);
     }
@@ -376,7 +397,13 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
   // reloads; applies only to the achievement canvas background.
   const [boardMenu, setBoardMenu] = useState(null); // { x, y } | null
   const achTransparent = !!S.achBoardTransparent;
-  const achDark = !!S.achBoardDark;
+  // Theme-aware background toggle: on a light theme it offers "Dark
+  // background"; on a dark theme it offers "Light background". One
+  // stored flag (achBoardInvert) = "use the opposite of the theme's
+  // default board background". Migrates the old achBoardDark flag.
+  const isDarkTheme = S.theme === 'dark' || S.theme === 'dark-os';
+  const achInvert = (S.achBoardInvert ?? S.achBoardDark) || false;
+  const invertClass = achInvert ? (isDarkTheme ? ' is-light' : ' is-dark') : '';
   function handleBoardContextMenu(e) {
     e.preventDefault();
     setBoardMenu({ x: e.clientX, y: e.clientY });
@@ -444,6 +471,12 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
   const [dragHint, setDragHint] = useState(null); // { id, x, y } | null
 
   // ── handlers ────────────────────────────────────────────────────
+
+  function handleDragMove(id, x, y) {
+    // Live hint — moves connection endpoints with the node without
+    // committing to global state (and re-saving) on every frame.
+    setDragHint({ id, x, y });
+  }
 
   function handleDragCommit(id, x, y) {
     setDragHint(null);
@@ -629,7 +662,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           touchAction pan-x/pan-y lets single-finger scroll the canvas
           while our handler owns two-finger pinch-zoom. */}
       <div
-        className={`ach-canvas-wrap${achTransparent ? ' is-transparent' : ''}${achDark ? ' is-dark' : ''}`}
+        className={`ach-canvas-wrap${achTransparent ? ' is-transparent' : ''}${invertClass}`}
         ref={canvasWrapRef}
         style={{ touchAction: 'pan-x pan-y' }}
         onContextMenu={handleBoardContextMenu}
@@ -679,6 +712,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
               connectingFrom={connectingFrom}
               zoom={zoom}
               onDragCommit={handleDragCommit}
+              onDragMove={handleDragMove}
               onComplete={handleToggleComplete}
               onConnect={handleConnect}
               onDelete={handleDelete}
@@ -777,12 +811,15 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
           <button
             type="button"
             className="hub-module-menu-row"
-            onClick={() => update(prev => ({ ...prev, achBoardDark: !prev.achBoardDark }))}
+            onClick={() => update(prev => {
+              const cur = (prev.achBoardInvert ?? prev.achBoardDark) || false;
+              return { ...prev, achBoardInvert: !cur, achBoardDark: false };
+            })}
             role="menuitemcheckbox"
-            aria-checked={achDark}
+            aria-checked={achInvert}
           >
-            <span className="hub-module-menu-label">Dark background</span>
-            <span className={`hub-switch${achDark ? ' is-on' : ''}`} aria-hidden="true">
+            <span className="hub-module-menu-label">{isDarkTheme ? 'Light background' : 'Dark background'}</span>
+            <span className={`hub-switch${achInvert ? ' is-on' : ''}`} aria-hidden="true">
               <span className="hub-switch-knob" />
             </span>
           </button>

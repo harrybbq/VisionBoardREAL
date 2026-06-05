@@ -501,8 +501,11 @@ function AddSavingsGoalModal({ openId, onClose, achievements, onAdd }) {
  * Typical output: 30-60 KB. The original file is never persisted.
  */
 function SavingsImagePicker({ image, onChange }) {
-  const inputId = 'savingsImageInput';
-  function pick() { document.getElementById(inputId)?.click(); }
+  // Ref instead of a shared element id — the Add and Edit modals are
+  // both mounted, so a hardcoded id collided (getElementById returned
+  // the wrong modal's input and the picker silently did nothing).
+  const inputRef = useRef(null);
+  function pick() { inputRef.current?.click(); }
   function onFile(e) {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -528,7 +531,7 @@ function SavingsImagePicker({ image, onChange }) {
   return (
     <div className="fg">
       <label>Photo (optional)</label>
-      <input id={inputId} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFile} />
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFile} />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div
           onClick={pick}

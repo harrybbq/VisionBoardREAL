@@ -845,6 +845,15 @@ nav:hover .nav-tab-label{opacity:1;}
   --ach-canvas-bg:        #f0ead8;
   --ach-grid-line:        rgba(0,0,0,0.04);
   --ach-conn-active:      #88c4a4;
+}
+/* Free dark theme: give the achievement board a dark default so the
+   right-click "Light background" toggle is meaningful (dark-os already
+   has its own dark override in hub-dark.css). */
+html[data-theme="dark"] {
+  --ach-canvas-bg:        #0e0e0d;
+  --ach-grid-line:        rgba(255,255,255,0.04);
+}
+:root {
   --ach-conn-done:        #c8970a;
   --ach-conn-locked:      #ccc;
   --ach-node-active-bg:   linear-gradient(180deg, #eef8f2 0%, #ddf0e8 100%);
@@ -902,6 +911,14 @@ nav:hover .nav-tab-label{opacity:1;}
   background-image:radial-gradient(circle, var(--ach-grid-line) 1px, transparent 1px);
   border-color:#2a2832;
   box-shadow:0 4px 18px rgba(0,0,0,.25);
+}
+.ach-canvas-wrap.is-light{
+  --ach-canvas-bg:#f4efe2;
+  --ach-grid-line:rgba(0,0,0,.05);
+  background:var(--ach-canvas-bg);
+  background-image:radial-gradient(circle, var(--ach-grid-line) 1px, transparent 1px);
+  border-color:var(--border);
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 4px 18px rgba(28,26,23,.06);
 }
 .ach-canvas-wrap.is-transparent{
   background:transparent;
@@ -1415,7 +1432,9 @@ nav:hover .nav-tab-label{opacity:1;}
 .ach-card-arriving{ animation:achNodeArrive 1.1s cubic-bezier(.22,1,.36,1) forwards; }
 
 /* ── TRACK ── */
-.track-layout{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start;width:100%;}
+/* Calendar column capped (was 1fr) so it doesn't stretch full-width
+   and blow the square day-cells up huge on wide screens. */
+.track-layout{display:grid;grid-template-columns:240px minmax(0,520px);gap:20px;align-items:start;width:100%;}
 .trackers-panel{padding:20px;position:sticky;top:20px;}
 .trackers-panel h3{font-family:var(--display);font-size:15px;font-weight:700;color:var(--em);margin-bottom:14px;}
 .tracker-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(253,250,243,.55);border:1px solid var(--border-lt);border-radius:var(--radius-md);margin-bottom:7px;cursor:pointer;transition:all .22s var(--ease-out);}
