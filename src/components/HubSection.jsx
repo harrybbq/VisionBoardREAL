@@ -203,8 +203,47 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
   }
 
   function handleSortWidgets() {
-    update(prev => ({ ...prev, widgetPositions: {}, notepadPos: null }));
+    // Sort re-flows widgets into the grid AND resets any custom sizes
+    // the user dragged the widgets to (per the resize feature).
+    update(prev => ({ ...prev, widgetPositions: {}, widgetSizes: {}, notepadPos: null }));
   }
+
+  // Make a widget wrapper user-resizable: apply any saved size, show a
+  // resize grip (CSS resize: both), and commit the new size to
+  // S.widgetSizes ONLY when the user actually drags the grip. We detect
+  // that by a pointerdown landing in the bottom-right grip zone, then
+  // read the size on pointerup — so content-driven layout changes (e.g.
+  // a GitHub widget's stats loading) never get mistaken for a resize.
+  const makeResizable = useCallback((wrapper, id) => {
+    const saved = (S.widgetSizes || {})[id];
+    if (saved) {
+      if (saved.w) wrapper.style.width = saved.w + 'px';
+      if (saved.h) wrapper.style.height = saved.h + 'px';
+    }
+    wrapper.style.resize = 'both';
+    wrapper.style.overflow = 'hidden';
+    // The default link wrapper is clamped 280–360px wide; lift the cap
+    // and set floors so resize can grow/shrink freely.
+    wrapper.style.maxWidth = 'none';
+    wrapper.style.minWidth = '220px';
+    wrapper.style.minHeight = '90px';
+
+    wrapper.addEventListener('pointerdown', e => {
+      const r = wrapper.getBoundingClientRect();
+      const inGrip = (r.right - e.clientX) < 24 && (r.bottom - e.clientY) < 24;
+      if (!inGrip) return; // not the resize grip — leave drag/clicks alone
+      const onUp = () => {
+        const w = wrapper.offsetWidth;
+        const h = wrapper.offsetHeight;
+        update(prev => {
+          const cur = (prev.widgetSizes || {})[id];
+          if (cur && cur.w === w && cur.h === h) return prev;
+          return { ...prev, widgetSizes: { ...(prev.widgetSizes || {}), [id]: { w, h } } };
+        });
+      };
+      window.addEventListener('pointerup', onUp, { once: true });
+    });
+  }, [S.widgetSizes, update]);
 
   // Render all widgets imperatively into the canvas
   const renderCanvas = useCallback(() => {
@@ -279,6 +318,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
       wrapper.appendChild(island);
       canvas.appendChild(wrapper);
       makeDraggable(wrapper, link.id);
+      makeResizable(wrapper, link.id);
 
       if (isGH) loadGHIsland(link, S.ghCache, update);
     });
@@ -336,6 +376,7 @@ export default function HubSection({ S, update, active, onOpenModal, onOpenWaitl
       wrapper.appendChild(island);
       canvas.appendChild(wrapper);
       makeDraggable(wrapper, yt.id);
+      makeResizable(wrapper, yt.id);
       loadYouTubeFeed(yt);
     });
 

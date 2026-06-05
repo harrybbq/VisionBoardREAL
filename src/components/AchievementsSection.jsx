@@ -51,7 +51,7 @@ function recalcLocks(achievements, connections) {
 
 // ── SVG bezier connection ────────────────────────────────────────────
 
-function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey }) {
+function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey, onRemove }) {
   if (!from || !to) return null;
   const x1 = from.x + NODE_W / 2;
   const y1 = from.y + NODE_HEAD_OFFSET;
@@ -88,28 +88,42 @@ function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey }) {
     return <polygon points={pts} fill={color} opacity={opacity} />;
   };
 
+  // Transparent wide stroke sitting on top of the visible line — gives
+  // a comfortable click/tap target for unlinking. The parent <svg> sets
+  // pointer-events:none, so we re-enable it just on this hit path.
+  const hitPath = onRemove ? (
+    <path
+      className="ach-conn-hit"
+      d={d}
+      stroke="transparent"
+      strokeWidth="18"
+      fill="none"
+      style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+      onClick={e => { e.stopPropagation(); onRemove(from.id, to.id); }}
+    >
+      <title>Click to unlink</title>
+    </path>
+  ) : null;
+
+  let visual;
   if (locked) {
-    return (
-      <g>
+    visual = (
+      <>
         <path d={d} stroke="var(--ach-conn-locked)" strokeWidth="1.5"
           fill="none" strokeDasharray="5,4" opacity=".3" />
         {arrowAt('var(--ach-conn-locked)', 0.35)}
-      </g>
+      </>
     );
-  }
-
-  if (bothDone) {
-    return (
-      <g>
+  } else if (bothDone) {
+    visual = (
+      <>
         <path d={d} stroke="var(--ach-conn-done)" strokeWidth="2.5"
           fill="none" opacity=".85" />
         {arrowAt('var(--ach-conn-done)', 0.9)}
-      </g>
+      </>
     );
-  }
-
-  if (parentDone) {
-    return (
+  } else if (parentDone) {
+    visual = (
       <g key={animKey}>
         {/* grey track */}
         <path d={d} stroke="var(--ach-conn-locked)" strokeWidth="2"
@@ -125,27 +139,34 @@ function ConnPath({ from, to, fromCompleted, toCompleted, locked, connKey }) {
         {arrowAt('var(--em-light)', 0.95)}
       </g>
     );
+  } else {
+    // active but parent not done — animated dashed
+    visual = (
+      <>
+        <path d={d} stroke="var(--ach-conn-active)" strokeWidth="2"
+          fill="none" strokeDasharray="6,4" opacity=".45"
+          className="ach-conn-anim" />
+        {arrowAt('var(--ach-conn-active)', 0.7)}
+      </>
+    );
   }
 
-  // active but parent not done — animated dashed
-  return (
-    <g>
-      <path d={d} stroke="var(--ach-conn-active)" strokeWidth="2"
-        fill="none" strokeDasharray="6,4" opacity=".45"
-        className="ach-conn-anim" />
-      {arrowAt('var(--ach-conn-active)', 0.7)}
-    </g>
-  );
+  return <g className="ach-conn-group">{visual}{hitPath}</g>;
 }
 
 // ── Single achievement node ──────────────────────────────────────────
 
 function AchNode({
   ach, conns, allAchs,
-  connectingFrom,
+  connectingFrom, zoom = 1,
   onDragCommit,
   onComplete, onConnect, onDelete, onEdit,
 }) {
+  // Drag deltas are screen pixels; the canvas is CSS-scaled by `zoom`,
+  // so divide by it to keep the node under the finger/cursor. Ref so
+  // the bound move handler always sees the current zoom.
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
   const parents = conns.filter(([, t]) => t === ach.id);
   const completedParents = parents.filter(([f]) => {
     const p = allAchs.find(a => a.id === f);
@@ -202,8 +223,9 @@ function AchNode({
   }
   function moveDrag(cx, cy) {
     if (!dragging.current) return;
-    const dx = cx - startCoords.current.sx;
-    const dy = cy - startCoords.current.sy;
+    const z = zoomRef.current || 1;
+    const dx = (cx - startCoords.current.sx) / z;
+    const dy = (cy - startCoords.current.sy) / z;
     if (!moved.current && Math.abs(dx) + Math.abs(dy) < 4) return;
     moved.current = true;
     const nx = Math.max(0, startCoords.current.ox + dx);
@@ -230,7 +252,13 @@ function AchNode({
     const onMouseMove = e => moveDrag(e.clientX, e.clientY);
     const onMouseUp = () => endDrag();
     const onTouchMove = e => {
-      if (e.touches[0]) moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      // Only act on a genuine single-finger node drag. Let two-finger
+      // gestures through so the canvas pinch-zoom handler gets them, and
+      // preventDefault while dragging so the page/canvas doesn't scroll-
+      // fight the drag on touch devices.
+      if (!dragging.current || e.touches.length !== 1) return;
+      e.preventDefault();
+      moveDrag(e.touches[0].clientX, e.touches[0].clientY);
     };
     const onTouchEnd = () => endDrag();
     window.addEventListener('mousemove', onMouseMove);
@@ -342,6 +370,41 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
   const connectingFrom = S.connectingFrom || null;
 
   const [zoom, setZoom] = useState(1);
+  // Pinch-to-zoom on touch devices. zoomRef lets the (bind-once) touch
+  // effect read the current zoom without re-binding every change.
+  const canvasWrapRef = useRef(null);
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  useEffect(() => {
+    const el = canvasWrapRef.current;
+    if (!el) return;
+    let startDist = 0, startZoom = 1, pinching = false;
+    const dist = ts => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+    const onStart = e => {
+      if (e.touches.length === 2) {
+        pinching = true;
+        startDist = dist(e.touches) || 1;
+        startZoom = zoomRef.current;
+      }
+    };
+    const onMove = e => {
+      if (!pinching || e.touches.length !== 2) return;
+      e.preventDefault(); // stop native page pinch-zoom
+      const ratio = dist(e.touches) / startDist;
+      setZoom(Math.min(2, Math.max(0.4, +(startZoom * ratio).toFixed(2))));
+    };
+    const onEnd = e => { if (e.touches.length < 2) pinching = false; };
+    el.addEventListener('touchstart', onStart, { passive: false });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+    };
+  }, []);
   // Tab toggle (F4 Sprint 2) — 'goals' = the achievement board canvas,
   // 'savings' = monetary goals list. Sticky to component state so a
   // refresh resets to goals (canvas is the dominant surface).
@@ -402,12 +465,30 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
       return;
     }
     update(prev => {
+      // Re-connecting two already-linked nodes toggles the link OFF.
       if (prev.connections.some(([a, b]) => a === connectingFrom && b === targetId)) {
-        return { ...prev, connectingFrom: null };
+        const newConns = prev.connections.filter(([a, b]) => !(a === connectingFrom && b === targetId));
+        return {
+          ...prev,
+          connections: newConns,
+          achievements: recalcLocks(prev.achievements, newConns),
+          connectingFrom: null,
+        };
       }
       const newConns = [...prev.connections, [connectingFrom, targetId]];
       const recalced = recalcLocks(prev.achievements, newConns);
       return { ...prev, connections: newConns, achievements: recalced, connectingFrom: null };
+    });
+  }
+
+  function handleRemoveConnection(fId, tId) {
+    update(prev => {
+      const newConns = prev.connections.filter(([a, b]) => !(a === fId && b === tId));
+      return {
+        ...prev,
+        connections: newConns,
+        achievements: recalcLocks(prev.achievements, newConns),
+      };
     });
   }
 
@@ -479,6 +560,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
         <div className="ach-toolbar-hints">
           <span className="ach-hint-pill"><span className="ach-hint-key">Drag</span> move</span>
           <span className="ach-hint-pill"><span className="ach-hint-key">✦</span> connect</span>
+          <span className="ach-hint-pill"><span className="ach-hint-key">Tap line</span> unlink</span>
           <span className="ach-hint-pill"><span className="ach-hint-key">★</span> complete</span>
         </div>
         {activeTab === 'goals' && (
@@ -515,8 +597,10 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
         <SavingsList S={S} onOpenModal={onOpenModal} />
       ) : (<>
 
-      {/* Canvas — dot grid background, draggable nodes, SVG connections */}
-      <div className="ach-canvas-wrap">
+      {/* Canvas — dot grid background, draggable nodes, SVG connections.
+          touchAction pan-x/pan-y lets single-finger scroll the canvas
+          while our handler owns two-finger pinch-zoom. */}
+      <div className="ach-canvas-wrap" ref={canvasWrapRef} style={{ touchAction: 'pan-x pan-y' }}>
         <div
           className="ach-canvas-inner"
           style={{
@@ -547,6 +631,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
                   fromCompleted={f.completed}
                   toCompleted={t.completed}
                   locked={locked}
+                  onRemove={handleRemoveConnection}
                 />
               );
             })}
@@ -559,6 +644,7 @@ export default function AchievementsSection({ S, update, active, onOpenModal, on
               conns={connections}
               allAchs={achievements}
               connectingFrom={connectingFrom}
+              zoom={zoom}
               onDragCommit={handleDragCommit}
               onComplete={handleToggleComplete}
               onConnect={handleConnect}

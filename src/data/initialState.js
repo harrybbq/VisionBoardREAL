@@ -18,6 +18,10 @@ export const DEFAULT_STATE = {
   shopCategories: [],
   shopFilter: 'all',
   widgetPositions: {},
+  // Per-widget custom sizes { [widgetId]: { w, h } } set by dragging a
+  // widget's resize grip. Cleared by the "Sort" action alongside
+  // widgetPositions.
+  widgetSizes: {},
   holidays: [],
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
