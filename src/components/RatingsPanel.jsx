@@ -19,7 +19,7 @@
  * check" CTA wired to that category's self-check component, gated
  * by the shared 30-day cooldown.
  */
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { categoryBreakdown } from '../lib/ratings/derive';
 import { ovrTier } from '../lib/ratings/tiers';
 import { isCooldownActive, daysUntilRetake } from './SelfCheck';
@@ -85,12 +85,69 @@ export default function RatingsPanel({ S, update, compact = false }) {
   const prestige = ovrTier(ovr);
   const [activeBreakdown, setActiveBreakdown] = useState(null);
   const [activeCheck, setActiveCheck] = useState(null);
+  const [menu, setMenu] = useState(null); // long-press transparency menu { x, y }
 
   const ActiveCheckCmp = activeCheck ? SELF_CHECKS[activeCheck]?.Component : null;
 
+  // Transparency — shares the same per-module flag the desktop right-click
+  // menu uses (S.moduleTransparency.ratings), applied here via React so it
+  // works on mobile too. Long-press opens a menu to toggle it.
+  const transparent = !!(S?.moduleTransparency?.ratings);
+  const lpTimer = useRef(0);
+  const lpStart = useRef({ x: 0, y: 0 });
+  const suppressClick = useRef(false);
+
+  function setTransparent(val) {
+    update && update(prev => ({
+      ...prev,
+      moduleTransparency: { ...(prev.moduleTransparency || {}), ratings: val },
+    }));
+  }
+  function onTouchStart(e) {
+    if (!update || e.touches.length !== 1) return;
+    lpStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    clearTimeout(lpTimer.current);
+    lpTimer.current = setTimeout(() => {
+      suppressClick.current = true;
+      setMenu({ x: lpStart.current.x, y: lpStart.current.y });
+      if (navigator.vibrate) { try { navigator.vibrate(15); } catch { /* ignore */ } }
+    }, 450);
+  }
+  function onTouchMove(e) {
+    const t = e.touches[0];
+    if (!t) return;
+    if (Math.abs(t.clientX - lpStart.current.x) > 8 || Math.abs(t.clientY - lpStart.current.y) > 8) {
+      clearTimeout(lpTimer.current);
+    }
+  }
+  function onTouchEnd() { clearTimeout(lpTimer.current); }
+
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const id = setTimeout(() => {
+      document.addEventListener('pointerdown', close);
+      document.addEventListener('scroll', close, true);
+    }, 0);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('scroll', close, true);
+    };
+  }, [menu]);
+
   return (
     <>
-      <div className={`ratings-ledger${compact ? ' ratings-ledger-compact' : ''}`}>
+      <div
+        className={`ratings-ledger${compact ? ' ratings-ledger-compact' : ''}`}
+        data-transparent={transparent ? 'true' : undefined}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+        // Swallow the row tap that would otherwise fire after a long-press.
+        onClickCapture={e => { if (suppressClick.current) { suppressClick.current = false; e.preventDefault(); e.stopPropagation(); } }}
+      >
         {/* Header bar — mono eyebrow + version label */}
         <div className="ratings-ledger-head">
           <span className="ratings-ledger-eyebrow">RATINGS · LEDGER</span>
@@ -162,6 +219,29 @@ export default function RatingsPanel({ S, update, compact = false }) {
           update={update}
           onClose={() => setActiveCheck(null)}
         />
+      )}
+
+      {menu && (
+        <div
+          className="hub-module-menu"
+          style={{ left: Math.min(menu.x, window.innerWidth - 230), top: Math.min(menu.y, window.innerHeight - 120) }}
+          onPointerDown={e => e.stopPropagation()}
+          role="menu"
+        >
+          <div className="hub-module-menu-head">Ratings</div>
+          <button
+            type="button"
+            className="hub-module-menu-row"
+            onClick={() => { setTransparent(!transparent); setMenu(null); }}
+            role="menuitemcheckbox"
+            aria-checked={transparent}
+          >
+            <span className="hub-module-menu-label">Transparent background</span>
+            <span className={`hub-switch${transparent ? ' is-on' : ''}`} aria-hidden="true">
+              <span className="hub-switch-knob" />
+            </span>
+          </button>
+        </div>
       )}
     </>
   );

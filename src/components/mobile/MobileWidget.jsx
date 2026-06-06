@@ -221,13 +221,6 @@ export default function MobileWidget({ widget, S, update, onRemove }) {
           <div className="m-widget-head">
             <span className="m-widget-icon m-widget-chip" style={chipStyle}>{meta.icon}</span>
             <span className="m-widget-eyebrow">// {meta.eyebrow}</span>
-            <button
-              type="button"
-              className="m-widget-remove"
-              onClick={() => onRemove(widget.id)}
-              aria-label="Remove widget"
-              title="Remove"
-            >×</button>
           </div>
           <div className="m-widget-body">
             {renderBody(widget, meta, S, update)}

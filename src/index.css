@@ -4194,7 +4194,10 @@ button:active:not(:disabled),
 .m-widget {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--card, rgba(255,255,255,0.04));
+  /* Opaque surface by default (var(--card) is unset on some themes and
+     fell back to near-transparent white, letting the page background
+     bleed through). Transparency is opt-in via .is-transparent. */
+  background: var(--bg-raised, #fff);
   padding: 0;
   display: flex;
   flex-direction: column;
