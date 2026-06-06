@@ -43,12 +43,6 @@ function AddLinkModal({ openId, onClose, onSwitchModal, onAddNotepad, onAddApp }
           <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>Notepad</span>
           <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Quick notes & tasks for today</span>
         </button>
-        <button className="btn btn-ghost" style={{ padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', borderRadius: '12px', height: 'auto' }}
-          onClick={() => onSwitchModal('addYouTubeModal')}>
-          <span style={{ fontSize: '22px' }}>▶</span>
-          <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text)' }}>YouTube Feed</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Latest uploads from a channel</span>
-        </button>
       </div>
 
       {/* Our Apps — one-click presets for our own apps, a Pro bonus.

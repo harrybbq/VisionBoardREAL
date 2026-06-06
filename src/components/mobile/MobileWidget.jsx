@@ -45,6 +45,16 @@ const BASE_WIDGET_META = {
     eyebrow: 'COINS',
     icon: '⬡',
   },
+  'habits': {
+    label: 'Habits',
+    eyebrow: 'STREAKS',
+    icon: '◷',
+  },
+  'holidays': {
+    label: 'Holidays',
+    eyebrow: 'TRIPS',
+    icon: '✈',
+  },
   // F4 Sprint 4 — mobile parity for the desktop hub widgets.
   // These are read-only summaries of what the user has configured on
   // desktop (S.links, S.ghCache, S.ytWidgets). No new API calls fire
@@ -279,6 +289,8 @@ function renderBody(widget, meta, S, update) {
     case 'notepad':     return <NotepadBody S={S} update={update} />;
     case 'recent-wins': return <RecentWinsBody S={S} />;
     case 'coin-history':return <CoinHistoryBody S={S} />;
+    case 'habits':      return <HabitsBody S={S} />;
+    case 'holidays':    return <HolidaysBody S={S} />;
     case 'github':      return <GithubBody S={S} meta={meta} />;
     case 'linkedin':    return <LinkedinBody S={S} meta={meta} />;
     case 'youtube':     return <YoutubeBody S={S} meta={meta} />;
@@ -323,6 +335,88 @@ function RecentWinsBody({ S }) {
           {a.coins > 0 && <span className="m-widget-list-meta">+{a.coins} ⬡</span>}
         </li>
       ))}
+    </ul>
+  );
+}
+
+// ── Habits — longest-running first, with live streak timers ──
+function fmtElapsed(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${sec}s`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+function HabitsBody({ S }) {
+  // Tick once a second so the timers stay live.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const habits = (S.habits || [])
+    .filter(h => h.startTime)
+    .slice()
+    .sort((a, b) => a.startTime - b.startTime) // oldest start = longest running
+    .slice(0, 4);
+  if (!habits.length) {
+    return <div className="m-widget-empty">No habits yet — add one in Habits to see live streak timers here.</div>;
+  }
+  const now = Date.now();
+  return (
+    <ul className="m-widget-list">
+      {habits.map(h => (
+        <li key={h.id} className="m-widget-list-row">
+          <span className="m-widget-list-name">{h.name}</span>
+          <span className="m-widget-list-meta" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {fmtElapsed(now - h.startTime)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── Holidays — closest upcoming trips first ──
+function HolidaysBody({ S }) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const trips = (S.holidays || [])
+    .filter(h => h.status !== 'completed')
+    .map(h => {
+      let dep = null;
+      if (h.from) { dep = new Date(h.from); dep.setHours(0, 0, 0, 0); }
+      return { h, dep };
+    })
+    .filter(x => !x.dep || x.dep >= today) // upcoming or undated
+    .sort((a, b) => {
+      if (!a.dep) return 1;
+      if (!b.dep) return -1;
+      return a.dep - b.dep;
+    })
+    .slice(0, 4);
+  if (!trips.length) {
+    return <div className="m-widget-empty">No upcoming trips — plan one in Holidays.</div>;
+  }
+  return (
+    <ul className="m-widget-list">
+      {trips.map(({ h, dep }) => {
+        const days = dep ? Math.round((dep - today) / 86400000) : null;
+        const label = days == null ? 'TBC'
+          : days === 0 ? 'Today'
+          : days === 1 ? 'Tomorrow'
+          : `${days}d`;
+        return (
+          <li key={h.id} className="m-widget-list-row">
+            <span className="m-widget-list-name">{h.dest || 'Trip'}</span>
+            <span className="m-widget-list-meta">{label}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

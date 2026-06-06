@@ -21,10 +21,11 @@ const PICKER_ORDER = [
   'notepad',
   'recent-wins',
   'coin-history',
-  // F4 Sprint 4 — mobile parity for the desktop hub widgets.
+  'habits',
+  'holidays',
+  // Mobile parity for the desktop hub widgets.
   'github',
   'linkedin',
-  'youtube',
   // User app presets (FloorplanStudio / TubeLube / …) from shared config.
   ...APP_PRESETS.map(p => p.id),
   'vitals',
