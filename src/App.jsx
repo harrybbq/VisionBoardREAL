@@ -32,6 +32,7 @@ import LegalPage from './components/LegalPage';
 import CookieBanner from './components/CookieBanner';
 import InstallPrompt from './components/InstallPrompt';
 import TutorialOverlay from './components/TutorialOverlay';
+import BackgroundCropModal from './components/BackgroundCropModal';
 import { useCapacitor, haptic } from './hooks/useCapacitor';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useVisions } from './lib/visions/useVisions';
@@ -316,22 +317,32 @@ function Board({ userId, userEmail, onSignOut }) {
     bgInputRef.current?.click();
   }
 
+  // Open the crop modal after the user picks an image; the modal's
+  // confirm callback is what actually writes to S.backgrounds. cropTarget
+  // captures the section (rather than reading activeSection later) so the
+  // saved crop lands where the user picked it even if they navigate
+  // while the modal is open.
+  const [cropTarget, setCropTarget] = useState(null); // { section, src } | null
   function handleBgFileChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     const section = activeSection;
     const reader = new FileReader();
-    reader.onload = async ev => {
-      // Compress before storing — backgrounds sync in the state blob now,
-      // so a raw multi-MB upload would bloat every save.
-      const compressed = await compressImageDataUrl(ev.target.result);
-      update(prev => ({
-        ...prev,
-        backgrounds: { ...(prev.backgrounds || {}), [section]: compressed },
-      }));
-    };
+    reader.onload = ev => setCropTarget({ section, src: ev.target.result });
     reader.readAsDataURL(file);
     e.target.value = '';
+  }
+  async function handleBgCropConfirm(croppedDataUrl) {
+    if (!cropTarget) return;
+    const { section } = cropTarget;
+    // The crop has already been rendered at output size; still pass
+    // through the compressor as a safety net (clamps long edge + JPEG).
+    const compressed = await compressImageDataUrl(croppedDataUrl);
+    update(prev => ({
+      ...prev,
+      backgrounds: { ...(prev.backgrounds || {}), [section]: compressed },
+    }));
+    setCropTarget(null);
   }
 
   function handleRemoveBg() {
@@ -681,6 +692,13 @@ function Board({ userId, userEmail, onSignOut }) {
       <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <CookieBanner onOpenLegal={setLegalPage} />
       <InstallPrompt />
+      {cropTarget && (
+        <BackgroundCropModal
+          src={cropTarget.src}
+          onCancel={() => setCropTarget(null)}
+          onConfirm={handleBgCropConfirm}
+        />
+      )}
       <NotificationPermissionPrompt
         open={pushPrePromptOpen}
         onClose={() => setPushPrePromptOpen(false)}
