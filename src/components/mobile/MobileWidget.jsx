@@ -12,7 +12,7 @@
  *   2. Add a case in renderBody()
  *   3. Add an option in AddMobileWidgetModal's picker
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { APP_PRESETS, getAppPreset } from '../../data/appPresets';
 
 // App presets (FloorplanStudio / TubeLube / …) become mobile widget
@@ -102,21 +102,87 @@ export default function MobileWidget({ widget, S, update, onRemove }) {
     borderColor: meta.accent + '55',
   } : undefined;
 
+  // ── Swipe-left to reveal a red Delete button ──
+  // Foreground card translates left up to REVEAL px; past half it snaps
+  // open, otherwise snaps closed. touch-action: pan-y keeps vertical
+  // scrolling native while we own the horizontal gesture.
+  const REVEAL = 84;
+  const [offset, setOffset] = useState(0);
+  const startX = useRef(0);
+  const startOff = useRef(0);
+  const dragging = useRef(false);
+
+  function onTouchStart(e) {
+    if (e.touches.length !== 1) return;
+    dragging.current = true;
+    startX.current = e.touches[0].clientX;
+    startOff.current = offset;
+  }
+  function onTouchMove(e) {
+    if (!dragging.current) return;
+    const dx = e.touches[0].clientX - startX.current;
+    const next = Math.max(-REVEAL, Math.min(0, startOff.current + dx));
+    setOffset(next);
+  }
+  function onTouchEnd() {
+    if (!dragging.current) return;
+    dragging.current = false;
+    setOffset(o => (o < -REVEAL / 2 ? -REVEAL : 0));
+  }
+
+  const open = offset < 0;
+
   return (
-    <div className="m-widget">
-      <div className="m-widget-head">
-        <span className="m-widget-icon m-widget-chip" style={chipStyle}>{meta.icon}</span>
-        <span className="m-widget-eyebrow">// {meta.eyebrow}</span>
-        <button
-          type="button"
-          className="m-widget-remove"
-          onClick={() => onRemove(widget.id)}
-          aria-label="Remove widget"
-          title="Remove"
-        >×</button>
-      </div>
-      <div className="m-widget-body">
-        {renderBody(widget, meta, S, update)}
+    <div className="m-widget-swipe" style={{ position: 'relative', overflow: 'hidden', borderRadius: 12 }}>
+      {/* Red delete action behind the card */}
+      <button
+        type="button"
+        className="m-widget-delete"
+        onClick={() => onRemove(widget.id)}
+        aria-label="Delete widget"
+        style={{
+          position: 'absolute', top: 0, right: 0, bottom: 0, width: REVEAL,
+          border: 'none', background: 'rgb(220,60,60)', color: '#fff',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 3, fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 1,
+          textTransform: 'uppercase', fontWeight: 700, cursor: 'pointer',
+        }}
+      >
+        <span style={{ fontSize: 16 }}>🗑</span>
+        Delete
+      </button>
+
+      {/* Foreground card — slides left to reveal the button */}
+      <div
+        className="m-widget"
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: dragging.current ? 'none' : 'transform .2s ease',
+          touchAction: 'pan-y',
+          position: 'relative',
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+        // When open, a tap anywhere on the card just closes it (and is
+        // swallowed so it doesn't trigger anything underneath).
+        onClickCapture={e => { if (open) { e.preventDefault(); e.stopPropagation(); setOffset(0); } }}
+      >
+        <div className="m-widget-head">
+          <span className="m-widget-icon m-widget-chip" style={chipStyle}>{meta.icon}</span>
+          <span className="m-widget-eyebrow">// {meta.eyebrow}</span>
+          <button
+            type="button"
+            className="m-widget-remove"
+            onClick={() => onRemove(widget.id)}
+            aria-label="Remove widget"
+            title="Remove"
+          >×</button>
+        </div>
+        <div className="m-widget-body">
+          {renderBody(widget, meta, S, update)}
+        </div>
       </div>
     </div>
   );
