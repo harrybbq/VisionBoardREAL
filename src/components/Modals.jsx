@@ -1535,6 +1535,7 @@ function WaitlistModal({ openId, onClose, userId, userEmail }) {
 
 // ── Main Modals container ──
 export default function Modals({ openModal, S, update, onClose, onOpen, onShowCoinToast, userId, userEmail }) {
+  const { hasPro } = useSubscriptionContext();
   function handleAddLink(link) {
     update(prev => ({ ...prev, links: [...prev.links, link] }));
   }
@@ -1545,11 +1546,11 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
     // createdAt stamped server-time so the rating engine's time-spacing
     // rule (≥7 days created→completed) has a reliable signal.
     //
-    // Anti-gaming rate limit: cap at DAILY_CREATE_CAP new achievements
-    // per rolling 24h. Stops users from spinning up hundreds in a day
-    // (the diminishing-returns curve in derive.js makes that mostly
-    // worthless anyway, but this also keeps the canvas usable).
-    const DAILY_CREATE_CAP = 10;
+    // Anti-gaming rate limit: cap new achievements per rolling 24h.
+    // Pro users get a higher cap. (The diminishing-returns curve in
+    // derive.js makes bulk spam mostly worthless anyway; this also
+    // keeps the canvas usable.)
+    const DAILY_CREATE_CAP = hasPro ? 40 : 15;
     const since = Date.now() - 86_400_000;
     update(prev => {
       const recent = (prev.achievements || []).filter(a => (a.createdAt || 0) > since).length;
