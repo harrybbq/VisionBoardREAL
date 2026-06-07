@@ -76,18 +76,22 @@ function toRating(points, k = 1) {
 
 // ── Derivation (mirrors src/lib/ratings/derive.js) ─────────────────────────
 
+// Anti-gaming: 7-day spacing + diminishing returns past FULL_CREDIT_N
+// (mirrors derive.js — keep in lockstep).
+const FULL_CREDIT_N = 8;
 function achievementPoints(state, category) {
   const list = state.achievements || [];
-  let points = 0;
+  let count = 0;
   for (const a of list) {
     if (a.category !== category) continue;
     if (!a.completed) continue;
     if (a.createdAt && a.completedAt) {
       if ((a.completedAt - a.createdAt) < TIME_SPACING_MS) continue;
     }
-    points += 1;
+    count += 1;
   }
-  return points;
+  if (count <= FULL_CREDIT_N) return count;
+  return FULL_CREDIT_N + Math.sqrt((count - FULL_CREDIT_N) * FULL_CREDIT_N);
 }
 
 function trackerPoints(state, category) {

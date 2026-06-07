@@ -74,24 +74,32 @@ function toRating(points, k = 1) {
 
 /**
  * Returns the rating-point contribution of completed achievements in
- * a given category. Each qualifying achievement adds 1 point.
- * Achievements that completed before they were ≥7 days old return 0.
- * `general`-category achievements never contribute.
+ * a given category.
+ *
+ * Anti-gaming layers:
+ *   - Rule 1 (time-spacing): achievements with createdAt+completedAt
+ *     where completedAt-createdAt < 7 days contribute 0. Legacy entries
+ *     without createdAt are treated as legit.
+ *   - Rule 1b (diminishing returns, added 2026-06): even with spacing,
+ *     bulk creation+complete would let a user inflate ratings (create
+ *     1000 today, complete in a week). Each qualifying achievement is
+ *     worth 1 point up to FULL_CREDIT_N, then sqrt-tapered. Net effect:
+ *     first 8 count fully; beyond that you need ~4× more for 2×.
  */
+const FULL_CREDIT_N = 8;
 function achievementPoints(S, category) {
   const list = S.achievements || [];
-  let points = 0;
+  let count = 0;
   for (const a of list) {
     if (a.category !== category) continue;
     if (!a.completed) continue;
-    // Time-spacing rule: created at least 7 days before completion.
-    // Legacy achievements without createdAt are treated as legit.
     if (a.createdAt && a.completedAt) {
       if ((a.completedAt - a.createdAt) < TIME_SPACING_MS) continue;
     }
-    points += 1;
+    count += 1;
   }
-  return points;
+  if (count <= FULL_CREDIT_N) return count;
+  return FULL_CREDIT_N + Math.sqrt((count - FULL_CREDIT_N) * FULL_CREDIT_N);
 }
 
 // ── Rule 4: tracker activity-based points ──────────────────────────────────

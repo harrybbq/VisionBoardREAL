@@ -1542,13 +1542,26 @@ export default function Modals({ openModal, S, update, onClose, onOpen, onShowCo
     update(prev => ({ ...prev, ytWidgets: [...(prev.ytWidgets || []), yt] }));
   }
   function handleAddAchievement(ach) {
-    // createdAt stamped server-time (Date.now() ms) so the rating
-    // engine's time-spacing rule (≥7 days created→completed) has a
-    // reliable signal. Existing achievements without createdAt are
-    // treated as legitimately old by derive.js — see playbook
-    // F5 Sprint 3 for the migration rule.
-    const withTimestamp = { ...ach, createdAt: ach.createdAt || Date.now() };
-    update(prev => ({ ...prev, achievements: [...prev.achievements, withTimestamp] }));
+    // createdAt stamped server-time so the rating engine's time-spacing
+    // rule (≥7 days created→completed) has a reliable signal.
+    //
+    // Anti-gaming rate limit: cap at DAILY_CREATE_CAP new achievements
+    // per rolling 24h. Stops users from spinning up hundreds in a day
+    // (the diminishing-returns curve in derive.js makes that mostly
+    // worthless anyway, but this also keeps the canvas usable).
+    const DAILY_CREATE_CAP = 10;
+    const since = Date.now() - 86_400_000;
+    update(prev => {
+      const recent = (prev.achievements || []).filter(a => (a.createdAt || 0) > since).length;
+      if (recent >= DAILY_CREATE_CAP) {
+        if (typeof window !== 'undefined') {
+          alert(`Daily limit reached: max ${DAILY_CREATE_CAP} new achievements per 24 hours. This prevents inflated ratings — try again later.`);
+        }
+        return prev;
+      }
+      const withTimestamp = { ...ach, createdAt: ach.createdAt || Date.now() };
+      return { ...prev, achievements: [...prev.achievements, withTimestamp] };
+    });
   }
   function handleEditAchievement(id, patch) {
     // Preserve x/y/completed/locked/coinAwarded — only swap user-editable
