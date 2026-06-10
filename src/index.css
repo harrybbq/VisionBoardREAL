@@ -4075,6 +4075,7 @@ button:active:not(:disabled),
   font-size: 11px;
   letter-spacing: 1.4px;
   color: var(--text-muted);
+  white-space: nowrap; /* never wrap "[ OVR ]" vertically in the rail */
 }
 .ratings-ledger-ovr-value {
   font-family: var(--serif, Georgia, serif);
@@ -4097,6 +4098,17 @@ button:active:not(:disabled),
   text-transform: uppercase;
   font-weight: 700;
   white-space: nowrap;
+}
+/* Prestige badge sits on its own row under the OVR hero so narrow
+   variants (144px rail, compact) never crowd the number/tier. */
+.ratings-ledger-prestige-row {
+  display: flex;
+  margin-top: -4px;
+}
+.ratings-ledger-compact .ratings-ledger-prestige-row .prestige-badge-md,
+.profile-col--with-rail .ratings-ledger-prestige-row .prestige-badge-md {
+  font-size: 8px;
+  padding: 3px 6px;
 }
 
 /* ── OVR prestige glow (F5 Sprint 6) ──────────────────────────────

@@ -201,12 +201,19 @@ export default function RatingsPanel({ S, update, compact = false }) {
             <span className="ratings-ledger-ovr-label">[ OVR ]</span>
             <span className={`ratings-ledger-ovr-value ovr-num ovr-tier-${glow.key}`}>{ovr}</span>
             <span className="ratings-ledger-ovr-suffix">/99</span>
-            <PrestigeBadge prestige={prestigeLevel} size="md" />
           </div>
           <span className="ratings-ledger-ovr-tier" style={{ color: glow.color }}>
             → {glow.label.toUpperCase()}
           </span>
         </div>
+
+        {/* Prestige badge — own row so it never crowds the hero number
+            in the 144px rail / compact variants. */}
+        {prestigeLevel > 0 && (
+          <div className="ratings-ledger-prestige-row">
+            <PrestigeBadge prestige={prestigeLevel} size="md" />
+          </div>
+        )}
 
         {/* Prestige-up CTA — only at OVR 99 and below the prestige cap.
             The server re-validates against canonical profiles values. */}
