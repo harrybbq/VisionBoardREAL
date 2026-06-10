@@ -45,12 +45,18 @@ export function toRoman(n) {
  * Badge descriptor for a prestige level.
  * Returns null for P0 (no badge). Otherwise:
  *   { band, numeral, text } — e.g. text "GREEN IV".
+ *
+ * Roman numeral is **relative to the colour band** (resets each time
+ * the band changes): P1='I' … P9='IX', P10='I', P11='II' … P19='X',
+ * P20='I' …, so the visible label always reads in a tidy I–X scale
+ * within its colour.
  */
 export function prestigeBadge(prestige) {
   const p = Number(prestige);
   if (!Number.isFinite(p) || p < 1) return null;
   const clamped = Math.min(p, PRESTIGE_MAX);
   const band = PRESTIGE_BANDS.find(b => clamped >= b.min && clamped <= b.max) || PRESTIGE_BANDS[0];
-  const numeral = toRoman(clamped);
+  // Position within the band: P1→1, P10→1, P19→10, P99→10, etc.
+  const numeral = toRoman(clamped - band.min + 1);
   return { band, numeral, text: `${band.label.toUpperCase()} ${numeral}` };
 }
