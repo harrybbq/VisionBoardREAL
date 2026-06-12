@@ -34,6 +34,9 @@ import InstallPrompt from './components/InstallPrompt';
 import TutorialOverlay from './components/TutorialOverlay';
 import BackgroundCropModal from './components/BackgroundCropModal';
 import LeaderboardSection from './components/LeaderboardSection';
+import AdminEditModal from './components/AdminEditModal';
+import VisionsModal from './components/VisionsModal';
+import { useIsOwner } from './hooks/useIsOwner';
 import { useCapacitor, haptic } from './hooks/useCapacitor';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useVisions } from './lib/visions/useVisions';
@@ -104,6 +107,30 @@ function Board({ userId, userEmail, onSignOut }) {
   } = useVisionBoardState(userId);
   const { atLimit } = useTierLimits();
   const { hasPro } = useSubscriptionContext();
+  const { isOwner } = useIsOwner(userEmail);
+  // Owner admin edit modal — opened via right-click on OVR / coin chip
+  // (handlers in PageHeader + MobileAppBar + RatingsPanel).
+  const [adminEdit, setAdminEdit] = useState(null); // 'rating' | 'coins' | null
+  // Global owner-only right-click handler — picks up any element
+  // tagged with data-admin-target ('rating' on the OVR hero row). Keeps
+  // RatingsPanel free of owner-prop plumbing through 3 mount points.
+  useEffect(() => {
+    if (!isOwner) return;
+    const onCtx = e => {
+      const el = e.target.closest('[data-admin-target]');
+      if (!el) return;
+      const target = el.getAttribute('data-admin-target');
+      if (target !== 'rating' && target !== 'coins') return;
+      e.preventDefault();
+      setAdminEdit(target);
+    };
+    document.addEventListener('contextmenu', onCtx);
+    return () => document.removeEventListener('contextmenu', onCtx);
+  }, [isOwner]);
+  // Visions catalogue modal — global "view what visions exist + which
+  // ones you've unlocked". Triggered from Settings + a coin-wallet
+  // menu option.
+  const [visionsOpen, setVisionsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hub');
   const [openModal, setOpenModal] = useState(null);
   const [coinToast, setCoinToast] = useState({ message: '', type: '', visible: false });
@@ -555,6 +582,7 @@ function Board({ userId, userEmail, onSignOut }) {
             onChangeBg={handleChangeBgClick}
             onRemoveBg={currentBg ? handleRemoveBg : null}
             hasBg={!!currentBg}
+            onCoinContextMenu={isOwner ? () => setAdminEdit('coins') : null}
           />
           <BottomTabBar
             activeSection={activeSection}
@@ -580,6 +608,7 @@ function Board({ userId, userEmail, onSignOut }) {
         onChangeBg={handleChangeBgClick}
         onRemoveBg={currentBg ? handleRemoveBg : null}
         onSignOut={onSignOut}
+        onCoinContextMenu={isOwner ? () => setAdminEdit('coins') : null}
       />
 
       {/* Main sections */}
@@ -641,7 +670,7 @@ function Board({ userId, userEmail, onSignOut }) {
         )}
         {activeSection === 'settings' && (
           <motion.div key="settings" {...pageMotion}>
-            <SettingsSection S={S} update={update} active userId={userId} onOpenLegal={setLegalPage} onOpenPalette={() => setPaletteOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} />
+            <SettingsSection S={S} update={update} active userId={userId} onOpenLegal={setLegalPage} onOpenPalette={() => setPaletteOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} onOpenVisions={() => setVisionsOpen(true)} />
           </motion.div>
         )}
         {/* Friends — mobile-only route. Desktop puts FriendsRail in
@@ -703,6 +732,19 @@ function Board({ userId, userEmail, onSignOut }) {
       <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       <CookieBanner onOpenLegal={setLegalPage} />
       <InstallPrompt />
+      <AdminEditModal
+        open={!!adminEdit}
+        target={adminEdit}
+        userId={userId}
+        S={S}
+        update={update}
+        onClose={() => setAdminEdit(null)}
+      />
+      <VisionsModal
+        open={visionsOpen}
+        S={S}
+        onClose={() => setVisionsOpen(false)}
+      />
       {cropTarget && (
         <BackgroundCropModal
           src={cropTarget.src}

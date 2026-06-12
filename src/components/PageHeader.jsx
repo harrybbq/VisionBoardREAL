@@ -26,7 +26,7 @@ function getDynamicGreeting(name) {
   return `Still up${n}? 🌙`;
 }
 
-export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg, onSignOut }) {
+export default function PageHeader({ activeSection, coins, onOpenCoinHistory, profileName, onChangeBg, onRemoveBg, onSignOut, onCoinContextMenu }) {
   const greeting = getDynamicGreeting(profileName);
   const labelRef = useRef(null);
   const prevSection = useRef(activeSection);
@@ -105,7 +105,12 @@ export default function PageHeader({ activeSection, coins, onOpenCoinHistory, pr
         )}
       </div>
 
-      <div id="coinWallet" onClick={onOpenCoinHistory} title="Your coins — click for history">
+      <div
+        id="coinWallet"
+        onClick={onOpenCoinHistory}
+        onContextMenu={onCoinContextMenu ? e => { e.preventDefault(); onCoinContextMenu(); } : undefined}
+        title="Your coins — click for history"
+      >
         <span className="cw-icon">⬡</span>
         <div>
           <div className="cw-amount" id="coinAmount">{coins}</div>

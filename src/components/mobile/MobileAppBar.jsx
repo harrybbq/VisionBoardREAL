@@ -41,6 +41,7 @@ export default function MobileAppBar({
   onChangeBg,
   onRemoveBg,
   hasBg = false,
+  onCoinContextMenu,
 }) {
   const label = SECTION_LABELS[activeSection] || '';
   return (
@@ -78,6 +79,7 @@ export default function MobileAppBar({
         type="button"
         className="m-appbar-coins"
         onClick={onOpenCoinHistory}
+        onContextMenu={onCoinContextMenu ? e => { e.preventDefault(); onCoinContextMenu(); } : undefined}
         aria-label={`${coins} coins — view history`}
         whileTap={{ scale: 0.95 }}
       >

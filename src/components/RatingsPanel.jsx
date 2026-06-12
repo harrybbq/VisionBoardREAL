@@ -196,7 +196,7 @@ export default function RatingsPanel({ S, update, compact = false }) {
         {/* OVR hero — bracket label, big italic number, /99 suffix, tier.
             Prestige badge (colour band + Roman numeral) sits beside the
             number once the user has prestiged at least once. */}
-        <div className="ratings-ledger-ovr-row">
+        <div className="ratings-ledger-ovr-row" data-admin-target="rating">
           <div className="ratings-ledger-ovr-block">
             <span className="ratings-ledger-ovr-label">[ OVR ]</span>
             <span className={`ratings-ledger-ovr-value ovr-num ovr-tier-${glow.key}`}>{ovr}</span>

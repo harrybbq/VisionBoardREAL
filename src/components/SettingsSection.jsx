@@ -371,7 +371,7 @@ const SETTINGS_TABS = [
   { id: 'data',       label: 'Data'       },
 ];
 
-export default function SettingsSection({ S, update, active, userId, onOpenLegal, onOpenPalette, onOpenShortcuts }) {
+export default function SettingsSection({ S, update, active, userId, onOpenLegal, onOpenPalette, onOpenShortcuts, onOpenVisions }) {
   const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
   const currentScheme = S.colorScheme || 'green';
@@ -846,11 +846,26 @@ export default function SettingsSection({ S, update, active, userId, onOpenLegal
             link deep-links to the platform-native subs UI. */}
         <SubscriptionPanel />
 
+        {/* Visions catalogue — milestones the user can chase. */}
+        <div className="card" style={{ padding: '22px' }}>
+          <h3 style={{ margin: '0 0 4px' }}>Visions</h3>
+          <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
+            See every system milestone and which ones you've unlocked. Each feeds your category ratings.
+          </p>
+          <button
+            type="button"
+            className="tut-replay-btn"
+            onClick={onOpenVisions}
+          >
+            <span aria-hidden="true">✦</span> Open visions catalogue
+          </button>
+        </div>
+
         {/* Walkthrough / tour */}
         <div className="card" style={{ padding: '22px' }}>
           <h3 style={{ margin: '0 0 4px' }}>Walkthrough</h3>
           <p style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 16px', lineHeight: '1.7' }}>
-            Replay the 30-second intro tour — useful if you want a refresher or you skipped it the first time.
+            Replay the intro tour — useful if you want a refresher or you skipped it the first time.
           </p>
           <button
             type="button"
