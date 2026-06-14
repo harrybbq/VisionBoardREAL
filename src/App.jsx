@@ -111,21 +111,40 @@ function Board({ userId, userEmail, onSignOut }) {
   // Owner admin edit modal — opened via right-click on OVR / coin chip
   // (handlers in PageHeader + MobileAppBar + RatingsPanel).
   const [adminEdit, setAdminEdit] = useState(null); // 'rating' | 'coins' | null
-  // Global owner-only right-click handler — picks up any element
-  // tagged with data-admin-target ('rating' on the OVR hero row). Keeps
-  // RatingsPanel free of owner-prop plumbing through 3 mount points.
+  // Global owner-only handlers:
+  //   1. Coin chip uses data-admin-target='coins' (caught here via
+  //      capture-phase contextmenu so the React handler can't preventDefault
+  //      first).
+  //   2. The Ratings module is wrapped in the hub-module right-click menu
+  //      already, so we expose a 'vantage:admin-edit' CustomEvent the menu
+  //      fires when an owner clicks its admin row — see HubModuleMenu.
+  //   window.__vantageOwner is set so HubModuleMenu can detect ownership
+  //   without prop-threading through HubSection.
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__vantageOwner = !!isOwner;
+    }
     if (!isOwner) return;
     const onCtx = e => {
-      const el = e.target.closest('[data-admin-target]');
+      const el = e.target.closest && e.target.closest('[data-admin-target]');
       if (!el) return;
       const target = el.getAttribute('data-admin-target');
       if (target !== 'rating' && target !== 'coins') return;
       e.preventDefault();
+      e.stopPropagation();
       setAdminEdit(target);
     };
-    document.addEventListener('contextmenu', onCtx);
-    return () => document.removeEventListener('contextmenu', onCtx);
+    const onEvt = e => {
+      const t = e.detail;
+      if (t === 'rating' || t === 'coins') setAdminEdit(t);
+    };
+    // Capture phase so we run before React's bubbling handlers.
+    document.addEventListener('contextmenu', onCtx, true);
+    document.addEventListener('vantage:admin-edit', onEvt);
+    return () => {
+      document.removeEventListener('contextmenu', onCtx, true);
+      document.removeEventListener('vantage:admin-edit', onEvt);
+    };
   }, [isOwner]);
   // Visions catalogue modal — global "view what visions exist + which
   // ones you've unlocked". Triggered from Settings + a coin-wallet

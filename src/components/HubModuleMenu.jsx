@@ -80,7 +80,7 @@ export function useModuleTransparency(rootRef, transparency, syncKey) {
  *   onContextMenu  — attach to the same container
  *   menuNode       — render anywhere inside the layout
  */
-export function useHubModuleMenu({ S, update, syncKey }) {
+export function useHubModuleMenu({ S, update, syncKey, adminActions }) {
   const rootRef = useRef(null);
   const [menu, setMenu] = useState(null);
   const transparency = S.moduleTransparency || {};
@@ -102,12 +102,29 @@ export function useHubModuleMenu({ S, update, syncKey }) {
     setMenu(null);
   }
 
+  // Resolve the admin actions list for the currently-targeted module.
+  // Owner-only; rows dispatch CustomEvents on document so App can route
+  // them without prop-threading owner state through HubSection.
+  const moduleAdmin = (() => {
+    if (!menu) return [];
+    if (adminActions && adminActions[menu.id]) return adminActions[menu.id];
+    // Default: if window.__vantageOwner is set (App writes this when
+    // useIsOwner returns true), expose the same actions Settings does.
+    if (typeof window !== 'undefined' && window.__vantageOwner) {
+      if (menu.id === 'ratings') {
+        return [{ label: 'Edit ratings & prestige', onClick: () => document.dispatchEvent(new CustomEvent('vantage:admin-edit', { detail: 'rating' })) }];
+      }
+    }
+    return [];
+  })();
+
   const menuNode = (
     <HubModuleMenu
       menu={menu}
       transparency={transparency}
       onToggle={onToggle}
       onClose={() => setMenu(null)}
+      adminActions={moduleAdmin}
     />
   );
 
@@ -119,7 +136,7 @@ export function moduleIdFromLabel(label) {
   return String(label || 'panel').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export default function HubModuleMenu({ menu, transparency, onToggle, onClose }) {
+export default function HubModuleMenu({ menu, transparency, onToggle, onClose, adminActions = [] }) {
   // Dismiss on any outside pointerdown, scroll, or Escape.
   useEffect(() => {
     if (!menu) return;
@@ -167,6 +184,26 @@ export default function HubModuleMenu({ menu, transparency, onToggle, onClose })
           <span className="hub-switch-knob" />
         </span>
       </button>
+      {adminActions.length > 0 && (
+        <>
+          <div className="hub-module-menu-sep" />
+          <div className="hub-module-menu-head" style={{ color: 'var(--gold, #c8970a)' }}>
+            // ADMIN
+          </div>
+          {adminActions.map((a, i) => (
+            <button
+              key={i}
+              type="button"
+              className="hub-module-menu-row"
+              onClick={() => { onClose(); a.onClick(); }}
+              role="menuitem"
+            >
+              <span className="hub-module-menu-label">{a.label}</span>
+              <span aria-hidden="true" style={{ color: 'var(--text-muted)' }}>›</span>
+            </button>
+          ))}
+        </>
+      )}
     </div>
   );
 }
