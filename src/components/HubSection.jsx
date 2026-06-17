@@ -105,48 +105,81 @@ function useWidgetDrag(canvasRef, S, update) {
   const makeDraggable = useCallback((wrapper, linkId) => {
     const handle = wrapper.querySelector('[data-drag]');
     if (!handle) return;
-    handle.addEventListener('mousedown', e => {
+    // Pointer events cover mouse + touch + pen in one path. touch-action:none
+    // on the grip stops the browser fighting scroll-vs-drag on touch devices.
+    handle.style.touchAction = 'none';
+
+    handle.addEventListener('pointerdown', e => {
+      // Ignore non-primary buttons (right-click etc.).
+      if (e.button !== undefined && e.button !== 0) return;
       e.preventDefault();
       const canvas = canvasRef.current;
       if (!canvas) return;
 
+      // ── Snapping → absolute conversion ──
+      // Previously this called update() once PER widget inside a forEach,
+      // landing N debounced cloud saves and a canvas re-render at exactly
+      // the moment the user wanted to drag — visible as click-to-drag lag.
+      // Now: do all DOM mutations immediately (instant feel), then commit
+      // every position to React state in ONE batched update.
       if (wrapper.classList.contains('snapping')) {
         const all = canvas.querySelectorAll('.widget-wrapper');
         const snapshots = [];
         all.forEach(w => { const r = w.getBoundingClientRect(); snapshots.push({ w, x: r.left, y: r.top }); });
         canvas.style.cssText = 'position:relative;flex:1;min-height:calc(100vh - 180px);display:block;';
         const cr = canvas.getBoundingClientRect();
+        const newPositions = {};
         snapshots.forEach(({ w, x, y }) => {
           w.classList.remove('snapping');
-          w.style.cssText = `position:absolute;min-width:280px;max-width:360px;width:300px;user-select:none;left:${x - cr.left}px;top:${y - cr.top}px;`;
+          const left = x - cr.left;
+          const top  = y - cr.top;
+          w.style.cssText = `position:absolute;min-width:280px;max-width:360px;width:300px;user-select:none;left:${left}px;top:${top}px;`;
           const id = w.dataset.linkId;
-          if (id) {
-            update(prev => ({ ...prev, widgetPositions: { ...prev.widgetPositions, [id]: { x: x - cr.left, y: y - cr.top } } }));
-          }
+          if (id) newPositions[id] = { x: left, y: top };
         });
+        if (Object.keys(newPositions).length) {
+          update(prev => ({ ...prev, widgetPositions: { ...prev.widgetPositions, ...newPositions } }));
+        }
       }
 
-      const startX = e.clientX - wrapper.offsetLeft;
-      const startY = e.clientY - wrapper.offsetTop;
-      const island = wrapper.querySelector('.link-island');
+      // Cache layout values up-front — onMove ran getBoundingClientRect /
+      // offsetWidth every frame before, forcing a relayout on each move.
+      const wrapperW = wrapper.offsetWidth;
+      const canvasW  = canvas.offsetWidth;
+      const maxX     = canvasW - wrapperW;
+      const startX   = e.clientX - wrapper.offsetLeft;
+      const startY   = e.clientY - wrapper.offsetTop;
+      const island   = wrapper.querySelector('.link-island');
       if (island) island.classList.add('dragging-active');
+      try { handle.setPointerCapture(e.pointerId); } catch { /* ignore */ }
 
+      // rAF-coalesce moves so we never write style more than once per frame.
+      let rafId = 0;
+      let pending = null;
+      function flush() {
+        rafId = 0;
+        if (!pending) return;
+        wrapper.style.left = pending.x + 'px';
+        wrapper.style.top  = pending.y + 'px';
+        pending = null;
+      }
       function onMove(ev) {
-        const c = canvasRef.current;
-        if (!c) return;
-        let nx = Math.max(0, Math.min(ev.clientX - startX, c.offsetWidth - wrapper.offsetWidth));
-        let ny = Math.max(0, ev.clientY - startY);
-        wrapper.style.left = nx + 'px';
-        wrapper.style.top = ny + 'px';
+        const nx = Math.max(0, Math.min(ev.clientX - startX, maxX));
+        const ny = Math.max(0, ev.clientY - startY);
+        pending = { x: nx, y: ny };
+        if (!rafId) rafId = requestAnimationFrame(flush);
       }
       function onUp() {
+        if (rafId) { cancelAnimationFrame(rafId); flush(); }
         if (island) island.classList.remove('dragging-active');
         update(prev => ({ ...prev, widgetPositions: { ...prev.widgetPositions, [linkId]: { x: wrapper.offsetLeft, y: wrapper.offsetTop } } }));
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
       }
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
     });
   }, [canvasRef, update]);
 
