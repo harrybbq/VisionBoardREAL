@@ -614,6 +614,7 @@ function Board({ userId, userEmail, onSignOut }) {
             onClose={() => setMoreOpen(false)}
             onNavigate={navigate}
             activeSection={activeSection}
+            onUpgrade={() => handleOpenModal('paywall:generic')}
           />
         </>
       )}

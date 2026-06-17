@@ -1,5 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { haptic } from '../../hooks/useCapacitor';
+import { useSubscriptionContext } from '../../context/SubscriptionContext';
+
+const PRO_CHIP_DISMISSED_KEY = 'vb4_more_pro_chip_dismissed';
 
 /**
  * Bottom-sheet drawer surfaced from the More tab in BottomTabBar.
@@ -27,7 +30,27 @@ const MORE_ITEMS = [
   { id: 'settings',     icon: '⚙', label: 'Settings',     desc: 'Theme, privacy, tools' },
 ];
 
-export default function MoreDrawer({ open, onClose, onNavigate, activeSection }) {
+export default function MoreDrawer({ open, onClose, onNavigate, activeSection, onUpgrade }) {
+  const { hasPro } = useSubscriptionContext();
+  // Persistent dismiss for the Pro chip — once the user closes it,
+  // don't re-show on later opens. Surfaces again on paywall trigger
+  // anyway, so dismiss-here ≠ never see Pro CTA again.
+  const [chipDismissed, setChipDismissed] = useState(() => {
+    try { return localStorage.getItem(PRO_CHIP_DISMISSED_KEY) === '1'; }
+    catch { return false; }
+  });
+  function dismissChip(e) {
+    e.stopPropagation();
+    setChipDismissed(true);
+    try { localStorage.setItem(PRO_CHIP_DISMISSED_KEY, '1'); } catch { /* quota */ }
+  }
+  function handleChipClick() {
+    haptic('LIGHT');
+    onClose();
+    // Generic upgrade context — same paywall as a cap-triggered one
+    // but with a feature gate that explains the broader pitch.
+    onUpgrade && onUpgrade();
+  }
   // Esc closes
   useEffect(() => {
     if (!open) return;
@@ -127,6 +150,32 @@ export default function MoreDrawer({ open, onClose, onNavigate, activeSection })
               );
             })}
           </ul>
+
+          {/* Free-tier upgrade chip — persistent across sessions until
+              dismissed. Hidden once the user is Pro. Tap → paywall. */}
+          {!hasPro && !chipDismissed && onUpgrade && (
+            <button
+              type="button"
+              className="m-drawer-pro-chip"
+              onClick={handleChipClick}
+              aria-label="Go Pro — see what's included"
+            >
+              <span className="m-drawer-pro-chip-icon" aria-hidden="true">◐</span>
+              <span className="m-drawer-pro-chip-text">
+                <span className="m-drawer-pro-chip-label">Go Pro</span>
+                <span className="m-drawer-pro-chip-sub">Unlimited everything · from £3.99/mo</span>
+              </span>
+              <span className="m-drawer-pro-chip-chev" aria-hidden="true">›</span>
+              <span
+                role="button"
+                tabIndex={0}
+                aria-label="Dismiss"
+                className="m-drawer-pro-chip-dismiss"
+                onClick={dismissChip}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') dismissChip(e); }}
+              >×</span>
+            </button>
+          )}
         </div>
       </div>
     </>

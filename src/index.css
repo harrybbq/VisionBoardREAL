@@ -3728,6 +3728,84 @@ button:active:not(:disabled),
   flex-shrink: 0;
 }
 
+/* Free-tier upgrade chip at the bottom of the More drawer. Persistent,
+   dismissable. Hidden once user is Pro. Same height-rhythm as the
+   list rows so it reads as a peer, not an ad bar. */
+.m-drawer-pro-chip {
+  margin: 14px 0 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--gold, #c8970a) 38%, transparent);
+  background: color-mix(in srgb, var(--gold, #c8970a) 10%, var(--bg-raised, #fff));
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+}
+.m-drawer-pro-chip:active { transform: scale(0.99); }
+.m-drawer-pro-chip-icon {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  background: color-mix(in srgb, var(--gold, #c8970a) 22%, transparent);
+  color: var(--gold, #c8970a);
+  border: 1px solid color-mix(in srgb, var(--gold, #c8970a) 36%, transparent);
+}
+.m-drawer-pro-chip-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.m-drawer-pro-chip-label {
+  font-family: var(--sans); font-weight: 700; font-size: 14px;
+  color: var(--text);
+}
+.m-drawer-pro-chip-sub {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+.m-drawer-pro-chip-chev {
+  font-size: 20px; color: var(--gold, #c8970a); flex-shrink: 0;
+}
+.m-drawer-pro-chip-dismiss {
+  position: absolute; top: 6px; right: 8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; line-height: 1; color: var(--text-muted);
+  background: transparent;
+}
+.m-drawer-pro-chip-dismiss:hover { color: var(--text); }
+
+/* Paywall trigger card — shown above the feature list when a numeric
+   cap fired (e.g. "5/5 habits"). Names the trigger in plain words. */
+.paywall-trigger-card {
+  margin: 14px 18px 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--em) 28%, transparent);
+  background: color-mix(in srgb, var(--em) 8%, transparent);
+}
+.paywall-trigger-eyebrow {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 1.6px;
+  font-weight: 700; color: var(--em);
+}
+.paywall-trigger-line {
+  display: flex; align-items: baseline; gap: 8px; margin-top: 4px;
+}
+.paywall-trigger-count {
+  font-family: var(--serif, Georgia, serif); font-style: italic; font-weight: 700;
+  font-size: 26px; color: var(--em); letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.paywall-trigger-label {
+  font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--text);
+  text-transform: capitalize;
+}
+.paywall-trigger-unlock {
+  margin-top: 6px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+  line-height: 1.55;
+}
+
 /* ── Body padding for mobile chrome ── */
 /* When mobile chrome is active we need to push the page content
    below the app bar and above the bottom tabs. The existing .section

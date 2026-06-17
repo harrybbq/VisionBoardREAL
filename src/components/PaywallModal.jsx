@@ -143,6 +143,24 @@ export default function PaywallModal({ openId, onClose, onUpgrade, onShowToast }
               </p>
             </div>
 
+            {/* Context summary — only when a specific cap triggered this
+                (i.e. not the generic upgrade entry). Names the trigger
+                in plain words + leads with what they get immediately,
+                so the modal reads as "here's what unlocking does for
+                you right now" rather than a generic feature list. */}
+            {!hasPro && !cap.feature && (
+              <div className="paywall-trigger-card">
+                <div className="paywall-trigger-eyebrow">// CAP REACHED</div>
+                <div className="paywall-trigger-line">
+                  <span className="paywall-trigger-count">{cap.limit}/{cap.limit}</span>
+                  <span className="paywall-trigger-label">{cap.label}</span>
+                </div>
+                <div className="paywall-trigger-unlock">
+                  Pro removes this cap immediately + adds 4 perks below.
+                </div>
+              </div>
+            )}
+
             {/* Inline preview — what your coach noticed.
                 Shown only to non-Pro users; gives them a real example
                 pulled from their own data when possible. */}
