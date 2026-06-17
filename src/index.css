@@ -768,6 +768,16 @@ nav:hover .nav-tab-label{opacity:1;}
 
 /* Generic link body */
 .link-island-notes{font-family:var(--sans);font-size:11.5px;color:var(--text-mid);line-height:1.55;}
+/* Live-data Our Apps preset (desktop hub link) — hero strip + note. */
+.link-island-live{display:flex;flex-direction:column;gap:8px;}
+.link-island-live-hero{
+  display:block;width:100%;height:120px;border-radius:8px;overflow:hidden;
+  background:rgba(var(--em-rgb),.06);
+  font-family:var(--mono);font-size:10px;letter-spacing:1px;
+  color:var(--text-muted);text-transform:uppercase;
+  text-align:center;line-height:120px;text-decoration:none;
+}
+.link-island-live-hero img{width:100%;height:100%;object-fit:cover;display:block;}
 
 /* ── Hub content widgets (Habits / Holidays) ── */
 .hub-widget-body{display:flex;flex-direction:column;gap:12px;}
@@ -4798,6 +4808,30 @@ button:active:not(:disabled),
 .m-widget-brand {
   display: flex; flex-direction: column; gap: 10px;
   padding: 4px 0;
+}
+/* Click-through affordance on widget rows that jump to a section. */
+.m-widget-clickable { cursor: pointer; transition: background .12s; }
+.m-widget-clickable:active { background: rgba(var(--em-rgb), .08); }
+
+/* Desktop hub equivalent — habit rows, trip cards, leaderboard rows
+   tagged with [data-go-to] become clickable links. Hover gets a faint
+   tint; focus ring for keyboard users. The drag handle / delete button
+   still take priority because the canvas click delegate skips them. */
+.hub-row-go { cursor: pointer; transition: background .12s, transform .12s; outline: none; }
+.hub-row-go:hover { background: rgba(var(--em-rgb), .06); }
+.hub-row-go:focus-visible { box-shadow: 0 0 0 2px var(--em); border-radius: 6px; }
+.hub-trip.hub-row-go:hover { transform: translateY(-1px); }
+.hub-lb-list[data-go-to] { cursor: pointer; }
+
+/* Live-data variant — scraped og:image hero strip up top. */
+.m-widget-brand-live { gap: 8px; padding-top: 0; }
+.m-widget-brand-hero {
+  display: block; width: 100%; height: 96px;
+  border-radius: 8px; overflow: hidden;
+  background: rgba(var(--em-rgb), .06);
+}
+.m-widget-brand-hero img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
 }
 .m-widget-brand-head {
   display: flex; flex-direction: column; gap: 2px;
